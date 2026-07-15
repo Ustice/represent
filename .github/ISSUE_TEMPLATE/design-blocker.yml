@@ -1,0 +1,78 @@
+name: Design blocker
+description:
+  Stop implementation and expose the smallest unresolved semantic decision.
+title: "Blocker: "
+body:
+  - type: input
+    id: blocked_work
+    attributes:
+      label: Blocked work
+      description: Link the issue or pull request that must stop.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: demonstration
+    attributes:
+      label: Minimal demonstrating example
+      description:
+        Show the smallest failing or explicitly skipped example that exposes the
+        blocker.
+    validations:
+      required: true
+
+  - type: textarea
+    id: conflict
+    attributes:
+      label: Unresolved conflict
+      description:
+        Identify conflicting clauses, undefined invariants, adapter leakage,
+        unsafe casts, weakened guarantees, or reviewer disagreement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and evidence
+      description:
+        Record the credible choices, their effects on guarantees, and evidence
+        for or against each one.
+    validations:
+      required: true
+
+  - type: input
+    id: owner
+    attributes:
+      label: Decision owner or review role
+      description: Name who is responsible for reviewing the decision.
+    validations:
+      required: true
+
+  - type: textarea
+    id: decision
+    attributes:
+      label: Smallest decision required to resume
+      description:
+        State one bounded decision; do not propose an implementation workaround.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: records
+    attributes:
+      label: Required follow-up
+      options:
+        - label:
+            After creating this issue, I will link it from
+            `research/open-questions.md`.
+          required: true
+        - label:
+            After creating this issue, I will create or update an ADR describing
+            the alternatives and affected guarantees, then link it here.
+          required: true
+        - label:
+            The blocked implementation remains stopped until the design decision
+            is reviewed.
+          required: true

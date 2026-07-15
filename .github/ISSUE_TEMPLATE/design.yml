@@ -1,0 +1,100 @@
+name: Design work
+description: Define or revise normative behavior before tests or implementation.
+title: "Design: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for a design question or intended behavior. A substantial design needs an independent reviewer before it is accepted.
+
+        After review, the independent reviewer records the decision in a comment using the acceptance record from `docs/workflow.md`. Until that comment says `Outcome: Accepted`, this issue is not ready for implementation.
+
+  - type: input
+    id: objective
+    attributes:
+      label: Project objective
+      description: Link the objective issue this work advances or constrains.
+      placeholder: "#2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: intent
+    attributes:
+      label: Intended behavior or design question
+      description:
+        State the observable behavior to define or the smallest question to
+        decide.
+    validations:
+      required: true
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Existing authority
+      description:
+        Link specification clauses, ADRs, architecture constraints, and prior
+        issues. Write "None — reason" when no authority exists yet.
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples and counterexamples
+      description:
+        Include concrete cases that a future specification and its semantic
+        tests must distinguish.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Semantic impact
+      description:
+        Identify proposed observable guarantees, diagnostics, representations,
+        conversions, or adapter boundaries that could change.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and unresolved disagreement
+      description:
+        Record credible alternatives and reviewer disagreement instead of
+        writing ambiguous consensus language.
+    validations:
+      required: true
+
+  - type: input
+    id: reviewer
+    attributes:
+      label: Independent review role
+      description:
+        Name the person or focused agent role that will review this design
+        independently.
+      placeholder: Skeptical application-developer reviewer
+    validations:
+      required: true
+
+  - type: textarea
+    id: outputs
+    attributes:
+      label: Expected outputs
+      description:
+        List specification clauses, ADRs, semantic tests, or linked child issues
+        expected from this work.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: phase
+    attributes:
+      label: Phase check
+      options:
+        - label:
+            I checked the current phase in the README and
+            `docs/development-phases.md`, and this design work is permitted.
+          required: true

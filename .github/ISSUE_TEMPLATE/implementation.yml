@@ -1,0 +1,114 @@
+name: Implementation work
+description:
+  Implement bounded behavior already owned by reviewed clauses and semantic
+  tests.
+title: "Implement: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not use this form to invent behavior. If the owning specification or semantic test is ambiguous, return to design work or open a design blocker. Phase -2 does not permit product implementation.
+
+  - type: dropdown
+    id: work_kind
+    attributes:
+      label: Work kind
+      options:
+        - Engineering tooling or workflow validation
+        - Executable specification support
+        - Disposable Phase 0 prototype
+        - Phase 1 or later product implementation
+    validations:
+      required: true
+
+  - type: textarea
+    id: phase
+    attributes:
+      label: Phase permission
+      description:
+        State the current phase and quote or link the rule that permits this
+        kind of implementation.
+    validations:
+      required: true
+
+  - type: input
+    id: objective
+    attributes:
+      label: Project objective
+      description: Link the objective issue this implementation advances.
+      placeholder: "#2"
+    validations:
+      required: true
+
+  - type: input
+    id: design_issue
+    attributes:
+      label: Accepted design or engineering-system issue
+      description:
+        Link the independently reviewed design issue, or the Phase -2
+        engineering-system issue, that authorized this work.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: clauses
+    attributes:
+      label: Owning clauses or engineering rules
+      description:
+        List stable clause identifiers and links. For Phase -2 tooling only,
+        cite the engineering rule and issue acceptance criteria instead.
+      placeholder:
+        "REP-CONV-001 — docs/specifications/conversions.md#rep-conv-001"
+    validations:
+      required: true
+
+  - type: textarea
+    id: tests
+    attributes:
+      label: Accepted semantic or workflow tests
+      description:
+        List test paths and names that exercise the clauses, including relevant
+        deliberately broken cases. For Phase -2 tooling only, list the workflow
+        validation that proves the acceptance criteria.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Bounded implementation scope
+      description:
+        State the smallest behavior to implement and explicit non-goals.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Closure evidence
+      description:
+        List focused and full validation commands, expected diagnostics, and any
+        remaining limitations.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Readiness gate
+      options:
+        - label: The current phase permits this implementation.
+          required: true
+        - label:
+            The owning clauses, or Phase -2 engineering rules and acceptance
+            criteria, completed independent review.
+          required: true
+        - label:
+            Tests or workflow validation were derived from the owning authority
+            rather than from the proposed implementation.
+          required: true
+        - label:
+            This issue does not require changing the owning clauses or weakening
+            a valid test.
+          required: true
