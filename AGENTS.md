@@ -27,6 +27,29 @@ existing libraries. Represent does not replace Prisma's generators, migrations,
 or runtime; a GraphQL server; Standard Schema; tRPC; or any other integrated
 system.
 
+## Current phase gate
+
+Before every implementation task, read
+[`docs/development-phases.md`](docs/development-phases.md) and verify the
+current phase in the README. State how the proposed implementation is permitted
+by that phase before writing code. If it is not permitted, stop and identify the
+phase transition or design decision required to proceed.
+
+The phase rules are:
+
+- Phase -2: no production code. Implementation is allowed only when needed to
+  validate engineering tooling or workflows.
+- Phase -1: implementation exists only to clarify, exercise, or make
+  specifications executable. It has no product or compatibility status.
+- Phase 0: implement the smallest complete vertical slice and assume it is
+  disposable. Compatibility must not constrain the design.
+- Phase 1 and later: production implementation begins, and compatibility and API
+  stability become meaningful constraints.
+
+Changing the current phase requires an architectural review, an accepted ADR,
+and an update to both the README and the development-phases document. Do not
+infer a phase transition from the presence of implementation code.
+
 ## Development order
 
 1. Engineer the engineering system.
