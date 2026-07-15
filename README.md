@@ -1,12 +1,15 @@
 # Represent
 
+[![Current phase: -2 — Engineer the Engineering System](https://img.shields.io/static/v1?label=Current%20phase&message=Phase%20-2%20%E2%80%94%20Engineer%20the%20Engineering%20System&color=blue)](docs/development-phases.md#phase--2--engineer-the-engineering-system)
+
 Represent is a proposed framework-neutral TypeScript toolkit for defining domain
 data and operations once, connecting them to the rest of an application stack,
 and deriving useful artifacts from a shared semantic graph.
 
-The project is currently in its engineering-system phase. There is no library
-implementation and no stable public API. The next phase is to write and
-adversarially review specifications before production code begins.
+The project is currently in
+[Phase -2: Engineer the Engineering System](docs/development-phases.md#phase--2--engineer-the-engineering-system).
+There is no library implementation and no stable public API. The next phase is
+to write and adversarially review specifications before production code begins.
 
 ## Product direction
 
@@ -16,7 +19,9 @@ neutral model to systems such as Standard Schema, GraphQL, Prisma, tRPC, and CSV
 without replacing those systems.
 
 See [the vision](docs/vision.md), [architecture](docs/architecture.md), and
-[workflow](docs/workflow.md) for the current boundaries.
+[workflow](docs/workflow.md) for the current boundaries. The
+[development phases](docs/development-phases.md) define what kind of work is
+appropriate at each stage.
 
 ## Development
 
