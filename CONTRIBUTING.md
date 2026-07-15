@@ -4,6 +4,11 @@ Represent develops specifications before implementations. Begin with the
 relevant document under `docs/`, identify the guarantee being changed, and keep
 the neutral core independent of adapter-specific semantics.
 
+Start work with the matching form under `.github/ISSUE_TEMPLATE/` and follow the
+[issue-to-implementation workflow](docs/workflow.md). Each pull request should
+use the repository template to link the objective, design, specification
+clauses, ADRs, semantic tests, and implementation work that apply.
+
 ## Before changing behavior
 
 1. Identify or propose a specification clause.

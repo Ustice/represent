@@ -1,0 +1,40 @@
+name: Project objective
+description: Define a durable project outcome that future design work can trace.
+title: "Objective: "
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description:
+        State the durable outcome without prescribing an implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: Explain the user or architectural value of this outcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and non-goals
+      description:
+        Link existing architecture boundaries and state what this objective does
+        not authorize.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence of progress
+      description:
+        Describe observable evidence that future design and implementation
+        issues can produce.
+    validations:
+      required: true

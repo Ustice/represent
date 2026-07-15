@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project workflow
+    url: https://github.com/Ustice/represent/blob/main/docs/workflow.md
+    about: Choose the issue type and check its readiness requirements.

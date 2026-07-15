@@ -77,6 +77,25 @@ make an implementation pass. A test may change only when review establishes that
 it conflicts with the specification, asserts the wrong observable behavior, or
 is itself defective; record the reason with the change.
 
+## Issue and pull request workflow
+
+Use GitHub issues to preserve the chain from objective to design, specification
+clause, ADR, semantic test, implementation issue, and pull request. Follow
+[`docs/workflow.md`](docs/workflow.md) and use the forms under
+`.github/ISSUE_TEMPLATE/`.
+
+Before implementation begins, verify that the issue links an independently
+reviewed design, accepted clauses with stable identifiers, and semantic tests
+derived from those clauses. Phase -2 tooling may instead cite the governing
+engineering rule, issue acceptance criteria, and workflow validation. If any
+required link is missing or ambiguous, return to design work. Do not let
+implementation and its test changes silently redefine the owning specification.
+
+Pull requests must report semantic impact and validation evidence using
+`.github/PULL_REQUEST_TEMPLATE.md`. Changed files alone are not an adequate
+handoff. Prototype discoveries return to design review; code presence does not
+grant product or compatibility status.
+
 ## Testing standards
 
 A good test asserts observable behavior or a declared invariant, names a
