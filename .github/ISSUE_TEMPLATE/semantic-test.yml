@@ -1,0 +1,137 @@
+name: Semantic test work
+description:
+  Derive executable semantic evidence from accepted specification clauses.
+title: "Test: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for semantic tests or adapter-certification suites derived from accepted clauses. A test cannot invent behavior or become an implementation gate without the record required by `REP-TEST-008`.
+
+  - type: input
+    id: objective
+    attributes:
+      label: Project objective
+      description: Link the objective issue this evidence advances.
+      placeholder: "#2"
+    validations:
+      required: true
+
+  - type: input
+    id: design
+    attributes:
+      label: Accepted design issue
+      description:
+        Link the issue containing the independent design-review record.
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Evidence classification
+      options:
+        - Semantic evidence
+        - Compile-time contract evidence
+        - Engineering-workflow validation
+    validations:
+      required: true
+
+  - type: textarea
+    id: clauses
+    attributes:
+      label: Owning authority
+      description:
+        List stable clause identifiers and links, or Phase -2 engineering rules
+        and acceptance criteria. Distinguish owning authority from contextual
+        references.
+      placeholder:
+        "REP-CONV-001 — docs/specifications/conversions.md#rep-conv-001"
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Observable, oracle, and regression
+      description:
+        State the observable or invariant, equality notion or oracle, and
+        plausible incorrect implementation the test will reject.
+    validations:
+      required: true
+
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Execution boundary and static/runtime distinction
+      description:
+        Name the smallest sufficient public boundary. For runtime tests, explain
+        why static checks are insufficient. For compile-time tests, identify the
+        consumer program and compiler outcome being distinguished.
+    validations:
+      required: true
+
+  - type: textarea
+    id: cases
+    attributes:
+      label: Cases and diagnostics
+      description:
+        List applicable examples, counterexamples, or generated domains and
+        expected semantic diagnostic content.
+    validations:
+      required: true
+
+  - type: textarea
+    id: discrimination
+    attributes:
+      label: Discrimination checks
+      description:
+        List relevant mutation IDs or deliberately broken subjects and the
+        expected observable failure, or write "Impractical — reason."
+    validations:
+      required: true
+
+  - type: textarea
+    id: coverage
+    attributes:
+      label: Semantic coverage
+      description:
+        List nodes, edges, significant paths, laws, and capabilities covered or
+        explicitly left as gaps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: certification
+    attributes:
+      label: Adapter-certification declaration
+      description:
+        For adapter certification, identify adapter and profile versions or
+        revisions, target and runtime versions, semantic configuration,
+        capabilities, suite revision, and input domains. Otherwise write "None —
+        not adapter certification."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: quality
+    attributes:
+      label: Test-quality gate
+      options:
+        - label:
+            The test is derived from accepted authority rather than proposed
+            implementation structure.
+          required: true
+        - label:
+            The test can fail for the named regression and survive
+            behavior-preserving refactoring.
+          required: true
+        - label:
+            Focused semantic assertions are used, or any snapshot is justified
+            as a reviewed public artifact.
+          required: true
+        - label:
+            Relevant surviving mutations will be classified and resolved or
+            tracked as explicit gaps.
+          required: true

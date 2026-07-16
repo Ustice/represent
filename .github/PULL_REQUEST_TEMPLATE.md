@@ -19,7 +19,7 @@
 
 ## Evidence
 
-<!-- Report focused checks, the full validation gate, adversarial cases, and independent review evidence. -->
+<!-- Report focused checks, the full validation gate, independent review, relevant mutation/discrimination results, and semantic coverage units. Adapter certification must identify the adapter, profile, target, runtime, configuration, capabilities, suite revision, input domains, and all obligation results. -->
 
 ## Remaining limitations or disagreements
 
@@ -34,6 +34,10 @@
       implementation relied on them.
 - [ ] Tests cite owning clauses and assert observable behavior or declared
       invariants.
+- [ ] Gate tests record their oracle, regression, boundary, static/runtime
+      distinction, discrimination checks, and semantic coverage units.
+- [ ] Relevant surviving mutations and skipped certification obligations are
+      classified and linked as explicit gaps.
 - [ ] I did not weaken a guarantee or rewrite a valid test to make
       implementation pass.
 - [ ] Discovered ambiguities and blockers were reported upward instead of
