@@ -25,6 +25,14 @@
 
 <!-- Link open questions and blockers. Write "None — reason" only when none are known. -->
 
+## Files changed
+
+<!-- Group the intentionally changed files by purpose. -->
+
+## Next safe step
+
+<!-- State the smallest action a future contributor can take without inventing missing authority or semantics. -->
+
 ## Review safeguards
 
 <!-- Mark each item complete or explain why it does not apply above. -->

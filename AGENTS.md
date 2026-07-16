@@ -29,11 +29,12 @@ system.
 
 ## Current phase gate
 
-Before every implementation task, read
-[`docs/development-phases.md`](docs/development-phases.md) and verify the
-current phase in the README. State how the proposed implementation is permitted
-by that phase before writing code. If it is not permitted, stop and identify the
-phase transition or design decision required to proceed.
+Before every implementation task, read the authoritative current-phase
+declaration in [`docs/development-phases.md`](docs/development-phases.md) and
+verify that its required README summary agrees. State how the proposed
+implementation is permitted by that phase before writing code. If it is not
+permitted, stop and identify the phase transition or design decision required to
+proceed.
 
 The phase rules are:
 

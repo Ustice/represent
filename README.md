@@ -1,15 +1,18 @@
 # Represent
 
-[![Current phase: -2 — Engineer the Engineering System](https://img.shields.io/static/v1?label=Current%20phase&message=Phase%20-2%20%E2%80%94%20Engineer%20the%20Engineering%20System&color=blue)](docs/development-phases.md#phase--2--engineer-the-engineering-system)
+[![Current phase: -1 — Engineer the Design](https://img.shields.io/static/v1?label=Current%20phase&message=Phase%20-1%20%E2%80%94%20Engineer%20the%20Design&color=blue)](docs/development-phases.md#phase--1--engineer-the-design)
 
 Represent is a proposed framework-neutral TypeScript toolkit for defining domain
 data and operations once, connecting them to the rest of an application stack,
 and deriving useful artifacts from a shared semantic graph.
 
 The project is currently in
-[Phase -2: Engineer the Engineering System](docs/development-phases.md#phase--2--engineer-the-engineering-system).
-There is no library implementation and no stable public API. The next phase is
-to write and adversarially review specifications before production code begins.
+[Phase -1: Engineer the Design](docs/development-phases.md#phase--1--engineer-the-design).
+The current-phase declaration in `docs/development-phases.md` is authoritative;
+this README is its required public summary. There is no library implementation
+and no stable public API. The next work is bounded, independently reviewed
+semantic design; Phase -1 does not authorize production packages or
+compatibility commitments.
 
 ## Product direction
 
@@ -23,11 +26,23 @@ See [the vision](docs/vision.md), [architecture](docs/architecture.md), and
 [development phases](docs/development-phases.md) define what kind of work is
 appropriate at each stage.
 
+## Project navigation
+
+- [Current phase and transition rules](docs/development-phases.md)
+- [Phase -2 exit checklist](docs/phase-minus-2-exit-checklist.md)
+- [Architecture decisions](docs/decisions/README.md)
+- [Normative specifications](docs/specifications/README.md)
+- [Open questions](research/open-questions.md)
+- [Continuity-drill prompt](prompts/continuity-drill.md)
+- [CI and local validation](docs/ci.md)
+
 ## Development
 
-Use Node.js 22 and pnpm 11.
+Use Node.js 22 and pnpm 11. The repository includes `.nvmrc`; use `nvm use` or
+select Node 22 with another version manager before installing dependencies.
 
 ```sh
+nvm use
 corepack enable
 pnpm install
 pnpm check
@@ -38,6 +53,7 @@ design or implementation changes.
 
 ## Status
 
-The repository contains process, architecture boundaries, and a reference
-acceptance-case outline only. Schema, representation, conversion, and operation
+The repository contains the engineering process, architecture boundaries, a
+normative testing and certification specification, and a reference
+acceptance-case outline. Schema, representation, conversion, and operation
 specifications are intentionally deferred.

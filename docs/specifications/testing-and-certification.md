@@ -365,6 +365,8 @@ Semantic coverage: <nodes, edges, paths, laws, capabilities>
 
 ## Review outcome
 
-An independent test-quality reviewer must verify these clauses against issue #5
-before this specification is accepted. The review record belongs on the issue
-using the format in `docs/workflow.md`.
+An independent semantic test-quality reviewer accepted `REP-TEST-001` through
+`REP-TEST-025` after the requested normative corrections were applied. The
+[durable acceptance record](https://github.com/Ustice/represent/issues/5#issuecomment-4987818206)
+identifies the reviewer role, decision, clause range, evidence status, and lack
+of unresolved disagreement.
