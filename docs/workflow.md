@@ -188,6 +188,40 @@ not promote prototype behavior into a specification merely because code exists.
 Prototype completion means the learning and feedback links are recorded, not
 that a feature shipped.
 
+Before Phase 1, the promotion review inventories each prototype component and
+learned behavior. Each receives exactly one disposition:
+
+- **Replace:** discard the implementation while carrying reviewed evidence back
+  to specifications and tests.
+- **Salvage:** identify the bounded parts retained, justify them independently,
+  and treat everything else as replaced.
+- **Promote:** link strong evidence that rebuilding would not materially improve
+  the design and state the compatibility commitment that begins.
+
+The record links hypotheses, affected clauses, semantic tests, mutation or
+certification evidence, unresolved risks, and the independent architectural
+review. Code presence or test passage alone is not promotion evidence.
+
+## Architectural and phase-transition review
+
+An architectural review is accepted only when a reviewer other than the sole
+author of the substantial change records:
+
+```text
+Architectural review outcome
+Reviewer: <person or independent agent role>
+Outcome: Accepted | Changes requested | Blocked
+Decision: <bounded decision or smallest requested change>
+Evidence reviewed: <exit checklist, clauses, tests, drills, and validation>
+Affected ADR: <number and link>
+Unresolved disagreements: <links, or None — reason>
+```
+
+A phase-transition ADR remains proposed until this record exists. It links every
+applicable exit criterion, the validation runtime, deviations, and remaining
+limitations. Acceptance updates the authoritative phase declaration and its
+README summary together; a governance test verifies they remain synchronized.
+
 ## Adapter-certification evidence
 
 Adapter-certification evidence identifies the adapter, certification profile,
@@ -207,4 +241,6 @@ semantic contracts.
 At integration, run the repository validation gate, request a reviewer who did
 not solely author the design, and use the pull request template to report the
 traceability chain, guarantees changed, evidence collected, unresolved
-questions, deviations, and next safe step.
+questions, deviations, and next safe step. For work without a pull request, use
+[`docs/handoff.md`](handoff.md). Every handoff also inventories the
+intentionally changed files.

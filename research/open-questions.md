@@ -1,9 +1,11 @@
 # Open questions
 
-Unresolved questions and reviewer disagreements belong here until a
-specification or ADR decides them. Each entry should include context, competing
+Active unresolved questions and reviewer disagreements belong here until a
+specification or ADR decides them. Each active entry includes context, competing
 alternatives, affected guarantees, evidence, owner or review role, and the
-smallest decision needed to proceed.
+smallest decision needed to proceed. The list below is a deferred research
+queue, not active blocker records; promote an item into a structured entry when
+a Phase -1 issue takes ownership of it.
 
 ## Deferred for the specification phase
 

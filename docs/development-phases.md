@@ -3,6 +3,10 @@
 This phase model is established by
 [ADR 0002: Development phases](decisions/0002-development-phases.md).
 
+This document is the single authority for the current phase. The README badge
+and summary must mirror it so the phase is visible at the repository entrypoint.
+The governance test fails when those displays disagree.
+
 ## Development philosophy
 
 Represent intentionally separates engineering, design, and implementation. Early
@@ -97,8 +101,14 @@ must choose one of these outcomes:
 - salvage selected components;
 - promote the implementation into Phase 1.
 
-Promotion requires strong evidence that rebuilding would not materially improve
-the design.
+The review records every prototype component or learned behavior with one
+disposition: replace, salvage, or promote. For each item it links the
+hypothesis, evidence, affected clauses and tests, unresolved risks, and
+compatibility consequence. Salvage identifies the bounded parts retained and
+treats all other parts as replaced. Promotion requires strong evidence that
+rebuilding would not materially improve the design and independent architectural
+approval. Nothing acquires compatibility status merely because it survived a
+prototype.
 
 ## Phase 1 — Intentional Implementation
 
@@ -142,3 +152,7 @@ A phase transition requires an architectural review and an accepted ADR that
 records the evidence for moving forward. The transition must update the current
 phase in this document and in the README. Implementation code appearing in the
 repository does not itself change the phase.
+
+The architectural review and ADR use the evidence and acceptance formats in
+[`docs/workflow.md`](workflow.md). Phase -2 additionally requires the
+[`Phase -2 exit checklist`](phase-minus-2-exit-checklist.md).
