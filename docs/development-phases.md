@@ -25,10 +25,6 @@ exist to discover the correct abstractions, not to become production software.
 
 ## Phase -2 — Engineer the Engineering System
 
-**Current phase**
-
-The project is currently in Phase -2.
-
 ### Goal
 
 Build the system used to engineer the library, including:
@@ -53,6 +49,10 @@ No production code is permitted in this phase. Implementation is allowed only
 when it is needed to validate engineering tooling or workflows.
 
 ## Phase -1 — Engineer the Design
+
+**Current phase**
+
+The project is currently in Phase -1.
 
 ### Goal
 

@@ -63,3 +63,9 @@ transition-ADR acceptance remain separate gates.
 - Affected ADR: ADR 0003 — Enter Phase -1
 - Unresolved disagreements: None. The PR's Node 22 CI result remains an expected
   external transition precondition, not a material governance gap.
+
+## Transition completion
+
+[PR #8's Node 22 CI run](https://github.com/Ustice/represent/actions/runs/29470230680)
+passed. With every checklist item complete, ADR 0003 was accepted and the
+authoritative phase plus README summary moved together to Phase -1.

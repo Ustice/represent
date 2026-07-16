@@ -1,6 +1,6 @@
 # ADR 0003: Enter Phase -1
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-07-15
 - Objective: [#2](https://github.com/Ustice/represent/issues/2)
 - Owning issue: [#4](https://github.com/Ustice/represent/issues/4)
@@ -16,16 +16,14 @@ The evidence is the
 [`Phase -2 exit checklist`](../phase-minus-2-exit-checklist.md), the
 [`continuity-drill record`](../../research/continuity-drill-2026-07-15.md), the
 workflow validation test, the Node 22 local gate, and the pull request's Node 22
-CI result. Acceptance remains blocked until the post-remediation drill,
-architectural review, and CI result are recorded.
+CI result. Each gate is now recorded and passing.
 
 ## Decision
 
-Enter Phase -1 — Engineer the Design after every exit-checklist item is
-complete. Phase -1 authorizes reviewed semantic design and implementation only
-when it clarifies, exercises, or makes specifications executable. It does not
-authorize production packages, compatibility commitments, or a stable public
-API.
+Enter Phase -1 — Engineer the Design. Every exit-checklist item is complete.
+Phase -1 authorizes reviewed semantic design and implementation only when it
+clarifies, exercises, or makes specifications executable. It does not authorize
+production packages, compatibility commitments, or a stable public API.
 
 The first Phase -1 task must be a bounded design issue that selects one deferred
 semantic question or another explicitly reviewed design objective. This ADR does
@@ -63,9 +61,10 @@ this ADR is accepted. The governance test protects that synchronization.
 ## Review evidence
 
 - Reviewer: Independent adversarial governance reviewer
-- Outcome: accepted subject to the pull request's Node 22 CI precondition
+- Outcome: accepted
 - Evidence reviewed: `docs/phase-minus-2-exit-checklist.md`,
   `research/continuity-drill-2026-07-15.md`,
-  `tests/governance/continuity.test.ts`, Node 22 local gate, and PR CI
-- Unresolved disagreements: None; external PR CI evidence remains pending
-- Accepted on: Not accepted
+  `tests/governance/continuity.test.ts`, Node 22 local gate, and
+  [PR #8 CI](https://github.com/Ustice/represent/actions/runs/29470230680)
+- Unresolved disagreements: None
+- Accepted on: 2026-07-15

@@ -1,16 +1,18 @@
 # Represent
 
-[![Current phase: -2 — Engineer the Engineering System](https://img.shields.io/static/v1?label=Current%20phase&message=Phase%20-2%20%E2%80%94%20Engineer%20the%20Engineering%20System&color=blue)](docs/development-phases.md#phase--2--engineer-the-engineering-system)
+[![Current phase: -1 — Engineer the Design](https://img.shields.io/static/v1?label=Current%20phase&message=Phase%20-1%20%E2%80%94%20Engineer%20the%20Design&color=blue)](docs/development-phases.md#phase--1--engineer-the-design)
 
 Represent is a proposed framework-neutral TypeScript toolkit for defining domain
 data and operations once, connecting them to the rest of an application stack,
 and deriving useful artifacts from a shared semantic graph.
 
 The project is currently in
-[Phase -2: Engineer the Engineering System](docs/development-phases.md#phase--2--engineer-the-engineering-system).
+[Phase -1: Engineer the Design](docs/development-phases.md#phase--1--engineer-the-design).
 The current-phase declaration in `docs/development-phases.md` is authoritative;
 this README is its required public summary. There is no library implementation
-and no stable public API.
+and no stable public API. The next work is bounded, independently reviewed
+semantic design; Phase -1 does not authorize production packages or
+compatibility commitments.
 
 ## Product direction
 

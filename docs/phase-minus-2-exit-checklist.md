@@ -26,16 +26,18 @@ document does not itself change phases.
       evidence and independent review.
 - [x] The repository-only continuity drill has a reusable prompt and recorded
       result.
-- [ ] The full local gate passes on Node 22 and the PR's Node 22 CI run passes.
+- [x] The full local gate passes on Node 22 and the PR's Node 22 CI run passes.
       Local evidence: Node 22.23.1 and pnpm 11.13.0, one test file and four
-      governance tests passed. PR CI remains pending.
+      governance tests passed.
+      [PR #8 CI](https://github.com/Ustice/represent/actions/runs/29470230680)
+      passed.
 - [x] An independent post-remediation continuity drill finds no material gap.
       The repository-only continuation reviewer recorded `continuity succeeds`.
 - [x] An independent architectural review accepts Phase -2 exit. The adversarial
       governance reviewer accepted exit subject only to the expected PR CI
       precondition.
-- [ ] A phase-transition ADR is accepted and updates the authoritative phase and
-      README summary together.
+- [x] [ADR 0003](decisions/0003-enter-phase-minus-1.md) is accepted and updates
+      the authoritative phase and README summary together.
 
 ## Evidence rules
 

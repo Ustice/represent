@@ -62,8 +62,8 @@ describe("Phase -2 repository continuity", () => {
     const workflow = read(".github/workflows/ci.yml");
 
     expect(read(".nvmrc").trim()).toBe("22");
-    expect(workflow).toContain("pnpm/action-setup@v4");
-    expect(workflow).toContain("version: 11.13.0");
+    expect(workflow).toContain("actions/setup-node@v5");
+    expect(workflow).toContain("corepack enable");
     expect(workflow).toContain("node-version-file: .nvmrc");
     expect(workflow).toContain("pnpm install --frozen-lockfile");
     expect(workflow).toContain("pnpm check");
