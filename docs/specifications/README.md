@@ -1,8 +1,14 @@
 # Design specifications
 
-This directory will own normative, reviewable statements of Represent's
-observable behavior and guarantees. It intentionally contains no schema,
-representation, conversion, or operation design yet.
+This directory owns normative, reviewable statements of Represent's observable
+behavior and guarantees. It intentionally contains no schema, representation,
+conversion, or operation design yet.
+
+Current specifications:
+
+- [Testing and certification](testing-and-certification.md) defines semantic
+  test quality, discrimination checks, adapter certification, and semantic
+  coverage for the engineering system.
 
 Future specifications should give clauses stable identifiers, define relevant
 terms and equality notions, include examples and counterexamples, state expected

@@ -22,6 +22,10 @@ Specification clause identifiers use `REP-<AREA>-NNN`, are unique across the
 repository, and remain stable when headings move. Tests cite their owning clause
 identifier in the test name or an adjacent description.
 
+Semantic and contract tests also follow the test-case record in `REP-TEST-008`.
+Reviews use the discrimination strategy and coverage model in
+[`docs/specifications/testing-and-certification.md`](specifications/testing-and-certification.md).
+
 Do not create placeholder artifacts merely to fill the chain. Write
 `None — reason` when an artifact does not apply. A pull request reports the
 complete chain in `.github/PULL_REQUEST_TEMPLATE.md` so reviewers can inspect
@@ -63,6 +67,28 @@ bounded implementation issue.
    relevant ADR rather than hiding it in compromise wording.
 6. Create or update stable specification clauses and any required ADR.
 7. Derive executable semantic tests from the accepted clauses.
+
+Before a test becomes an implementation gate, its author or test reviewer
+records:
+
+```text
+Test case: <behavioral name>
+Classification: <semantic | compile-time contract | workflow validation>
+Owning authority: <REP-AREA-NNN, contract, or Phase -2 rule>
+Observable/invariant: <consumer-visible behavior>
+Oracle/equality: <comparison and equality notion>
+Regression caught: <plausible broken behavior>
+Execution boundary: <smallest sufficient boundary>
+Static/runtime distinction: <runtime insufficiency or compile-time consumer program and compiler outcome>
+Cases: <applicable examples, counterexamples, or generated domains>
+Discrimination: <mutation IDs or broken subjects, or impractical reason>
+Expected diagnostics: <semantic content or None — reason>
+Semantic coverage: <nodes, edges, paths, laws, capabilities>
+```
+
+The record may live beside the test or in a linked semantic-test issue. A test
+that cannot complete the record is exploratory evidence or a tracked semantic
+coverage gap, not an implementation gate.
 
 After review, the independent reviewer posts this acceptance record on the
 design issue:
@@ -120,6 +146,12 @@ After readiness is established:
 6. Return ambiguities to design and stop for design blockers. Do not patch
    around either one.
 
+The adversarial review must report relevant baseline mutation results using the
+obligation matrix in `REP-TEST-012`. A surviving mutation is classified as a
+weak assertion, invalid mutation, undefined semantic boundary, or tooling
+defect. It blocks a complete evidence claim until resolved or linked as an
+explicit gap.
+
 An implementation issue may close only when its pull request links the complete
 traceability chain, cited clauses and semantic tests pass, focused and full
 validation results are recorded, semantic impact and limitations are stated, and
@@ -155,6 +187,20 @@ design issue and feed the evidence back into Phase -1 specification review. Do
 not promote prototype behavior into a specification merely because code exists.
 Prototype completion means the learning and feedback links are recorded, not
 that a feature shipped.
+
+## Adapter-certification evidence
+
+Adapter-certification evidence identifies the adapter, certification profile,
+target and runtime versions, semantic configuration, declared capabilities,
+suite revision, input domains, and every pass, fail, skip, unsupported, gap, or
+harness-error result. Certification remains scoped to that declaration and
+separates universal obligations from target-owned extensions.
+
+A claimed capability cannot pass certification by being omitted or marked
+unsupported. A harness error is not a semantic failure, but it prevents a
+passing result. Substantial certification profiles and test strategies require
+independent test-quality review in addition to the design review that owns their
+semantic contracts.
 
 ## Integration and handoff
 

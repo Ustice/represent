@@ -69,8 +69,9 @@ body:
       label: Accepted semantic or workflow tests
       description:
         List test paths and names that exercise the clauses, including relevant
-        deliberately broken cases. For Phase -2 tooling only, list the workflow
-        validation that proves the acceptance criteria.
+        deliberately broken cases, test-case records, and semantic coverage
+        units. For Phase -2 tooling only, list the workflow validation that
+        proves the acceptance criteria.
     validations:
       required: true
 
@@ -107,6 +108,10 @@ body:
         - label:
             Tests or workflow validation were derived from the owning authority
             rather than from the proposed implementation.
+          required: true
+        - label:
+            Each gate test records its observable, oracle, regression, boundary,
+            static/runtime distinction, discrimination, and semantic coverage.
           required: true
         - label:
             This issue does not require changing the owning clauses or weakening

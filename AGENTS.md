@@ -98,6 +98,8 @@ grant product or compatibility status.
 
 ## Testing standards
 
+A test must follow
+[`docs/specifications/testing-and-certification.md`](docs/specifications/testing-and-certification.md).
 A good test asserts observable behavior or a declared invariant, names a
 realistic regression, survives implementation-only refactoring, uses the
 smallest meaningful execution boundary, avoids duplicating TypeScript's static
@@ -106,8 +108,19 @@ semantic coverage is.
 
 Where practical, validate important tests against deliberately broken
 implementations: dropped or swapped fields, collapsed null and missing values,
-wrong identity values, reversed composition order, and omitted impact-analysis
-edges.
+wrong identity values, reversed composition order, falsely preserved guarantees,
+and omitted impact-analysis edges. A relevant surviving mutation blocks a
+complete evidence claim until it is classified and resolved or tracked as a
+semantic coverage gap.
+
+Every gate test or cohesive table-driven group records its classification,
+owning authority, observable or invariant, oracle, regression caught, smallest
+sufficient execution boundary, static/runtime distinction, cases, discrimination
+checks, expected diagnostics, and semantic coverage units. The static/runtime
+distinction explains TypeScript's insufficiency for a runtime test or identifies
+the consumer program and compiler outcome for a compile-time test. Adapter
+certification must scope results to the declared adapter, profile, target,
+runtime, configuration, capabilities, and suite revision.
 
 Prohibited test patterns include tests that only check:
 
@@ -116,6 +129,8 @@ Prohibited test patterns include tests that only check:
 - that implementation structure matches a snapshot;
 - that trivial getters or constructors exist;
 - that arbitrary input does not throw without a meaningful property;
+- that mocks call other mocks;
+- that a coverage number increased;
 - behavior already guaranteed by TypeScript alone.
 
 Every test review asks:
