@@ -56,5 +56,6 @@ design or implementation changes.
 
 The repository contains the engineering process, architecture boundaries, a
 normative testing and certification specification, and a reference
-acceptance-case outline. Schema, representation, conversion, and operation
-specifications are intentionally deferred.
+acceptance-case outline. Conversion guarantees `REP-CONV-001` through
+`REP-CONV-007` are accepted; schema, representation, and operation
+specifications remain deferred.
