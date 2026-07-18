@@ -35,6 +35,9 @@ Use GitHub as the canonical control plane for agent automation:
 - Critic publishes and verifies the exact-head review before completing the
   `critic` check for either outcome; the check remains pending until the visible
   review exists, preventing auto-merge from racing ahead of review evidence;
+- exhausted bounded review-publication retries fail the `critic` check with a
+  sanitized infrastructure diagnostic and request local Codex notification; they
+  never become a passing check or a fabricated Critic judgment;
 - Critic reports only its own judgment: a failed `validate` check does not make
   Critic request changes when its independent review passes, while the
   coordinator still routes the CI failure into the one combined rework pass;

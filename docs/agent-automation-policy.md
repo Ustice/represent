@@ -264,7 +264,12 @@ expected head SHA, and only then complete the authoritative `critic` check. The
 check remains pending while review publication or verification is pending. This
 ordering applies to both outcomes: publish `APPROVED` before success, and
 publish `CHANGES_REQUESTED` before a terminal non-success result. Failed review
-publication fails closed and cannot produce a terminal `critic` check.
+publication receives bounded retries while the check remains pending. If those
+retries are exhausted, the `critic` check completes as failure—never
+success—with a sanitized infrastructure diagnostic, and the local notification
+path in REP-AUTO-016 and REP-AUTO-019 requests Jason's attention without raw or
+sensitive finding detail. This outcome is classified as review-publication
+infrastructure failure, not as Critic's review judgment.
 
 The review is human-readable evidence and a native place for discussion. It is
 not an authority input for merge eligibility, and the GitHub App review is not
@@ -545,7 +550,10 @@ Before activation, workflow tests or controlled repository exercises cover:
 - the `critic` check remaining pending until GitHub confirms the matching
   exact-head review, for both passing and rework outcomes;
 - failed or delayed Critic review publication never allowing the `critic` check
-  to complete first;
+  to complete successfully first;
+- bounded review-publication retries exhausting into a failed `critic` check,
+  sanitized infrastructure evidence, and a content-free local Codex
+  notification rather than a fabricated Critic judgment;
 - failed `validate` with an independently `APPROVED`/successful Critic pair
   still producing exactly one coordinated rework pass from the CI failure;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
