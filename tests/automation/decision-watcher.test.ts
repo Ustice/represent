@@ -37,96 +37,97 @@ Discrimination obligation matrix:
 const repositoryId = "900719925474099312345";
 const apiPrefix = "https://api.github.com/repos/Ustice/represent";
 
-const issueEndpoint: WatchEndpoint = {
+const issueEndpoint = {
   url: `${apiPrefix}/issues?labels=ready-for-human`,
   mediaType: "application/vnd.github+json",
   apiVersion: "2022-11-28",
   authenticationContextId: "read-only-app-installation-1",
-};
+} as const satisfies WatchEndpoint;
 
-const reviewEndpoint: WatchEndpoint = {
+const reviewEndpoint = {
   url: `${apiPrefix}/pulls?state=open`,
   mediaType: "application/vnd.github+json",
   apiVersion: "2022-11-28",
   authenticationContextId: "read-only-app-installation-1",
-};
+} as const satisfies WatchEndpoint;
 
-const actionable = (
-  overrides: Partial<ActionableGitHubState> = {},
-): ActionableGitHubState => ({
-  sourceRootEndpoint: issueEndpoint,
-  sourcePageEndpoint: issueEndpoint,
-  eventRestId: "900719925474099312370",
-  objectRevision: {
-    kind: "github-rest-object",
-    restId: "900719925474099312371",
-    updatedAt: "2026-07-18T14:59:00.000Z",
-  },
-  payload: {
-    repositoryId,
-    workItemId: "900719925474099312346",
-    workItemNumber: 15,
-    classification: "sensitive-review-required",
-    githubUrl: "https://github.com/Ustice/represent/issues/15",
-  },
-  ...overrides,
-});
+const actionable = (overrides: Partial<ActionableGitHubState> = {}) =>
+  ({
+    sourceRootEndpoint: issueEndpoint,
+    sourcePageEndpoint: issueEndpoint,
+    eventRestId: "900719925474099312370",
+    objectRevision: {
+      kind: "github-rest-object",
+      restId: "900719925474099312371",
+      updatedAt: "2026-07-18T14:59:00.000Z",
+    },
+    payload: {
+      repositoryId,
+      workItemId: "900719925474099312346",
+      workItemNumber: 15,
+      classification: "sensitive-review-required",
+      githubUrl: "https://github.com/Ustice/represent/issues/15",
+    },
+    ...overrides,
+  }) as const satisfies ActionableGitHubState;
 
-const validators = (): readonly StoredValidator[] => [
-  {
-    endpoint: issueEndpoint,
-    etag: '"issue-etag"',
-  },
-  {
-    endpoint: reviewEndpoint,
-    lastModified: "Fri, 18 Jul 2026 12:00:00 GMT",
-  },
-];
+const validators = () =>
+  [
+    {
+      endpoint: issueEndpoint,
+      etag: '"issue-etag"',
+    },
+    {
+      endpoint: reviewEndpoint,
+      lastModified: "Fri, 18 Jul 2026 12:00:00 GMT",
+    },
+  ] as const satisfies readonly StoredValidator[];
 
-const notModified = (endpoint: WatchEndpoint): GitHubWatchResponse => ({
-  kind: "not-modified",
-  endpoint,
-  status: 304,
-  validator: {
-    etag: `"${endpoint === issueEndpoint ? "issue" : "review"}-etag"`,
-  },
-});
+const notModified = (endpoint: WatchEndpoint) =>
+  ({
+    kind: "not-modified",
+    endpoint,
+    status: 304,
+    validator: {
+      etag: `"${endpoint === issueEndpoint ? "issue" : "review"}-etag"`,
+    },
+  }) as const satisfies GitHubWatchResponse;
 
-const emptyPage = (endpoint: WatchEndpoint): GitHubWatchResponse => ({
-  kind: "page",
-  endpoint,
-  status: 200,
-  validator: {
-    etag: `"${endpoint === issueEndpoint ? "issue" : "review"}-new"`,
-  },
-  nextUrl: null,
-  actionable: [],
-});
+const emptyPage = (endpoint: WatchEndpoint) =>
+  ({
+    kind: "page",
+    endpoint,
+    status: 200,
+    validator: {
+      etag: `"${endpoint === issueEndpoint ? "issue" : "review"}-new"`,
+    },
+    nextUrl: null,
+    actionable: [],
+  }) as const satisfies GitHubWatchResponse;
 
-const baseInput = (
-  overrides: Partial<DecisionWatcherInput> = {},
-): DecisionWatcherInput => ({
-  config: {
-    repositoryId,
-    publicRepositoryUrl: "https://github.com/Ustice/represent",
-    allowedGitHubApiUrlPrefix: apiPrefix,
-    endpoints: [issueEndpoint, reviewEndpoint],
-    activePollIntervalMs: 30_000,
-    idlePollIntervalMs: 300_000,
-    baseRetryDelayMs: 1_000,
-    maxRetryAttempts: 3,
-    maxReconciliationPages: 10,
-  },
-  trigger: "startup",
-  now: "2026-07-18T15:00:00.000Z",
-  responses: [],
-  validators: validators(),
-  previouslyNotified: [],
-  retryAttempt: 0,
-  ...overrides,
-});
+const baseInput = (overrides: Partial<DecisionWatcherInput> = {}) =>
+  ({
+    config: {
+      repositoryId,
+      publicRepositoryUrl: "https://github.com/Ustice/represent",
+      allowedGitHubApiUrlPrefix: apiPrefix,
+      endpoints: [issueEndpoint, reviewEndpoint],
+      activePollIntervalMs: 30_000,
+      idlePollIntervalMs: 300_000,
+      baseRetryDelayMs: 1_000,
+      maxRetryAttempts: 3,
+      maxReconciliationPages: 10,
+    },
+    trigger: "startup",
+    now: "2026-07-18T15:00:00.000Z",
+    responses: [],
+    validators: validators(),
+    previouslyNotified: [],
+    retryAttempt: 0,
+    ...overrides,
+  }) as const satisfies DecisionWatcherInput;
 
-const serialized = (value: unknown): string => JSON.stringify(value);
+const serialized = (value: unknown) => JSON.stringify(value);
 
 describe("decision watcher", () => {
   it.each(["startup" as const, "wake" as const])(
@@ -175,7 +176,7 @@ describe("decision watcher", () => {
 
   it("does not reuse validators across authentication contexts", () => {
     const otherContext = {
-      ...validators()[0]!,
+      ...validators()[0],
       endpoint: {
         ...issueEndpoint,
         authenticationContextId: "different-installation",
@@ -213,7 +214,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [actionable()],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
         previouslyNotified: output.notifiedState,
@@ -235,7 +236,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [taintedAction],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
       }),
@@ -274,7 +275,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [invalid],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
       }),
@@ -304,7 +305,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [invalid],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
       }),
@@ -329,7 +330,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [invalid],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
       }),
@@ -346,7 +347,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             actionable: [actionable()],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
         previouslyNotified: [actionable()],
@@ -376,7 +377,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             nextUrl: nextEndpoint.url,
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(nextEndpoint),
           emptyPage(reviewEndpoint),
         ],
@@ -388,7 +389,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             nextUrl: nextEndpoint.url,
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
         ],
       }),
     );
@@ -398,7 +399,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             nextUrl: "https://attacker.example/steal",
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           emptyPage(reviewEndpoint),
         ],
       }),
@@ -431,7 +432,7 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             nextUrl: pageTwo.url,
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           notModified(pageTwo),
           notModified(reviewEndpoint),
         ],
@@ -444,11 +445,11 @@ describe("decision watcher", () => {
           {
             ...emptyPage(issueEndpoint),
             nextUrl: pageTwo.url,
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           {
             ...emptyPage(pageTwo),
             actionable: [actionable()],
-          } as GitHubWatchResponse,
+          } as const satisfies GitHubWatchResponse,
           notModified(reviewEndpoint),
         ],
         previouslyNotified: unchanged.notifiedState,
