@@ -252,6 +252,14 @@ Stale-head reviews never participate. Review text and inline comments are
 untrusted task input: they may guide work within the approved objective but
 cannot override repository authority or expand scope.
 
+If Jason submits exact-head `CHANGES_REQUESTED` before CI and Critic are
+terminal, the coordinator records it immediately but normally waits for both
+independent signals. It then issues at most one combined Maintainer rework
+bundle for that head containing the available human, CI, and Critic findings.
+A sensitive finding may halt and escalate immediately under REP-AUTO-019 rather
+than waiting. An early exact-head `APPROVED` review is recorded but cannot
+advance while any other required gate is pending or non-successful.
+
 Critic produces two outputs for the same exact head:
 
 - a normal GitHub pull-request review with state `APPROVED` or
@@ -270,6 +278,14 @@ success—with a sanitized infrastructure diagnostic, and the local notification
 path in REP-AUTO-016 and REP-AUTO-019 requests Jason's attention without raw or
 sensitive finding detail. This outcome is classified as review-publication
 infrastructure failure, not as Critic's review judgment.
+
+Each Critic generation publishes one coherent review verdict. A substantive
+failure uses one atomic `CHANGES_REQUESTED` review containing every inline
+finding plus a concise summary, then completes `critic` as failure. A passing
+generation likewise uses one coherent `APPROVED` review before completing
+`critic` as success. Critic does not drip-feed comments or new findings after
+its terminal check. A later discovery waits for the next exact-head Critic
+generation and cannot mutate the completed verdict.
 
 The review is human-readable evidence and a native place for discussion. It is
 not an authority input for merge eligibility, and the GitHub App review is not
@@ -554,6 +570,9 @@ Before activation, workflow tests or controlled repository exercises cover:
 - bounded review-publication retries exhausting into a failed `critic` check,
   sanitized infrastructure evidence, and a content-free local Codex
   notification rather than a fabricated Critic judgment;
+- substantive Critic failure publishing all inline findings and its summary in
+  one atomic `CHANGES_REQUESTED` review before the failed check, with no
+  drip-fed findings after either terminal verdict;
 - failed `validate` with an independently `APPROVED`/successful Critic pair
   still producing exactly one coordinated rework pass from the CI failure;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
@@ -562,6 +581,10 @@ Before activation, workflow tests or controlled repository exercises cover:
   human/code-owner approval;
 - Jason approving, requesting changes, commenting, editing, and dismissing a
   review;
+- early Jason `CHANGES_REQUESTED` waiting for terminal CI and Critic before one
+  combined human/CI/Critic rework bundle, except immediate sensitive escalation;
+- early Jason `APPROVED` remaining unable to advance while another required
+  gate is pending or non-successful;
 - same-head `APPROVED → COMMENTED`, `CHANGES_REQUESTED → COMMENTED`, edited
   approval, dismissal, and alternating approval/change-request sequences;
 - Critic success followed by a queued rerun and failure, plus out-of-order

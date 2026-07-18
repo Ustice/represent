@@ -38,9 +38,16 @@ Use GitHub as the canonical control plane for agent automation:
 - exhausted bounded review-publication retries fail the `critic` check with a
   sanitized infrastructure diagnostic and request local Codex notification; they
   never become a passing check or a fabricated Critic judgment;
+- each Critic generation publishes one coherent review before its check: all
+  inline findings and a concise summary are atomic in `CHANGES_REQUESTED`, and
+  neither passing nor failing verdicts receive drip-fed findings afterward;
 - Critic reports only its own judgment: a failed `validate` check does not make
   Critic request changes when its independent review passes, while the
   coordinator still routes the CI failure into the one combined rework pass;
+- Jason's early exact-head change request is recorded immediately but normally
+  waits for terminal CI and Critic so one combined Maintainer bundle contains
+  all findings; sensitive findings may halt and escalate immediately, and an
+  early approval cannot advance past pending or failed native gates;
 - the ruleset requires exactly one human/code-owner approval from Jason plus the
   `validate`, `critic`, and `objective-authority` checks; Critic's App review is
   evidence and is not assumed to count toward the required approval total;
