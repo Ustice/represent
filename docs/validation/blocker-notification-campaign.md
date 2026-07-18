@@ -21,7 +21,8 @@ and Jason's explicit activation decision.
 Both boundaries admit untrusted GitHub evidence through shared Zod schemas.
 Those schemas validate fixed classifications, identifiers, revisions, and
 notification payloads while dropping fields that the inert result must not
-retain.
+retain. TypeScript data shapes are inferred from those schemas; explicit result
+types remain only at the behavioral planning seams.
 
 ## Public execution boundaries
 

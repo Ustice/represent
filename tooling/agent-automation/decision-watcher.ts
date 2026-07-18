@@ -7,93 +7,9 @@ import {
   notificationPayloadSchema,
   repositoryUrlSchema,
   timestampSchema,
-  type GitObjectRevision,
+  type DeepReadonly,
   type NotificationPayload,
 } from "./github-evidence.js";
-
-export interface WatchEndpoint {
-  readonly url: string;
-  readonly mediaType: string;
-  readonly apiVersion: string;
-  readonly authenticationContextId: string;
-}
-
-export interface HttpValidator {
-  readonly etag?: string | undefined;
-  readonly lastModified?: string | undefined;
-}
-
-export interface StoredValidator extends HttpValidator {
-  readonly endpoint: WatchEndpoint;
-}
-
-export interface ActionableGitHubState {
-  readonly sourceRootEndpoint: WatchEndpoint;
-  readonly sourcePageEndpoint: WatchEndpoint;
-  readonly eventRestId: string;
-  readonly objectRevision: GitObjectRevision;
-  readonly payload: NotificationPayload;
-}
-
-type ObservedActionableGitHubState = Omit<
-  ActionableGitHubState,
-  "sourceRootEndpoint" | "sourcePageEndpoint"
->;
-
-export type GitHubWatchResponse =
-  | {
-      readonly kind: "not-modified";
-      readonly endpoint: WatchEndpoint;
-      readonly status: 304;
-      readonly validator: HttpValidator;
-    }
-  | {
-      readonly kind: "page";
-      readonly endpoint: WatchEndpoint;
-      readonly status: 200;
-      readonly validator: HttpValidator;
-      readonly nextUrl: string | null;
-      readonly actionable: readonly ObservedActionableGitHubState[];
-    }
-  | {
-      readonly kind: "invalid-validator";
-      readonly endpoint: WatchEndpoint;
-      readonly status: 412;
-    }
-  | {
-      readonly kind: "rate-limited";
-      readonly endpoint: WatchEndpoint;
-      readonly status: 403 | 429;
-      readonly retryAfterSeconds?: number | undefined;
-      readonly rateLimitResetAt?: string | undefined;
-    }
-  | {
-      readonly kind: "unavailable";
-      readonly endpoint: WatchEndpoint;
-      readonly status: number;
-    };
-
-export interface DecisionWatcherConfig {
-  readonly repositoryId: string;
-  readonly publicRepositoryUrl: string;
-  readonly allowedGitHubApiUrlPrefix: string;
-  readonly endpoints: readonly WatchEndpoint[];
-  readonly activePollIntervalMs: number;
-  readonly idlePollIntervalMs: number;
-  readonly baseRetryDelayMs: number;
-  readonly maxRetryAttempts: number;
-  readonly maxReconciliationPages: number;
-}
-
-export interface DecisionWatcherInput {
-  readonly config: DecisionWatcherConfig;
-  readonly trigger: "startup" | "wake" | "active-poll" | "idle-poll";
-  readonly now: string;
-  readonly responses: readonly GitHubWatchResponse[];
-  readonly validators: readonly StoredValidator[];
-  readonly previouslyNotified: readonly ActionableGitHubState[];
-  readonly retryAttempt: number;
-}
 
 export interface PlannedGitHubRead {
   readonly method: "GET";
@@ -128,83 +44,79 @@ export interface DecisionWatcherResult {
   readonly diagnostics: readonly string[];
 }
 
-const endpointSchema: z.ZodType<WatchEndpoint> = z.object({
+const endpointSchema = z.object({
   url: z.url(),
   mediaType: nonBlankStringSchema,
   apiVersion: nonBlankStringSchema,
   authenticationContextId: nonBlankStringSchema,
 });
-const validatorSchema: z.ZodType<HttpValidator> = z
+const validatorSchema = z
   .object({
     etag: nonBlankStringSchema.optional(),
     lastModified: nonBlankStringSchema.optional(),
   })
   .refine((validator) => validator.etag || validator.lastModified);
-const storedValidatorObjectSchema: z.ZodType<StoredValidator> = z
+const storedValidatorObjectSchema = z
   .object({ endpoint: endpointSchema })
   .and(validatorSchema);
-const observedActionSchema: z.ZodType<ObservedActionableGitHubState> = z.object(
-  {
-    eventRestId: canonicalDecimalIdSchema,
-    objectRevision: gitObjectRevisionSchema,
-    payload: notificationPayloadSchema,
-  },
-);
-const persistedActionSchema: z.ZodType<ActionableGitHubState> = z.object({
+const observedActionSchema = z.object({
+  eventRestId: canonicalDecimalIdSchema,
+  objectRevision: gitObjectRevisionSchema,
+  payload: notificationPayloadSchema,
+});
+const persistedActionSchema = z.object({
   sourceRootEndpoint: endpointSchema,
   sourcePageEndpoint: endpointSchema,
   eventRestId: canonicalDecimalIdSchema,
   objectRevision: gitObjectRevisionSchema,
   payload: notificationPayloadSchema,
 });
-const responseSchema: z.ZodType<GitHubWatchResponse> = z.discriminatedUnion(
-  "kind",
-  [
-    z.object({
-      kind: z.literal("not-modified"),
-      endpoint: endpointSchema,
-      status: z.literal(304),
-      validator: validatorSchema,
-    }),
-    z.object({
-      kind: z.literal("page"),
-      endpoint: endpointSchema,
-      status: z.literal(200),
-      validator: validatorSchema,
-      nextUrl: z.url().nullable(),
-      actionable: z.array(observedActionSchema),
-    }),
-    z.object({
-      kind: z.literal("invalid-validator"),
-      endpoint: endpointSchema,
-      status: z.literal(412),
-    }),
-    z.object({
-      kind: z.literal("rate-limited"),
-      endpoint: endpointSchema,
-      status: z.union([z.literal(403), z.literal(429)]),
-      retryAfterSeconds: z.number().nonnegative().finite().optional(),
-      rateLimitResetAt: timestampSchema.optional(),
-    }),
-    z.object({
-      kind: z.literal("unavailable"),
-      endpoint: endpointSchema,
-      status: z.number().int(),
-    }),
-  ],
-);
-const inputSchema: z.ZodType<DecisionWatcherInput> = z.object({
-  config: z.object({
-    repositoryId: canonicalDecimalIdSchema,
-    publicRepositoryUrl: repositoryUrlSchema,
-    allowedGitHubApiUrlPrefix: z.url(),
-    endpoints: z.array(endpointSchema).min(1),
-    activePollIntervalMs: z.number().positive().finite(),
-    idlePollIntervalMs: z.number().positive().finite(),
-    baseRetryDelayMs: z.number().positive().finite(),
-    maxRetryAttempts: z.number().int().positive().safe(),
-    maxReconciliationPages: z.number().int().positive().safe(),
+const responseSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("not-modified"),
+    endpoint: endpointSchema,
+    status: z.literal(304),
+    validator: validatorSchema,
   }),
+  z.object({
+    kind: z.literal("page"),
+    endpoint: endpointSchema,
+    status: z.literal(200),
+    validator: validatorSchema,
+    nextUrl: z.url().nullable(),
+    actionable: z.array(observedActionSchema),
+  }),
+  z.object({
+    kind: z.literal("invalid-validator"),
+    endpoint: endpointSchema,
+    status: z.literal(412),
+  }),
+  z.object({
+    kind: z.literal("rate-limited"),
+    endpoint: endpointSchema,
+    status: z.union([z.literal(403), z.literal(429)]),
+    retryAfterSeconds: z.number().nonnegative().finite().optional(),
+    rateLimitResetAt: timestampSchema.optional(),
+  }),
+  z.object({
+    kind: z.literal("unavailable"),
+    endpoint: endpointSchema,
+    status: z.number().int(),
+  }),
+]);
+const configSchema = z.object({
+  repositoryId: canonicalDecimalIdSchema,
+  publicRepositoryUrl: repositoryUrlSchema,
+  allowedGitHubApiUrlPrefix: z.url(),
+  endpoints: z.array(endpointSchema).min(1),
+  activePollIntervalMs: z.number().positive().finite(),
+  idlePollIntervalMs: z.number().positive().finite(),
+  baseRetryDelayMs: z.number().positive().finite(),
+  maxRetryAttempts: z.number().int().positive().safe(),
+  maxReconciliationPages: z.number().int().positive().safe(),
+});
+const inputSchema = z.object({
+  config: configSchema,
   trigger: z.enum(["startup", "wake", "active-poll", "idle-poll"]),
   now: timestampSchema,
   responses: z.array(responseSchema),
@@ -213,23 +125,32 @@ const inputSchema: z.ZodType<DecisionWatcherInput> = z.object({
   retryAttempt: z.number().int().nonnegative().safe(),
 });
 
-const endpointKey = (endpoint: WatchEndpoint): string =>
+export type WatchEndpoint = DeepReadonly<z.infer<typeof endpointSchema>>;
+export type HttpValidator = DeepReadonly<z.infer<typeof validatorSchema>>;
+export type StoredValidator = DeepReadonly<
+  z.infer<typeof storedValidatorObjectSchema>
+>;
+export type ActionableGitHubState = DeepReadonly<
+  z.infer<typeof persistedActionSchema>
+>;
+export type GitHubWatchResponse = DeepReadonly<z.infer<typeof responseSchema>>;
+export type DecisionWatcherConfig = DeepReadonly<z.infer<typeof configSchema>>;
+export type DecisionWatcherInput = DeepReadonly<z.infer<typeof inputSchema>>;
+
+const endpointKey = (endpoint: WatchEndpoint) =>
   JSON.stringify([
     endpoint.url,
     endpoint.mediaType,
     endpoint.apiVersion,
     endpoint.authenticationContextId,
   ]);
-const sameEndpoint = (left: WatchEndpoint, right: WatchEndpoint): boolean =>
+const sameEndpoint = (left: WatchEndpoint, right: WatchEndpoint) =>
   endpointKey(left) === endpointKey(right);
-const within = (url: string, prefix: string): boolean =>
+const within = (url: string, prefix: string) =>
   url === prefix || url.startsWith(`${prefix}/`);
-const expectedApiPrefix = (repositoryUrl: string): string =>
+const expectedApiPrefix = (repositoryUrl: string) =>
   repositoryUrl.replace("https://github.com/", "https://api.github.com/repos/");
-const tryAddMilliseconds = (
-  timestamp: string,
-  milliseconds: number,
-): string | null => {
+const tryAddMilliseconds = (timestamp: string, milliseconds: number) => {
   const value = Date.parse(timestamp) + milliseconds;
   return Number.isFinite(value) && Number.isFinite(new Date(value).getTime())
     ? new Date(value).toISOString()
@@ -269,7 +190,7 @@ const stopped = (
 const validatorFor = (
   validators: readonly StoredValidator[],
   endpoint: WatchEndpoint,
-): HttpValidator | null => {
+) => {
   const matches = validators.filter((stored) =>
     sameEndpoint(stored.endpoint, endpoint),
   );
@@ -369,7 +290,7 @@ const responseProgress = (
 const updatedValidators = (
   current: readonly StoredValidator[],
   responses: readonly GitHubWatchResponse[],
-): readonly StoredValidator[] => {
+) => {
   const byEndpoint = new Map(
     current.map((validator) => [endpointKey(validator.endpoint), validator]),
   );
@@ -391,7 +312,7 @@ const retryTime = (
     { readonly kind: "rate-limited" }
   > | null,
   attempt: number,
-): string | null => {
+) => {
   if (response?.retryAfterSeconds !== undefined) {
     return tryAddMilliseconds(input.now, response.retryAfterSeconds * 1_000);
   }
@@ -442,21 +363,21 @@ const backoff = (
   });
 };
 
-const actionKey = (action: ActionableGitHubState): string =>
+const actionKey = (action: ActionableGitHubState) =>
   `${action.payload.repositoryId}:${action.payload.workItemId}:${action.payload.classification}`;
-const actionFingerprint = (action: ActionableGitHubState): string =>
+const actionFingerprint = (action: ActionableGitHubState) =>
   `${action.eventRestId}:${JSON.stringify(action.objectRevision)}:${JSON.stringify(action.payload)}`;
 const payloadUrlMatches = (
   payload: NotificationPayload,
   repositoryUrl: string,
-): boolean =>
+) =>
   payload.githubUrl === `${repositoryUrl}/issues/${payload.workItemNumber}` ||
   payload.githubUrl === `${repositoryUrl}/pull/${payload.workItemNumber}`;
 
 const snapshotActions = (
   input: DecisionWatcherInput,
   roots: readonly WatchEndpoint[],
-): readonly ActionableGitHubState[] => {
+) => {
   const entries = input.responses.map((response, index) => ({
     response,
     root: roots[index]!,

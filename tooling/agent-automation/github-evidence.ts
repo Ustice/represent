@@ -1,5 +1,11 @@
 import * as z from "zod";
 
+export type DeepReadonly<T> = T extends readonly (infer Item)[]
+  ? readonly DeepReadonly<Item>[]
+  : T extends object
+    ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+    : T;
+
 export const BLOCKER_CLASSIFICATIONS = [
   "design-authority-conflict",
   "inexpressible-invariant",
@@ -57,22 +63,17 @@ export const notificationClassificationSchema = z.union([
   sensitiveClassificationSchema,
 ]);
 
-export interface NotificationPayload {
-  readonly repositoryId: string;
-  readonly workItemId: string;
-  readonly workItemNumber: number;
-  readonly classification: BlockerClassification | SensitiveClassification;
-  readonly githubUrl: string;
-}
+export const notificationPayloadSchema = z.object({
+  repositoryId: canonicalDecimalIdSchema,
+  workItemId: canonicalDecimalIdSchema,
+  workItemNumber: z.number().int().positive().safe(),
+  classification: notificationClassificationSchema,
+  githubUrl: z.url(),
+});
 
-export const notificationPayloadSchema: z.ZodType<NotificationPayload> =
-  z.object({
-    repositoryId: canonicalDecimalIdSchema,
-    workItemId: canonicalDecimalIdSchema,
-    workItemNumber: z.number().int().positive().safe(),
-    classification: notificationClassificationSchema,
-    githubUrl: z.url(),
-  });
+export type NotificationPayload = DeepReadonly<
+  z.infer<typeof notificationPayloadSchema>
+>;
 
 export const gitObjectRevisionSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -86,9 +87,11 @@ export const gitObjectRevisionSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-export type GitObjectRevision = z.infer<typeof gitObjectRevisionSchema>;
+export type GitObjectRevision = DeepReadonly<
+  z.infer<typeof gitObjectRevisionSchema>
+>;
 
 export const sameGitHubObject = (
   left: z.infer<typeof githubObjectIdSchema>,
   right: z.infer<typeof githubObjectIdSchema>,
-): boolean => left.nodeId === right.nodeId && left.restId === right.restId;
+) => left.nodeId === right.nodeId && left.restId === right.restId;

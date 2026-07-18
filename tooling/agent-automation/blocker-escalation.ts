@@ -12,121 +12,15 @@ import {
   sensitiveClassificationSchema,
   timestampSchema,
   workflowRunSchema,
-  type BlockerClassification,
+  type DeepReadonly,
   type NotificationPayload,
-  type SensitiveClassification,
 } from "./github-evidence.js";
-import type {
-  GitHubObjectId,
-  GitHubWorkflowRun,
-} from "./objective-authority.js";
 
 export type {
   BlockerClassification,
   NotificationPayload,
   SensitiveClassification,
 } from "./github-evidence.js";
-
-export type EscalationSignal =
-  | {
-      readonly kind: "ordinary-implementation-failure";
-      readonly code: "implementation-failure";
-    }
-  | {
-      readonly kind: "design-blocker";
-      readonly code: BlockerClassification;
-      readonly evidence: PublicBlockerEvidence;
-    }
-  | {
-      readonly kind: "sensitive-blocker";
-      readonly code: SensitiveClassification;
-    };
-
-export interface PublicBlockerEvidence {
-  readonly minimalExample: string;
-  readonly authorityLinks: readonly string[];
-  readonly alternatives: readonly string[];
-  readonly affectedGuarantees: readonly string[];
-  readonly smallestDecisionRequired: string;
-}
-
-export interface BlockerEscalationConfig {
-  readonly repositoryId: GitHubObjectId;
-  readonly automationActorId: string;
-  readonly publicRepositoryUrl: string;
-  readonly allowedAuthorityLinkPrefixes: readonly string[];
-}
-
-export interface BlockerEscalationInput {
-  readonly config: BlockerEscalationConfig;
-  readonly workItemId: GitHubObjectId & { readonly number: number };
-  readonly workItemRevision: {
-    readonly eventId: string;
-    readonly deliveryId: string;
-    readonly occurredAt: string;
-  };
-  readonly source: {
-    readonly eventId: string;
-    readonly deliveryId: string;
-    readonly workflowRun: GitHubWorkflowRun;
-    readonly observedAt: string;
-  };
-  readonly signal: EscalationSignal;
-  readonly existingTransitions: readonly BlockerTransitionRecord[];
-}
-
-export interface BlockerTransitionPayload {
-  readonly kind: "blocker-escalated";
-  readonly repositoryId: GitHubObjectId;
-  readonly workItemId: GitHubObjectId & { readonly number: number };
-  readonly workItemRevision: BlockerEscalationInput["workItemRevision"];
-  readonly sourceEventId: string;
-  readonly sourceDeliveryId: string;
-  readonly workflowRun: GitHubWorkflowRun;
-  readonly automationActorId: string;
-  readonly observedAt: string;
-  readonly classification: BlockerClassification | SensitiveClassification;
-  readonly stateLabel: "ready-for-human";
-  readonly activationStatus: "default-off";
-  readonly publicRecord: PublicBlockerRecord;
-  readonly rotationOrRevocationRequired: boolean;
-}
-
-export interface BlockerTransitionRecord {
-  readonly id: GitHubObjectId;
-  readonly logicalKey: string;
-  readonly payload: BlockerTransitionPayload;
-}
-
-export interface BlockerTransitionDraft {
-  readonly logicalKey: string;
-  readonly payload: BlockerTransitionPayload;
-}
-
-export type PublicBlockerRecord =
-  | ({
-      readonly disclosure: "reviewed-public-evidence";
-      readonly marker: "<!-- represent-design-blocker -->";
-      readonly title: "Automation stopped for a design decision";
-      readonly classification: BlockerClassification;
-    } & PublicBlockerEvidence)
-  | {
-      readonly disclosure: "fixed-sensitive-marker";
-      readonly marker: "<!-- represent-sensitive-blocker -->";
-      readonly title: "Private human review required";
-      readonly classification: SensitiveClassification;
-    };
-
-export interface BlockerEscalationResult {
-  readonly state: "continue" | "blocked" | "recovery";
-  readonly dependentWorkPermitted: boolean;
-  readonly activationStatus: "default-off";
-  readonly effectsExecutable: false;
-  readonly transitionsToAppend: readonly BlockerTransitionDraft[];
-  readonly notification: NotificationPayload | null;
-  readonly rotationOrRevocationRequired: boolean;
-  readonly diagnostics: readonly string[];
-}
 
 const idWithNumberSchema = githubObjectIdSchema.extend({
   number: z.number().int().positive().safe(),
@@ -139,9 +33,8 @@ const publicEvidenceShape = {
   affectedGuarantees: nonEmptyStringsSchema,
   smallestDecisionRequired: nonBlankStringSchema,
 } as const;
-const publicEvidenceSchema: z.ZodType<PublicBlockerEvidence> =
-  z.object(publicEvidenceShape);
-const signalSchema: z.ZodType<EscalationSignal> = z.discriminatedUnion("kind", [
+const publicEvidenceSchema = z.object(publicEvidenceShape);
+const signalSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("ordinary-implementation-failure"),
     code: z.literal("implementation-failure"),
@@ -156,25 +49,22 @@ const signalSchema: z.ZodType<EscalationSignal> = z.discriminatedUnion("kind", [
     code: sensitiveClassificationSchema,
   }),
 ]);
-const publicRecordSchema: z.ZodType<PublicBlockerRecord> = z.discriminatedUnion(
-  "disclosure",
-  [
-    z.object({
-      disclosure: z.literal("reviewed-public-evidence"),
-      marker: z.literal("<!-- represent-design-blocker -->"),
-      title: z.literal("Automation stopped for a design decision"),
-      classification: blockerClassificationSchema,
-      ...publicEvidenceShape,
-    }),
-    z.object({
-      disclosure: z.literal("fixed-sensitive-marker"),
-      marker: z.literal("<!-- represent-sensitive-blocker -->"),
-      title: z.literal("Private human review required"),
-      classification: sensitiveClassificationSchema,
-    }),
-  ],
-);
-const transitionPayloadSchema: z.ZodType<BlockerTransitionPayload> = z.object({
+const publicRecordSchema = z.discriminatedUnion("disclosure", [
+  z.object({
+    disclosure: z.literal("reviewed-public-evidence"),
+    marker: z.literal("<!-- represent-design-blocker -->"),
+    title: z.literal("Automation stopped for a design decision"),
+    classification: blockerClassificationSchema,
+    ...publicEvidenceShape,
+  }),
+  z.object({
+    disclosure: z.literal("fixed-sensitive-marker"),
+    marker: z.literal("<!-- represent-sensitive-blocker -->"),
+    title: z.literal("Private human review required"),
+    classification: sensitiveClassificationSchema,
+  }),
+]);
+const transitionPayloadSchema = z.object({
   kind: z.literal("blocker-escalated"),
   repositoryId: githubObjectIdSchema,
   workItemId: idWithNumberSchema,
@@ -193,14 +83,12 @@ const transitionPayloadSchema: z.ZodType<BlockerTransitionPayload> = z.object({
   publicRecord: publicRecordSchema,
   rotationOrRevocationRequired: z.boolean(),
 });
-const transitionRecordSchema: z.ZodType<BlockerTransitionRecord> = z.object({
+const transitionRecordSchema = z.object({
   id: githubObjectIdSchema,
   logicalKey: nonBlankStringSchema,
   payload: transitionPayloadSchema,
 });
-const inputWithoutTransitionsSchema: z.ZodType<
-  Omit<BlockerEscalationInput, "existingTransitions">
-> = z.object({
+const inputWithoutTransitionsSchema = z.object({
   config: z.object({
     repositoryId: githubObjectIdSchema,
     automationActorId: canonicalDecimalIdSchema,
@@ -218,6 +106,43 @@ const inputWithoutTransitionsSchema: z.ZodType<
   signal: signalSchema,
 });
 const transitionsSchema = z.array(transitionRecordSchema);
+
+export type PublicBlockerEvidence = DeepReadonly<
+  z.infer<typeof publicEvidenceSchema>
+>;
+export type EscalationSignal = DeepReadonly<z.infer<typeof signalSchema>>;
+export type PublicBlockerRecord = DeepReadonly<
+  z.infer<typeof publicRecordSchema>
+>;
+export type BlockerTransitionPayload = DeepReadonly<
+  z.infer<typeof transitionPayloadSchema>
+>;
+export type BlockerTransitionRecord = DeepReadonly<
+  z.infer<typeof transitionRecordSchema>
+>;
+export type BlockerTransitionDraft = Pick<
+  BlockerTransitionRecord,
+  "logicalKey" | "payload"
+>;
+export type BlockerEscalationConfig = DeepReadonly<
+  z.infer<typeof inputWithoutTransitionsSchema>["config"]
+>;
+export type BlockerEscalationInput = DeepReadonly<
+  z.infer<typeof inputWithoutTransitionsSchema> & {
+    existingTransitions: z.infer<typeof transitionsSchema>;
+  }
+>;
+
+export interface BlockerEscalationResult {
+  readonly state: "continue" | "blocked" | "recovery";
+  readonly dependentWorkPermitted: boolean;
+  readonly activationStatus: "default-off";
+  readonly effectsExecutable: false;
+  readonly transitionsToAppend: readonly BlockerTransitionDraft[];
+  readonly notification: NotificationPayload | null;
+  readonly rotationOrRevocationRequired: boolean;
+  readonly diagnostics: readonly string[];
+}
 
 const outcome = (
   state: BlockerEscalationResult["state"],
@@ -240,7 +165,7 @@ const recovery = (diagnostic: string): BlockerEscalationResult =>
 const authorityLinksAllowed = (
   evidence: PublicBlockerEvidence,
   prefixes: readonly string[],
-): boolean =>
+) =>
   evidence.authorityLinks.every((link) =>
     prefixes.some((prefix) => link.startsWith(prefix)),
   );
@@ -266,13 +191,13 @@ const publicRecordFor = (
         classification: signal.code,
       };
 
-const logicalKey = (payload: BlockerTransitionPayload): string =>
+const logicalKey = (payload: BlockerTransitionPayload) =>
   `blocker:${payload.workItemId.nodeId}:${payload.workItemRevision.eventId}:${payload.sourceEventId}:${payload.classification}`;
 
 const transitionIsConsistent = (
   record: BlockerTransitionRecord,
   input: BlockerEscalationInput,
-): boolean => {
+) => {
   const { payload } = record;
   const publicClassificationMatches =
     payload.publicRecord.classification === payload.classification;
