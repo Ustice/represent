@@ -51,19 +51,11 @@ const reviewEndpoint: WatchEndpoint = {
   authenticationContextId: "read-only-app-installation-1",
 };
 
-const endpointKey = (endpoint: WatchEndpoint): string =>
-  JSON.stringify([
-    endpoint.url,
-    endpoint.mediaType,
-    endpoint.apiVersion,
-    endpoint.authenticationContextId,
-  ]);
-
 const actionable = (
   overrides: Partial<ActionableGitHubState> = {},
 ): ActionableGitHubState => ({
-  sourceRootEndpointKey: endpointKey(issueEndpoint),
-  sourcePageEndpointKey: endpointKey(issueEndpoint),
+  sourceRootEndpoint: issueEndpoint,
+  sourcePageEndpoint: issueEndpoint,
   eventRestId: "900719925474099312370",
   objectRevision: {
     kind: "github-rest-object",
@@ -82,12 +74,10 @@ const actionable = (
 
 const validators = (): readonly StoredValidator[] => [
   {
-    key: endpointKey(issueEndpoint),
     endpoint: issueEndpoint,
     etag: '"issue-etag"',
   },
   {
-    key: endpointKey(reviewEndpoint),
     endpoint: reviewEndpoint,
     lastModified: "Fri, 18 Jul 2026 12:00:00 GMT",
   },
@@ -433,7 +423,7 @@ describe("decision watcher", () => {
       url: `${apiPrefix}/issues?labels=ready-for-human&page=2`,
     };
     const priorPageTwoAction = actionable({
-      sourcePageEndpointKey: endpointKey(pageTwo),
+      sourcePageEndpoint: pageTwo,
     });
     const unchanged = evaluateDecisionWatcher(
       baseInput({
@@ -549,6 +539,77 @@ describe("decision watcher", () => {
       notifications: [],
       authorityStateChanged: false,
       nextPollAt: null,
+    });
+  });
+
+  it("fails closed when exponential retry delay exceeds the date range", () => {
+    const output = evaluateDecisionWatcher(
+      baseInput({
+        config: {
+          ...baseInput().config,
+          baseRetryDelayMs: Number.MAX_VALUE,
+        },
+        responses: [
+          {
+            kind: "rate-limited",
+            endpoint: issueEndpoint,
+            status: 429,
+          },
+        ],
+        retryAttempt: 1,
+      }),
+    );
+
+    expect(output).toMatchObject({
+      state: "stopped",
+      retryAt: null,
+      diagnostics: ["GitHub rate-limit response has no usable retry time"],
+    });
+  });
+
+  it("rejects a rate-limit response outside the serialized endpoint chain", () => {
+    const output = evaluateDecisionWatcher(
+      baseInput({
+        responses: [
+          {
+            kind: "rate-limited",
+            endpoint: {
+              ...issueEndpoint,
+              url: "https://attacker.example/rate",
+            },
+            status: 429,
+          },
+        ],
+      }),
+    );
+
+    expect(output).toMatchObject({
+      state: "stopped",
+      retryAt: null,
+      notifications: [],
+      diagnostics: [
+        "GitHub responses do not follow the configured serialized pagination chain",
+      ],
+    });
+  });
+
+  it("fails closed when the next poll time exceeds the date range", () => {
+    const input = baseInput();
+    const output = evaluateDecisionWatcher({
+      ...input,
+      config: {
+        ...input.config,
+        activePollIntervalMs: Number.MAX_VALUE,
+        idlePollIntervalMs: Number.MAX_VALUE,
+      },
+      responses: [emptyPage(issueEndpoint), emptyPage(reviewEndpoint)],
+    });
+
+    expect(output).toMatchObject({
+      state: "stopped",
+      nextPollAt: null,
+      notifications: [],
+      diagnostics: ["GitHub poll interval has no usable next poll time"],
     });
   });
 

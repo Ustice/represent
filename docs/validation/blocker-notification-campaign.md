@@ -18,6 +18,11 @@ credential access occurs from the pure execution boundaries. Transport and
 process adapters require separate least-privilege evidence, independent review,
 and Jason's explicit activation decision.
 
+Both boundaries admit untrusted GitHub evidence through shared Zod schemas.
+Those schemas validate fixed classifications, identifiers, revisions, and
+notification payloads while dropping fields that the inert result must not
+retain.
+
 ## Public execution boundaries
 
 The blocker-escalation boundary consumes immutable GitHub identifiers and one of
@@ -42,6 +47,10 @@ pagination is serialized by the protocol rather than asserted by metadata. A
 wake signal can only produce a GitHub reread plan. GitHub outage, malformed
 state, pagination escape, or exhausted retry budget stops the watcher without
 changing authority.
+
+Validator and notification provenance retains the structured endpoint that was
+actually observed. Serialized endpoint keys are an internal comparison detail,
+not persisted public state that later requires reparsing.
 
 ## Least-privilege and rollback evidence
 
@@ -86,10 +95,11 @@ queue and authority source.
 
 ## Evidence and limitations
 
-The focused suites exercise 32 cases across classification, sanitization,
+The focused suites exercise 36 cases across classification, sanitization,
 convergence, fixed notification payloads, validators, pagination, response
 ordering, changed and dismissed GitHub state, adaptive polling, rate-limit
-headers, exponential backoff, retry exhaustion, and watcher outage.
+headers, exponential backoff, scheduling overflow and retry exhaustion,
+off-chain response rejection, and watcher outage.
 
 No network or subprocess adapter is included, no credential is read, and no
 capability is activated. Native GitHub conditional-request behavior and the

@@ -127,6 +127,21 @@ describe("blocker escalation", () => {
     });
   });
 
+  it("ignores unrelated malformed transition history for an ordinary failure", () => {
+    const output = evaluateBlockerEscalation(
+      baseInput({
+        signal: {
+          kind: "ordinary-implementation-failure",
+          code: "implementation-failure",
+        },
+        existingTransitions: [{} as BlockerTransitionRecord],
+      }),
+    );
+
+    expect(output.state).toBe("continue");
+    expect(output.dependentWorkPermitted).toBe(true);
+  });
+
   it("stops dependent work and plans one reviewed public blocker record", () => {
     const output = evaluateBlockerEscalation(baseInput());
 

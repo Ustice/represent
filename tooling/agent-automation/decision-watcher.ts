@@ -1,8 +1,15 @@
-import type {
-  BlockerClassification,
-  NotificationPayload,
-  SensitiveClassification,
-} from "./blocker-escalation.js";
+import * as z from "zod";
+
+import {
+  canonicalDecimalIdSchema,
+  gitObjectRevisionSchema,
+  nonBlankStringSchema,
+  notificationPayloadSchema,
+  repositoryUrlSchema,
+  timestampSchema,
+  type GitObjectRevision,
+  type NotificationPayload,
+} from "./github-evidence.js";
 
 export interface WatchEndpoint {
   readonly url: string;
@@ -12,31 +19,26 @@ export interface WatchEndpoint {
 }
 
 export interface HttpValidator {
-  readonly etag?: string;
-  readonly lastModified?: string;
+  readonly etag?: string | undefined;
+  readonly lastModified?: string | undefined;
 }
 
 export interface StoredValidator extends HttpValidator {
-  readonly key: string;
   readonly endpoint: WatchEndpoint;
 }
 
 export interface ActionableGitHubState {
-  readonly sourceRootEndpointKey: string;
-  readonly sourcePageEndpointKey: string;
+  readonly sourceRootEndpoint: WatchEndpoint;
+  readonly sourcePageEndpoint: WatchEndpoint;
   readonly eventRestId: string;
-  readonly objectRevision:
-    | {
-        readonly kind: "github-rest-object";
-        readonly restId: string;
-        readonly updatedAt: string;
-      }
-    | {
-        readonly kind: "git-head";
-        readonly sha: string;
-      };
+  readonly objectRevision: GitObjectRevision;
   readonly payload: NotificationPayload;
 }
+
+type ObservedActionableGitHubState = Omit<
+  ActionableGitHubState,
+  "sourceRootEndpoint" | "sourcePageEndpoint"
+>;
 
 export type GitHubWatchResponse =
   | {
@@ -51,10 +53,7 @@ export type GitHubWatchResponse =
       readonly status: 200;
       readonly validator: HttpValidator;
       readonly nextUrl: string | null;
-      readonly actionable: readonly Omit<
-        ActionableGitHubState,
-        "sourceEndpointKey"
-      >[];
+      readonly actionable: readonly ObservedActionableGitHubState[];
     }
   | {
       readonly kind: "invalid-validator";
@@ -65,8 +64,8 @@ export type GitHubWatchResponse =
       readonly kind: "rate-limited";
       readonly endpoint: WatchEndpoint;
       readonly status: 403 | 429;
-      readonly retryAfterSeconds?: number;
-      readonly rateLimitResetAt?: string;
+      readonly retryAfterSeconds?: number | undefined;
+      readonly rateLimitResetAt?: string | undefined;
     }
   | {
       readonly kind: "unavailable";
@@ -129,462 +128,472 @@ export interface DecisionWatcherResult {
   readonly diagnostics: readonly string[];
 }
 
-const canonicalDecimalId = /^(0|[1-9]\d*)$/;
-const blockerClassifications = new Set<BlockerClassification>([
-  "design-authority-conflict",
-  "inexpressible-invariant",
-  "target-semantics-leak",
-  "untestable-law",
-  "weakened-guarantee",
-  "unsafe-consumer-cast",
-  "diagnostic-type-harm",
-  "undefined-path-consistency",
-]);
-const sensitiveClassifications = new Set<SensitiveClassification>([
-  "sensitive-review-required",
-  "suspected-credential-exposure",
-]);
+const endpointSchema: z.ZodType<WatchEndpoint> = z.object({
+  url: z.url(),
+  mediaType: nonBlankStringSchema,
+  apiVersion: nonBlankStringSchema,
+  authenticationContextId: nonBlankStringSchema,
+});
+const validatorSchema: z.ZodType<HttpValidator> = z
+  .object({
+    etag: nonBlankStringSchema.optional(),
+    lastModified: nonBlankStringSchema.optional(),
+  })
+  .refine((validator) => validator.etag || validator.lastModified);
+const storedValidatorObjectSchema: z.ZodType<StoredValidator> = z
+  .object({ endpoint: endpointSchema })
+  .and(validatorSchema);
+const observedActionSchema: z.ZodType<ObservedActionableGitHubState> = z.object(
+  {
+    eventRestId: canonicalDecimalIdSchema,
+    objectRevision: gitObjectRevisionSchema,
+    payload: notificationPayloadSchema,
+  },
+);
+const persistedActionSchema: z.ZodType<ActionableGitHubState> = z.object({
+  sourceRootEndpoint: endpointSchema,
+  sourcePageEndpoint: endpointSchema,
+  eventRestId: canonicalDecimalIdSchema,
+  objectRevision: gitObjectRevisionSchema,
+  payload: notificationPayloadSchema,
+});
+const responseSchema: z.ZodType<GitHubWatchResponse> = z.discriminatedUnion(
+  "kind",
+  [
+    z.object({
+      kind: z.literal("not-modified"),
+      endpoint: endpointSchema,
+      status: z.literal(304),
+      validator: validatorSchema,
+    }),
+    z.object({
+      kind: z.literal("page"),
+      endpoint: endpointSchema,
+      status: z.literal(200),
+      validator: validatorSchema,
+      nextUrl: z.url().nullable(),
+      actionable: z.array(observedActionSchema),
+    }),
+    z.object({
+      kind: z.literal("invalid-validator"),
+      endpoint: endpointSchema,
+      status: z.literal(412),
+    }),
+    z.object({
+      kind: z.literal("rate-limited"),
+      endpoint: endpointSchema,
+      status: z.union([z.literal(403), z.literal(429)]),
+      retryAfterSeconds: z.number().nonnegative().finite().optional(),
+      rateLimitResetAt: timestampSchema.optional(),
+    }),
+    z.object({
+      kind: z.literal("unavailable"),
+      endpoint: endpointSchema,
+      status: z.number().int(),
+    }),
+  ],
+);
+const inputSchema: z.ZodType<DecisionWatcherInput> = z.object({
+  config: z.object({
+    repositoryId: canonicalDecimalIdSchema,
+    publicRepositoryUrl: repositoryUrlSchema,
+    allowedGitHubApiUrlPrefix: z.url(),
+    endpoints: z.array(endpointSchema).min(1),
+    activePollIntervalMs: z.number().positive().finite(),
+    idlePollIntervalMs: z.number().positive().finite(),
+    baseRetryDelayMs: z.number().positive().finite(),
+    maxRetryAttempts: z.number().int().positive().safe(),
+    maxReconciliationPages: z.number().int().positive().safe(),
+  }),
+  trigger: z.enum(["startup", "wake", "active-poll", "idle-poll"]),
+  now: timestampSchema,
+  responses: z.array(responseSchema),
+  validators: z.array(storedValidatorObjectSchema),
+  previouslyNotified: z.array(persistedActionSchema),
+  retryAttempt: z.number().int().nonnegative().safe(),
+});
 
-const isNotificationClassification = (
-  value: unknown,
-): value is NotificationPayload["classification"] =>
-  typeof value === "string" &&
-  (blockerClassifications.has(value as BlockerClassification) ||
-    sensitiveClassifications.has(value as SensitiveClassification));
-
-const isTimestamp = (value: string): boolean =>
-  value.length > 0 && Number.isFinite(Date.parse(value));
-
-const isCanonicalTimestamp = (value: string): boolean =>
-  isTimestamp(value) && new Date(value).toISOString() === value;
-
-const validatorKey = (endpoint: WatchEndpoint): string =>
+const endpointKey = (endpoint: WatchEndpoint): string =>
   JSON.stringify([
     endpoint.url,
     endpoint.mediaType,
     endpoint.apiVersion,
     endpoint.authenticationContextId,
   ]);
-
-const endpointFromKey = (key: string): WatchEndpoint | null => {
-  try {
-    const value: unknown = JSON.parse(key);
-    if (
-      !Array.isArray(value) ||
-      value.length !== 4 ||
-      !value.every((part) => typeof part === "string")
-    ) {
-      return null;
-    }
-
-    const [url, mediaType, apiVersion, authenticationContextId] = value;
-    return url && mediaType && apiVersion && authenticationContextId
-      ? { url, mediaType, apiVersion, authenticationContextId }
-      : null;
-  } catch {
-    return null;
-  }
-};
-
-const hasValidator = (validator: HttpValidator): boolean =>
-  Boolean(validator.etag || validator.lastModified);
-
-const copyValidator = (validator: HttpValidator): HttpValidator => ({
-  ...(validator.etag ? { etag: validator.etag } : {}),
-  ...(validator.lastModified ? { lastModified: validator.lastModified } : {}),
-});
-
-const findValidator = (
-  validators: readonly StoredValidator[],
-  endpoint: WatchEndpoint,
-): HttpValidator | null => {
-  const key = validatorKey(endpoint);
-  const matches = validators.filter((validator) => validator.key === key);
-  const match = matches.length === 1 ? matches[0] : undefined;
-
-  return match && hasValidator(match) && validatorKey(match.endpoint) === key
-    ? copyValidator(match)
-    : null;
-};
-
-const isAllowedUrl = (url: string, repositoryUrl: string): boolean =>
-  url === repositoryUrl || url.startsWith(`${repositoryUrl}/`);
-
-const expectedApiPrefix = (repositoryUrl: string): string | null => {
-  const match = repositoryUrl.match(
-    /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/,
-  );
-
-  return match?.[1] && match[2]
-    ? `https://api.github.com/repos/${match[1]}/${match[2]}`
-    : null;
-};
-
-const validEndpoint = (
-  endpoint: WatchEndpoint,
-  repositoryUrl: string,
-): boolean =>
-  isAllowedUrl(endpoint.url, repositoryUrl) &&
-  endpoint.mediaType.length > 0 &&
-  endpoint.apiVersion.length > 0 &&
-  endpoint.authenticationContextId.length > 0;
-
-const validPersistedPageKey = (
-  pageKey: string,
-  rootKey: string,
-  config: DecisionWatcherConfig,
-): boolean => {
-  const page = endpointFromKey(pageKey);
-  const root = endpointFromKey(rootKey);
-
-  return Boolean(
-    page &&
-    root &&
-    validEndpoint(page, config.allowedGitHubApiUrlPrefix) &&
-    page.mediaType === root.mediaType &&
-    page.apiVersion === root.apiVersion &&
-    page.authenticationContextId === root.authenticationContextId,
-  );
-};
-
 const sameEndpoint = (left: WatchEndpoint, right: WatchEndpoint): boolean =>
-  validatorKey(left) === validatorKey(right);
-
-const actionKey = (action: ActionableGitHubState): string =>
-  `${action.payload.repositoryId}:${action.payload.workItemId}:${action.payload.classification}`;
-
-const actionFingerprint = (action: ActionableGitHubState): string =>
-  `${action.eventRestId}:${JSON.stringify(action.objectRevision)}:${JSON.stringify(action.payload)}`;
-
-const isValidObjectRevision = (
-  revision: unknown,
-): revision is ActionableGitHubState["objectRevision"] => {
-  if (!revision || typeof revision !== "object" || !("kind" in revision)) {
-    return false;
-  }
-
-  if (revision.kind === "github-rest-object") {
-    return (
-      "restId" in revision &&
-      typeof revision.restId === "string" &&
-      canonicalDecimalId.test(revision.restId) &&
-      "updatedAt" in revision &&
-      typeof revision.updatedAt === "string" &&
-      isCanonicalTimestamp(revision.updatedAt)
-    );
-  }
-
-  return (
-    revision.kind === "git-head" &&
-    "sha" in revision &&
-    typeof revision.sha === "string" &&
-    /^[0-9a-f]{40}$/.test(revision.sha)
-  );
+  endpointKey(left) === endpointKey(right);
+const within = (url: string, prefix: string): boolean =>
+  url === prefix || url.startsWith(`${prefix}/`);
+const expectedApiPrefix = (repositoryUrl: string): string =>
+  repositoryUrl.replace("https://github.com/", "https://api.github.com/repos/");
+const tryAddMilliseconds = (
+  timestamp: string,
+  milliseconds: number,
+): string | null => {
+  const value = Date.parse(timestamp) + milliseconds;
+  return Number.isFinite(value) && Number.isFinite(new Date(value).getTime())
+    ? new Date(value).toISOString()
+    : null;
 };
 
-const copyObjectRevision = (
-  revision: ActionableGitHubState["objectRevision"],
-): ActionableGitHubState["objectRevision"] =>
-  revision.kind === "github-rest-object"
-    ? {
-        kind: "github-rest-object",
-        restId: revision.restId,
-        updatedAt: revision.updatedAt,
-      }
-    : { kind: "git-head", sha: revision.sha };
-
-const validAction = (
-  action: Omit<ActionableGitHubState, "sourceEndpointKey">,
-  config: DecisionWatcherConfig,
-): boolean =>
-  canonicalDecimalId.test(action.eventRestId) &&
-  isValidObjectRevision(action.objectRevision) &&
-  action.payload.repositoryId === config.repositoryId &&
-  canonicalDecimalId.test(action.payload.repositoryId) &&
-  canonicalDecimalId.test(action.payload.workItemId) &&
-  Number.isSafeInteger(action.payload.workItemNumber) &&
-  action.payload.workItemNumber > 0 &&
-  isNotificationClassification(action.payload.classification) &&
-  (action.payload.githubUrl ===
-    `${config.publicRepositoryUrl}/issues/${action.payload.workItemNumber}` ||
-    action.payload.githubUrl ===
-      `${config.publicRepositoryUrl}/pull/${action.payload.workItemNumber}`);
-
-const addMilliseconds = (timestamp: string, milliseconds: number): string =>
-  new Date(Date.parse(timestamp) + milliseconds).toISOString();
-
-const stopped = (
-  input: DecisionWatcherInput,
-  diagnostic: string,
-  notifiedState: readonly ActionableGitHubState[] = [],
+const result = (
+  input: Pick<DecisionWatcherInput, "retryAttempt">,
+  state: DecisionWatcherResult["state"],
+  diagnostics: string,
+  overrides: Partial<DecisionWatcherResult> = {},
 ): DecisionWatcherResult => ({
-  state: "stopped",
+  state,
   activationStatus: "default-off",
   effectsExecutable: false,
   authorityStateChanged: false,
   reads: [],
   notifications: [],
-  validators: input.validators,
-  notifiedState,
+  validators: [],
+  notifiedState: [],
   nextPollAt: null,
   retryAt: null,
   retryAttempt: input.retryAttempt,
-  diagnostics: [diagnostic],
+  diagnostics: [diagnostics],
+  ...overrides,
 });
+
+const stopped = (
+  input: DecisionWatcherInput,
+  diagnostic: string,
+): DecisionWatcherResult =>
+  result(input, "stopped", diagnostic, {
+    validators: input.validators,
+    notifiedState: input.previouslyNotified,
+  });
+
+const validatorFor = (
+  validators: readonly StoredValidator[],
+  endpoint: WatchEndpoint,
+): HttpValidator | null => {
+  const matches = validators.filter((stored) =>
+    sameEndpoint(stored.endpoint, endpoint),
+  );
+  return matches.length === 1 ? validatorSchema.parse(matches[0]) : null;
+};
 
 const plannedRead = (
   input: DecisionWatcherInput,
   endpoint: WatchEndpoint,
-  omitValidator: boolean,
+  unconditional = false,
 ): PlannedGitHubRead => ({
   method: "GET",
   endpoint,
-  conditional: omitValidator ? null : findValidator(input.validators, endpoint),
+  conditional: unconditional ? null : validatorFor(input.validators, endpoint),
   credentialCapability: "github-read-only",
   serialized: true,
 });
 
-interface ResponseProgress {
-  readonly error: string | null;
-  readonly complete: boolean;
-  readonly nextEndpoint: WatchEndpoint | null;
-  readonly rootKeys: readonly string[];
-}
-
-const responseProgress = (input: DecisionWatcherInput): ResponseProgress => {
-  const expectedRoots = [...input.config.endpoints];
-  let rootIndex = 0;
-  let expected = expectedRoots[rootIndex];
-  const rootKeys: string[] = [];
-
-  for (const response of input.responses) {
-    if (!expected || !sameEndpoint(response.endpoint, expected)) {
-      return {
-        error:
-          "GitHub responses do not follow the configured serialized pagination chain",
-        complete: false,
-        nextEndpoint: null,
-        rootKeys,
-      };
+type ReconciliationProgress =
+  | { readonly kind: "invalid"; readonly diagnostic: string }
+  | {
+      readonly kind: "pending";
+      readonly nextEndpoint: WatchEndpoint;
+      readonly roots: readonly WatchEndpoint[];
     }
+  | {
+      readonly kind: "complete";
+      readonly roots: readonly WatchEndpoint[];
+    };
 
-    const root = expectedRoots[rootIndex];
-    if (!root) {
-      return {
-        error: "GitHub pagination has no configured root endpoint",
-        complete: false,
-        nextEndpoint: null,
-        rootKeys,
-      };
-    }
-    rootKeys.push(validatorKey(root));
-
-    if (response.kind === "page" && response.nextUrl) {
+const responseProgress = (
+  input: DecisionWatcherInput,
+): ReconciliationProgress => {
+  type Progress = {
+    readonly rootIndex: number;
+    readonly expected: WatchEndpoint | undefined;
+    readonly roots: readonly WatchEndpoint[];
+    readonly diagnostic?: string;
+  };
+  const progress = input.responses.reduce<Progress>(
+    (current, response) => {
+      if (current.diagnostic) {
+        return current;
+      }
+      const root = input.config.endpoints[current.rootIndex];
       if (
-        !isAllowedUrl(response.nextUrl, input.config.allowedGitHubApiUrlPrefix)
+        !root ||
+        !current.expected ||
+        !sameEndpoint(response.endpoint, current.expected)
       ) {
         return {
-          error: "GitHub pagination escaped the configured repository boundary",
-          complete: false,
-          nextEndpoint: null,
-          rootKeys,
+          ...current,
+          diagnostic:
+            "GitHub responses do not follow the configured serialized pagination chain",
+        };
+      }
+      if (
+        response.kind === "page" &&
+        response.nextUrl &&
+        !within(response.nextUrl, input.config.allowedGitHubApiUrlPrefix)
+      ) {
+        return {
+          ...current,
+          diagnostic:
+            "GitHub pagination escaped the configured repository boundary",
         };
       }
 
-      expected = { ...expected, url: response.nextUrl };
-      continue;
-    }
+      const roots = [...current.roots, root];
+      return response.kind === "page" && response.nextUrl
+        ? {
+            rootIndex: current.rootIndex,
+            expected: { ...root, url: response.nextUrl },
+            roots,
+          }
+        : {
+            rootIndex: current.rootIndex + 1,
+            expected: input.config.endpoints[current.rootIndex + 1],
+            roots,
+          };
+    },
+    { rootIndex: 0, expected: input.config.endpoints[0], roots: [] },
+  );
 
-    rootIndex += 1;
-    expected = expectedRoots[rootIndex];
+  if (progress.diagnostic) {
+    return { kind: "invalid", diagnostic: progress.diagnostic };
   }
-
-  return {
-    error: null,
-    complete: !expected,
-    nextEndpoint: expected ?? null,
-    rootKeys,
-  };
+  return progress.expected
+    ? {
+        kind: "pending",
+        nextEndpoint: progress.expected,
+        roots: progress.roots,
+      }
+    : { kind: "complete", roots: progress.roots };
 };
 
 const updatedValidators = (
   current: readonly StoredValidator[],
   responses: readonly GitHubWatchResponse[],
 ): readonly StoredValidator[] => {
-  const updates = responses.flatMap((response): readonly StoredValidator[] => {
-    if (
-      (response.kind !== "page" && response.kind !== "not-modified") ||
-      !hasValidator(response.validator)
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        key: validatorKey(response.endpoint),
+  const byEndpoint = new Map(
+    current.map((validator) => [endpointKey(validator.endpoint), validator]),
+  );
+  responses.forEach((response) => {
+    if (response.kind === "page" || response.kind === "not-modified") {
+      byEndpoint.set(endpointKey(response.endpoint), {
         endpoint: response.endpoint,
-        ...copyValidator(response.validator),
-      },
-    ];
+        ...response.validator,
+      });
+    }
   });
-  const updateKeys = new Set(updates.map((validator) => validator.key));
+  return [...byEndpoint.values()];
+};
+
+const retryTime = (
+  input: DecisionWatcherInput,
+  response: Extract<
+    GitHubWatchResponse,
+    { readonly kind: "rate-limited" }
+  > | null,
+  attempt: number,
+): string | null => {
+  if (response?.retryAfterSeconds !== undefined) {
+    return tryAddMilliseconds(input.now, response.retryAfterSeconds * 1_000);
+  }
+  if (response?.rateLimitResetAt) {
+    return new Date(response.rateLimitResetAt).toISOString();
+  }
+  return tryAddMilliseconds(
+    input.now,
+    input.config.baseRetryDelayMs * 2 ** Math.max(0, attempt - 1),
+  );
+};
+
+const backoff = (
+  input: DecisionWatcherInput,
+  response: Extract<
+    GitHubWatchResponse,
+    { readonly kind: "rate-limited" }
+  > | null,
+  reason: "rate-limit" | "outage",
+): DecisionWatcherResult => {
+  const attempt = input.retryAttempt + 1;
+  if (attempt > input.config.maxRetryAttempts) {
+    return stopped(
+      input,
+      reason === "rate-limit"
+        ? "bounded GitHub retry budget exhausted"
+        : "bounded GitHub outage retry budget exhausted; authority remains unchanged",
+    );
+  }
+  const retryAt = retryTime(input, response, attempt);
+  if (!retryAt) {
+    return stopped(
+      input,
+      reason === "rate-limit"
+        ? "GitHub rate-limit response has no usable retry time"
+        : "GitHub outage has no usable retry time; authority remains unchanged",
+    );
+  }
+  const diagnostic =
+    reason === "rate-limit"
+      ? "GitHub read delayed by bounded rate-limit backoff"
+      : "GitHub watcher outage delayed notification with bounded backoff";
+  return result(input, "backoff", diagnostic, {
+    validators: input.validators,
+    notifiedState: input.previouslyNotified,
+    retryAt,
+    retryAttempt: attempt,
+  });
+};
+
+const actionKey = (action: ActionableGitHubState): string =>
+  `${action.payload.repositoryId}:${action.payload.workItemId}:${action.payload.classification}`;
+const actionFingerprint = (action: ActionableGitHubState): string =>
+  `${action.eventRestId}:${JSON.stringify(action.objectRevision)}:${JSON.stringify(action.payload)}`;
+const payloadUrlMatches = (
+  payload: NotificationPayload,
+  repositoryUrl: string,
+): boolean =>
+  payload.githubUrl === `${repositoryUrl}/issues/${payload.workItemNumber}` ||
+  payload.githubUrl === `${repositoryUrl}/pull/${payload.workItemNumber}`;
+
+const snapshotActions = (
+  input: DecisionWatcherInput,
+  roots: readonly WatchEndpoint[],
+): readonly ActionableGitHubState[] => {
+  const entries = input.responses.map((response, index) => ({
+    response,
+    root: roots[index]!,
+  }));
+  const snapshot = entries.reduce(
+    (state, { response, root }, index) => {
+      const rootKey = endpointKey(root);
+      const pageKey = endpointKey(response.endpoint);
+      const firstForRoot =
+        index === 0 || !sameEndpoint(roots[index - 1]!, root);
+
+      state.observedPages.set(
+        rootKey,
+        new Set([...(state.observedPages.get(rootKey) ?? []), pageKey]),
+      );
+      if (response.kind === "page") {
+        state.refreshedPages.add(pageKey);
+        if (firstForRoot) {
+          state.authoritativeRoots.add(rootKey);
+        }
+        state.refreshedActions.push(
+          ...response.actionable.map((action) => ({
+            sourceRootEndpoint: root,
+            sourcePageEndpoint: response.endpoint,
+            ...action,
+          })),
+        );
+      }
+      return state;
+    },
+    {
+      observedPages: new Map<string, Set<string>>(),
+      refreshedPages: new Set<string>(),
+      authoritativeRoots: new Set<string>(),
+      refreshedActions: [] as ActionableGitHubState[],
+    },
+  );
 
   return [
-    ...current.filter((validator) => !updateKeys.has(validator.key)),
-    ...updates,
+    ...input.previouslyNotified.filter((action) => {
+      const rootKey = endpointKey(action.sourceRootEndpoint);
+      const pageKey = endpointKey(action.sourcePageEndpoint);
+      return (
+        !snapshot.refreshedPages.has(pageKey) &&
+        (!snapshot.authoritativeRoots.has(rootKey) ||
+          Boolean(snapshot.observedPages.get(rootKey)?.has(pageKey)))
+      );
+    }),
+    ...snapshot.refreshedActions,
   ];
 };
 
-const retryAt = (
-  input: DecisionWatcherInput,
-  response:
-    Extract<GitHubWatchResponse, { readonly kind: "rate-limited" }> | undefined,
-  attempt: number,
-): string | null => {
-  if (
-    response?.retryAfterSeconds !== undefined &&
-    Number.isFinite(response.retryAfterSeconds) &&
-    response.retryAfterSeconds >= 0
-  ) {
-    return addMilliseconds(input.now, response.retryAfterSeconds * 1_000);
-  }
-
-  if (response?.rateLimitResetAt && isTimestamp(response.rateLimitResetAt)) {
-    return new Date(response.rateLimitResetAt).toISOString();
-  }
-
-  const delay = input.config.baseRetryDelayMs * 2 ** Math.max(0, attempt - 1);
-  return Number.isFinite(delay) ? addMilliseconds(input.now, delay) : null;
-};
-
 export const evaluateDecisionWatcher = (
-  input: DecisionWatcherInput,
+  untrustedInput: DecisionWatcherInput,
 ): DecisionWatcherResult => {
-  if (
-    !canonicalDecimalId.test(input.config.repositoryId) ||
-    !isTimestamp(input.now) ||
-    expectedApiPrefix(input.config.publicRepositoryUrl) !==
-      input.config.allowedGitHubApiUrlPrefix ||
-    input.config.endpoints.length === 0 ||
-    !input.config.endpoints.every((endpoint) =>
-      validEndpoint(endpoint, input.config.allowedGitHubApiUrlPrefix),
-    ) ||
-    new Set(input.config.endpoints.map(validatorKey)).size !==
-      input.config.endpoints.length ||
-    !Number.isSafeInteger(input.config.maxRetryAttempts) ||
-    input.config.maxRetryAttempts < 1 ||
-    !Number.isSafeInteger(input.config.maxReconciliationPages) ||
-    input.config.maxReconciliationPages < 1 ||
-    input.config.activePollIntervalMs <= 0 ||
-    input.config.idlePollIntervalMs <= 0 ||
-    input.config.baseRetryDelayMs <= 0 ||
-    !Number.isSafeInteger(input.retryAttempt) ||
-    input.retryAttempt < 0
-  ) {
-    return stopped(
-      input,
-      "watcher configuration or immutable state is invalid",
-    );
+  const parsed = inputSchema.safeParse(untrustedInput);
+  if (!parsed.success) {
+    return result({ retryAttempt: 0 }, "stopped", "watcher input is invalid");
   }
-
-  const configuredEndpointKeys = new Set(
-    input.config.endpoints.map(validatorKey),
-  );
-  if (
-    !input.previouslyNotified.every(
+  const input = parsed.data;
+  const configuredEndpoints = new Set(input.config.endpoints.map(endpointKey));
+  const configurationIsValid =
+    expectedApiPrefix(input.config.publicRepositoryUrl) ===
+      input.config.allowedGitHubApiUrlPrefix &&
+    configuredEndpoints.size === input.config.endpoints.length &&
+    input.config.endpoints.every((endpoint) =>
+      within(endpoint.url, input.config.allowedGitHubApiUrlPrefix),
+    ) &&
+    input.validators.every((validator) =>
+      within(validator.endpoint.url, input.config.allowedGitHubApiUrlPrefix),
+    ) &&
+    input.previouslyNotified.every(
       (action) =>
-        configuredEndpointKeys.has(action.sourceRootEndpointKey) &&
-        validPersistedPageKey(
-          action.sourcePageEndpointKey,
-          action.sourceRootEndpointKey,
-          input.config,
+        configuredEndpoints.has(endpointKey(action.sourceRootEndpoint)) &&
+        within(
+          action.sourcePageEndpoint.url,
+          input.config.allowedGitHubApiUrlPrefix,
         ) &&
-        validAction(action, input.config),
-    )
-  ) {
-    return stopped(
+        action.sourcePageEndpoint.mediaType ===
+          action.sourceRootEndpoint.mediaType &&
+        action.sourcePageEndpoint.apiVersion ===
+          action.sourceRootEndpoint.apiVersion &&
+        action.sourcePageEndpoint.authenticationContextId ===
+          action.sourceRootEndpoint.authenticationContextId &&
+        action.payload.repositoryId === input.config.repositoryId &&
+        payloadUrlMatches(action.payload, input.config.publicRepositoryUrl),
+    );
+  if (!configurationIsValid) {
+    return result(
       input,
-      "persisted watcher state contains invalid fixed identifiers",
+      "stopped",
+      "watcher configuration or persisted state is invalid",
     );
   }
-  const safePrevious = input.previouslyNotified.map(
-    (action): ActionableGitHubState => ({
-      sourceRootEndpointKey: action.sourceRootEndpointKey,
-      sourcePageEndpointKey: action.sourcePageEndpointKey,
-      eventRestId: action.eventRestId,
-      objectRevision: copyObjectRevision(action.objectRevision),
-      payload: {
-        repositoryId: action.payload.repositoryId,
-        workItemId: action.payload.workItemId,
-        workItemNumber: action.payload.workItemNumber,
-        classification: action.payload.classification,
-        githubUrl: action.payload.githubUrl,
-      },
-    }),
-  );
 
+  const firstEndpoint = input.config.endpoints[0]!;
   if (input.responses.length === 0) {
-    const firstEndpoint = input.config.endpoints[0];
-    if (!firstEndpoint) {
-      return stopped(input, "watcher has no configured root endpoint");
-    }
-
-    return {
-      state: "reconcile",
-      activationStatus: "default-off",
-      effectsExecutable: false,
-      authorityStateChanged: false,
-      reads: [plannedRead(input, firstEndpoint, false)],
-      notifications: [],
-      validators: input.validators,
-      notifiedState: safePrevious,
-      nextPollAt: null,
-      retryAt: null,
-      retryAttempt: input.retryAttempt,
-      diagnostics: [
-        input.trigger === "wake"
-          ? "wake signal requires a fresh GitHub reconciliation"
-          : "GitHub reconciliation required",
-      ],
-    };
+    return result(
+      input,
+      "reconcile",
+      input.trigger === "wake"
+        ? "wake signal requires a fresh GitHub reconciliation"
+        : "GitHub reconciliation required",
+      {
+        reads: [plannedRead(input, firstEndpoint)],
+        validators: input.validators,
+        notifiedState: input.previouslyNotified,
+      },
+    );
   }
-
   if (input.responses.length > input.config.maxReconciliationPages) {
     return stopped(input, "bounded GitHub reconciliation page limit exceeded");
+  }
+
+  const progress = responseProgress(input);
+  if (progress.kind === "invalid") {
+    return stopped(input, progress.diagnostic);
   }
 
   const invalidValidator = input.responses.find(
     (response) => response.kind === "invalid-validator",
   );
   if (invalidValidator) {
-    const firstEndpoint = input.config.endpoints[0];
-    if (!firstEndpoint) {
-      return stopped(
-        input,
-        "watcher has no configured root endpoint",
-        safePrevious,
-      );
-    }
-
-    return {
-      state: "reconcile",
-      activationStatus: "default-off",
-      effectsExecutable: false,
-      authorityStateChanged: false,
-      reads: [plannedRead(input, firstEndpoint, true)],
-      notifications: [],
-      validators: input.validators.filter(
-        (validator) =>
-          validator.key !== validatorKey(invalidValidator.endpoint),
-      ),
-      notifiedState: safePrevious,
-      nextPollAt: null,
-      retryAt: null,
-      retryAttempt: 0,
-      diagnostics: [
-        "invalid validator discarded; bounded full reconciliation required",
-      ],
-    };
+    return result(
+      input,
+      "reconcile",
+      "invalid validator discarded; bounded full reconciliation required",
+      {
+        reads: [plannedRead(input, firstEndpoint, true)],
+        validators: input.validators.filter(
+          (validator) =>
+            !sameEndpoint(validator.endpoint, invalidValidator.endpoint),
+        ),
+        notifiedState: input.previouslyNotified,
+        retryAttempt: 0,
+      },
+    );
   }
 
   const limited = input.responses.find(
@@ -596,250 +605,85 @@ export const evaluateDecisionWatcher = (
     > => response.kind === "rate-limited",
   );
   if (limited) {
-    const attempt = input.retryAttempt + 1;
-    if (attempt > input.config.maxRetryAttempts) {
-      return stopped(
-        input,
-        "bounded GitHub retry budget exhausted",
-        safePrevious,
-      );
-    }
-
-    const retry = retryAt(input, limited, attempt);
-    if (!retry) {
-      return stopped(
-        input,
-        "GitHub rate-limit response has no usable retry time",
-        safePrevious,
-      );
-    }
-
-    return {
-      state: "backoff",
-      activationStatus: "default-off",
-      effectsExecutable: false,
-      authorityStateChanged: false,
-      reads: [],
-      notifications: [],
-      validators: input.validators,
-      notifiedState: safePrevious,
-      nextPollAt: null,
-      retryAt: retry,
-      retryAttempt: attempt,
-      diagnostics: ["GitHub read delayed by bounded rate-limit backoff"],
-    };
+    return backoff(input, limited, "rate-limit");
   }
-
   if (input.responses.some((response) => response.kind === "unavailable")) {
-    const attempt = input.retryAttempt + 1;
-    if (attempt > input.config.maxRetryAttempts) {
-      return stopped(
-        input,
-        "bounded GitHub outage retry budget exhausted; authority remains unchanged",
-        safePrevious,
-      );
-    }
-
-    const retry = retryAt(input, undefined, attempt);
-    if (!retry) {
-      return stopped(
-        input,
-        "GitHub outage has no usable retry time; authority remains unchanged",
-        safePrevious,
-      );
-    }
-
-    return {
-      state: "backoff",
-      activationStatus: "default-off",
-      effectsExecutable: false,
-      authorityStateChanged: false,
-      reads: [],
-      notifications: [],
-      validators: input.validators,
-      notifiedState: safePrevious,
-      nextPollAt: null,
-      retryAt: retry,
-      retryAttempt: attempt,
-      diagnostics: [
-        "GitHub watcher outage delayed notification with bounded backoff",
-      ],
-    };
+    return backoff(input, null, "outage");
   }
 
-  const progress = responseProgress(input);
-  if (progress.error) {
-    return stopped(input, progress.error, safePrevious);
-  }
-  if (!progress.complete) {
-    if (!progress.nextEndpoint) {
-      return stopped(
-        input,
-        "serialized GitHub reconciliation has no next endpoint",
-        safePrevious,
-      );
-    }
-
-    return {
-      state: "reconcile",
-      activationStatus: "default-off",
-      effectsExecutable: false,
-      authorityStateChanged: false,
-      reads: [plannedRead(input, progress.nextEndpoint, false)],
-      notifications: [],
-      validators: updatedValidators(input.validators, input.responses),
-      notifiedState: safePrevious,
-      nextPollAt: null,
-      retryAt: null,
-      retryAttempt: 0,
-      diagnostics: ["serialized GitHub reconciliation requires the next page"],
-    };
-  }
-
-  const observedActions = input.responses.flatMap((response, index) => {
-    if (response.kind !== "page") {
-      return [];
-    }
-
-    const sourceRootEndpointKey = progress.rootKeys[index];
-    return sourceRootEndpointKey
-      ? response.actionable.map((action) => ({
-          sourceRootEndpointKey,
-          sourcePageEndpointKey: validatorKey(response.endpoint),
-          action,
-        }))
-      : [];
-  });
-  if (
-    !observedActions.every(({ action }) => validAction(action, input.config))
-  ) {
-    return stopped(
+  if (progress.kind === "pending") {
+    return result(
       input,
-      "GitHub actionable state contains invalid fixed identifiers",
+      "reconcile",
+      "serialized GitHub reconciliation requires the next page",
+      {
+        reads: [plannedRead(input, progress.nextEndpoint)],
+        validators: updatedValidators(input.validators, input.responses),
+        notifiedState: input.previouslyNotified,
+        retryAttempt: 0,
+      },
     );
   }
 
-  const refreshedActions = observedActions.map(
-    ({
-      action,
-      sourceRootEndpointKey,
-      sourcePageEndpointKey,
-    }): ActionableGitHubState => ({
-      sourceRootEndpointKey,
-      sourcePageEndpointKey,
-      eventRestId: action.eventRestId,
-      objectRevision: copyObjectRevision(action.objectRevision),
-      payload: {
-        repositoryId: action.payload.repositoryId,
-        workItemId: action.payload.workItemId,
-        workItemNumber: action.payload.workItemNumber,
-        classification: action.payload.classification,
-        githubUrl: action.payload.githubUrl,
-      },
-    }),
-  );
-  const refreshedPageKeys = new Set(
-    input.responses.flatMap((response, index) =>
-      response.kind === "page" && progress.rootKeys[index]
-        ? [validatorKey(response.endpoint)]
-        : [],
-    ),
-  );
-  const authoritativeRootKeys = new Set(
-    input.responses.flatMap((response, index) => {
-      const rootKey = progress.rootKeys[index];
-      const isFirstRootResponse =
-        index === 0 || progress.rootKeys[index - 1] !== rootKey;
-      return response.kind === "page" && rootKey && isFirstRootResponse
-        ? [rootKey]
-        : [];
-    }),
-  );
-  const observedPageKeysByRoot = input.responses.reduce(
-    (pagesByRoot, response, index) => {
-      const rootKey = progress.rootKeys[index];
-      if (!rootKey) {
-        return pagesByRoot;
-      }
-
-      const pages = pagesByRoot.get(rootKey) ?? new Set<string>();
-      pages.add(validatorKey(response.endpoint));
-      pagesByRoot.set(rootKey, pages);
-      return pagesByRoot;
-    },
-    new Map<string, Set<string>>(),
-  );
-  const currentActions = [
-    ...safePrevious.filter((action) => {
-      if (refreshedPageKeys.has(action.sourcePageEndpointKey)) {
-        return false;
-      }
-
-      if (!authoritativeRootKeys.has(action.sourceRootEndpointKey)) {
-        return true;
-      }
-
-      return Boolean(
-        observedPageKeysByRoot
-          .get(action.sourceRootEndpointKey)
-          ?.has(action.sourcePageEndpointKey),
-      );
-    }),
-    ...refreshedActions,
-  ];
+  const currentActions = snapshotActions(input, progress.roots);
   const actionKeys = currentActions.map(actionKey);
   if (new Set(actionKeys).size !== actionKeys.length) {
     return stopped(
       input,
       "GitHub actionable state contains duplicate work-item classifications",
-      safePrevious,
+    );
+  }
+  if (
+    !currentActions.every(
+      (action) =>
+        action.payload.repositoryId === input.config.repositoryId &&
+        payloadUrlMatches(action.payload, input.config.publicRepositoryUrl),
+    )
+  ) {
+    return stopped(
+      input,
+      "GitHub actionable state is outside repository scope",
     );
   }
 
-  const previouslyByKey = new Map(
-    safePrevious.map((action) => [actionKey(action), action]),
+  const previous = new Map(
+    input.previouslyNotified.map((action) => [actionKey(action), action]),
   );
-  const changed = currentActions.filter((action) => {
-    const previous = previouslyByKey.get(actionKey(action));
-    return (
-      !previous || actionFingerprint(previous) !== actionFingerprint(action)
-    );
-  });
-  const notifications = changed.map((action): PlannedNotificationLaunch => ({
-    payload: {
-      repositoryId: action.payload.repositoryId,
-      workItemId: action.payload.workItemId,
-      workItemNumber: action.payload.workItemNumber,
-      classification: action.payload.classification,
-      githubUrl: action.payload.githubUrl,
-    },
-    sandbox: "read-only",
-    repositoryMutationCredentials: false,
-    externalConnectors: false,
-    toolCapableWorkPermitted: false,
-    requiresFreshJasonInstruction: true,
-  }));
-  const pollInterval =
-    currentActions.length > 0
-      ? input.config.activePollIntervalMs
-      : input.config.idlePollIntervalMs;
+  const notifications = currentActions
+    .filter((action) => {
+      const earlier = previous.get(actionKey(action));
+      return (
+        !earlier || actionFingerprint(earlier) !== actionFingerprint(action)
+      );
+    })
+    .map((action): PlannedNotificationLaunch => ({
+      payload: action.payload,
+      sandbox: "read-only",
+      repositoryMutationCredentials: false,
+      externalConnectors: false,
+      toolCapableWorkPermitted: false,
+      requiresFreshJasonInstruction: true,
+    }));
+  const pollInterval = currentActions.length
+    ? input.config.activePollIntervalMs
+    : input.config.idlePollIntervalMs;
+  const nextPollAt = tryAddMilliseconds(input.now, pollInterval);
+  if (!nextPollAt) {
+    return stopped(input, "GitHub poll interval has no usable next poll time");
+  }
 
-  return {
-    state: notifications.length > 0 ? "actionable" : "unchanged",
-    activationStatus: "default-off",
-    effectsExecutable: false,
-    authorityStateChanged: false,
-    reads: [],
-    notifications,
-    validators: updatedValidators(input.validators, input.responses),
-    notifiedState: currentActions,
-    nextPollAt: addMilliseconds(input.now, pollInterval),
-    retryAt: null,
-    retryAttempt: 0,
-    diagnostics: [
-      notifications.length > 0
-        ? "verified actionable GitHub state produced a fixed notification plan"
-        : "GitHub state is unchanged; Codex notification suppressed",
-    ],
-  };
+  return result(
+    input,
+    notifications.length ? "actionable" : "unchanged",
+    notifications.length
+      ? "verified actionable GitHub state produced a fixed notification plan"
+      : "GitHub state is unchanged; Codex notification suppressed",
+    {
+      notifications,
+      validators: updatedValidators(input.validators, input.responses),
+      notifiedState: currentActions,
+      nextPollAt,
+      retryAttempt: 0,
+    },
+  );
 };
