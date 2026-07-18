@@ -40,54 +40,55 @@ const workItemId = {
   number: 15,
 } as const;
 
-const publicSignal = (): EscalationSignal => ({
-  kind: "design-blocker",
-  code: "inexpressible-invariant",
-  evidence: {
-    minimalExample: "The required invariant has no neutral representation.",
-    authorityLinks: [
-      "https://github.com/Ustice/represent/issues/15",
-      "REP-AUTO-016",
-    ],
-    alternatives: ["Revise the invariant", "Defer the capability"],
-    affectedGuarantees: ["REP-AUTO-016"],
-    smallestDecisionRequired: "Choose whether the invariant or scope changes.",
-  },
-});
+const publicSignal = () =>
+  ({
+    kind: "design-blocker",
+    code: "inexpressible-invariant",
+    evidence: {
+      minimalExample: "The required invariant has no neutral representation.",
+      authorityLinks: [
+        "https://github.com/Ustice/represent/issues/15",
+        "REP-AUTO-016",
+      ],
+      alternatives: ["Revise the invariant", "Defer the capability"],
+      affectedGuarantees: ["REP-AUTO-016"],
+      smallestDecisionRequired:
+        "Choose whether the invariant or scope changes.",
+    },
+  }) as const satisfies EscalationSignal;
 
-const baseInput = (
-  overrides: Partial<BlockerEscalationInput> = {},
-): BlockerEscalationInput => ({
-  config: {
-    repositoryId,
-    automationActorId: "306379269",
-    publicRepositoryUrl: "https://github.com/Ustice/represent",
-    allowedAuthorityLinkPrefixes: [
-      "https://github.com/Ustice/represent/",
-      "REP-AUTO-",
-    ],
-  },
-  workItemId,
-  workItemRevision: {
-    eventId: "event-work-item-revision-15",
-    deliveryId: "delivery-work-item-revision-15",
-    occurredAt: "2026-07-18T14:55:00.000Z",
-  },
-  source: {
-    eventId: "event-blocker-15",
-    deliveryId: "delivery-blocker-15",
-    workflowRun: { restId: "900719925474099312360", attempt: 1 },
-    observedAt: "2026-07-18T15:00:00.000Z",
-  },
-  signal: publicSignal(),
-  existingTransitions: [],
-  ...overrides,
-});
+const baseInput = (overrides: Partial<BlockerEscalationInput> = {}) =>
+  ({
+    config: {
+      repositoryId,
+      automationActorId: "306379269",
+      publicRepositoryUrl: "https://github.com/Ustice/represent",
+      allowedAuthorityLinkPrefixes: [
+        "https://github.com/Ustice/represent/",
+        "REP-AUTO-",
+      ],
+    },
+    workItemId,
+    workItemRevision: {
+      eventId: "event-work-item-revision-15",
+      deliveryId: "delivery-work-item-revision-15",
+      occurredAt: "2026-07-18T14:55:00.000Z",
+    },
+    source: {
+      eventId: "event-blocker-15",
+      deliveryId: "delivery-blocker-15",
+      workflowRun: { restId: "900719925474099312360", attempt: 1 },
+      observedAt: "2026-07-18T15:00:00.000Z",
+    },
+    signal: publicSignal(),
+    existingTransitions: [],
+    ...overrides,
+  }) as const satisfies BlockerEscalationInput;
 
 const record = (
   input: BlockerEscalationInput,
   overrides: Partial<BlockerTransitionRecord> = {},
-): BlockerTransitionRecord => {
+) => {
   const draft = evaluateBlockerEscalation(input).transitionsToAppend[0];
 
   if (!draft) {
@@ -99,10 +100,10 @@ const record = (
     logicalKey: draft.logicalKey,
     payload: draft.payload,
     ...overrides,
-  };
+  } as const satisfies BlockerTransitionRecord;
 };
 
-const serialized = (value: unknown): string => JSON.stringify(value);
+const serialized = (value: unknown) => JSON.stringify(value);
 
 describe("blocker escalation", () => {
   it("does not classify an ordinary implementation failure as a design blocker", () => {
