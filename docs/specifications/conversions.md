@@ -30,6 +30,11 @@ requirement strength.
   source domain count as the same for a guarantee. It MUST be an equivalence
   relation on that domain. Exact value equality is one possible source equality;
   application-defined equivalence is another.
+- A **target equality** is the declared rule for deciding when two forward
+  results are observably the same for a collision claim. It MUST be an
+  equivalence relation over the target results considered by that claim. Exact
+  target equality is one possible target equality. A source round-trip
+  losslessness claim does not otherwise require a target equality.
 - The **forward image** is the set of target values actually produced by a
   conversion for values in its declared source domain.
 - A **reverse witness** is recovery behavior defined for every value in the
@@ -39,11 +44,14 @@ requirement strength.
   view. Projection describes the conversion's intent; it does not by itself
   prove information loss for every domain or source equality.
 - A **collision witness** is a pair of source values that are distinct under the
-  declared source equality but produce the same target value.
+  declared source equality but produce equivalent target values under the target
+  equality declared for that collision claim.
 
 In the clauses below, `f` is a conversion from source `A` to target `B`, `D` is
 its declared source domain, `r` is its reverse witness, and `a1 ≡A a2` means
-that the declared source equality treats `a1` and `a2` as the same.
+that the declared source equality treats `a1` and `a2` as the same. `b1 ≡B b2`
+means that the target equality declared for a collision claim treats `b1` and
+`b2` as the same.
 
 ## Normative clauses
 
@@ -76,22 +84,36 @@ opposite conversion direction MUST be declared and evidenced separately.
 ### REP-CONV-003: A collision demonstrates information loss
 
 A projection or other conversion has demonstrated information loss for a
-declared source domain and source equality when a collision witness exists:
+declared source domain, source equality, and target equality when a collision
+witness exists:
 
 ```text
 a1 ∈ D
 a2 ∈ D
 a1 ≢A a2
-f(a1) = f(a2)
+f(a1) ≡B f(a2)
 ```
 
-No single reverse witness can satisfy `REP-CONV-001` for both values under that
-same scope. The collision therefore prohibits a losslessness claim for that
-direction, domain, and source equality.
+The collision impossibility applies to a reverse witness that is:
+
+- **single-valued**: each target input produces one recovered source-equivalence
+  class;
+- **extensional**: recovery depends only on the target value, not hidden
+  provenance, mutable state, time, randomness, or execution history; and
+- **congruent with the declared target equality**: when `b1 ≡B b2`, then
+  `r(b1) ≡A r(b2)`.
+
+No such reverse witness can satisfy `REP-CONV-001` for both source values under
+the same scope. The collision therefore prohibits a losslessness claim whose
+recovery respects that declared target observation. A proposed recovery that
+distinguishes target-equivalent values through hidden or unmodeled information
+does not refute the collision; it changes the target observation or relies on
+information outside the target representation and requires a separate claim.
 
 This clause proves loss only for the stated scope. It does not imply that every
 source value is affected, that the target value is invalid, or that the same
-conversion loses information under a narrower domain or coarser source equality.
+conversion loses information under a narrower domain, coarser source equality,
+or finer target equality.
 
 ### REP-CONV-004: Shape is not evidence of information loss
 
@@ -101,10 +123,10 @@ Omitted information may be derivable from retained information, or the declared
 source equality may intentionally disregard it.
 
 A claim of projection-related information loss MUST identify a collision witness
-under its declared source domain and source equality. A transformation without
-either the round-trip evidence in `REP-CONV-001` or the collision evidence in
-`REP-CONV-003` remains unclassified with respect to these guarantees until its
-scope or evidence is made sufficient.
+under its declared source domain, source equality, and target equality. A
+transformation without either the round-trip evidence in `REP-CONV-001` or the
+collision evidence in `REP-CONV-003` remains unclassified with respect to these
+guarantees until its scope or evidence is made sufficient.
 
 ### REP-CONV-005: Recovery must reproduce source information
 
@@ -129,20 +151,29 @@ A consumer MUST NOT infer from that declaration alone:
 - preservation when the conversion is composed with other conversions.
 
 From a collision witness, a consumer MAY infer that the forward target does not
-retain enough information to distinguish that source pair under the declared
-source equality. A consumer MUST NOT infer which field or operation caused the
-collision without separate evidence.
+retain enough observable information to distinguish that source pair under the
+declared source and target equalities, and that no single-valued, extensional,
+congruent reverse witness can recover both. A consumer MUST NOT infer which
+field or operation caused the collision, that the runtime containers are
+identical, or that recovery using information outside the declared target
+observation is impossible without separate evidence.
 
 ### REP-CONV-007: Guarantee evidence and diagnostics
 
 Evidence for a directional losslessness claim MUST exercise the declared source
 domain, source equality, forward conversion, and reverse witness. Evidence for
 projection-related information loss MUST preserve the two distinct source values
-and their identical forward result as a reproducible counterexample.
+and their target-equivalent forward results as a reproducible counterexample. It
+MUST identify the target equality and state that the collision conclusion ranges
+only over recovery behavior required to be single-valued, extensional, and
+congruent with that equality. Evidence evaluating a concrete reverse witness
+MUST verify those conditions before using the collision impossibility argument.
 
 When a tool rejects or disproves either claim, its diagnostic MUST identify the
 conversion direction, declared source domain, source equality, violated clause,
-and recovered value or collision witness needed to reproduce the failure.
+and recovered value or collision witness needed to reproduce the failure. A
+collision diagnostic MUST also identify the declared target equality and the
+target-equivalent forward results.
 
 ## Examples and counterexamples
 
@@ -157,7 +188,8 @@ This conversion is lossless in that direction for the narrowed domain when the
 source round trip holds. The smaller target shape does not prove loss. If the
 domain also allowed two unequal `fullName` spellings with identical retained
 fields, those values would instead supply a collision witness under equality
-over all three fields.
+over all three source fields and structural target equality over the retained
+fields.
 
 ### Forward-image-only recovery
 
@@ -177,16 +209,21 @@ when the recovered epoch milliseconds match.
 The opposite claim does not follow. Over a source domain of parseable date
 strings with textual equality, the strings `2026-07-17T00:00:00.000Z` and
 `2026-07-16T20:00:00-04:00` denote the same instant and therefore produce the
-same `Date` value. They are a collision witness, so string-to-Date is not
-lossless for that domain and equality.
+same result under target equality by epoch milliseconds. They are a collision
+witness, so string-to-Date is not lossless for that domain, source equality, and
+target observation. A reverse witness congruent with epoch-millisecond target
+equality cannot recover both original spellings under textual source equality.
 
 ### Public-view collision
 
 Consider two source users that differ only in an email address included by
 source equality. A public-view projection that omits email produces the same
-target user for both. The pair demonstrates information loss for that source
-domain and equality. It does not imply that every public-view field is lossy or
-that a domain which equates those two source users would have the same result.
+target user for both under structural target equality over the exposed fields.
+The pair demonstrates information loss for that source domain, source equality,
+and target equality. A reverse witness congruent with the structural target
+equality cannot recover which email was present. This does not imply that every
+public-view field is lossy or that a domain which equates those two source users
+would have the same result.
 
 ### Placeholder reverse value
 
@@ -198,14 +235,14 @@ losslessness witness.
 
 ## Acceptance examples for executable specifications
 
-| Case                                              | Expected classification                                          | Oracle                                                  | Plausible defect distinguished                                            |
-| ------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Canonically derivable `fullName`                  | Lossless for the consistent source domain                        | Source round trip under equality over all source fields | Field removal is treated as automatic proof of loss                       |
-| Arbitrary target string outside the forward image | No obligation from the source-direction claim                    | Membership in the declared forward image                | Reverse witness is incorrectly required to cover all target values        |
-| Canonical `Date` to ISO string                    | Lossless for valid finite dates under epoch-millisecond equality | Recovered epoch milliseconds equal original             | Textual or object identity is used as the source oracle                   |
-| Differently spelled strings denoting one instant  | Collision under textual source equality                          | Distinct strings produce the same `Date` value          | Opposite-direction losslessness is inferred from the Date-to-string claim |
-| Two users differing only in omitted email         | Projection-related information loss                              | Source-unequal pair produces identical public view      | Field omission is asserted without a discriminating pair                  |
-| Dropped identifier restored as `unknown`          | Not a valid reverse witness                                      | Recovered source is not source-equivalent to original   | Any source-shaped reverse output is accepted                              |
+| Case                                              | Expected classification                                          | Oracle                                                                                                        | Plausible defect distinguished                                            |
+| ------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Canonically derivable `fullName`                  | Lossless for the consistent source domain                        | Source round trip under equality over all source fields                                                       | Field removal is treated as automatic proof of loss                       |
+| Arbitrary target string outside the forward image | No obligation from the source-direction claim                    | Membership in the declared forward image                                                                      | Reverse witness is incorrectly required to cover all target values        |
+| Canonical `Date` to ISO string                    | Lossless for valid finite dates under epoch-millisecond equality | Recovered epoch milliseconds equal original                                                                   | Textual or object identity is used as the source oracle                   |
+| Differently spelled strings denoting one instant  | Collision under textual source equality                          | Distinct strings produce Dates equal by epoch millisecond; recovery is congruent with that target equality    | Opposite-direction losslessness is inferred from the Date-to-string claim |
+| Two users differing only in omitted email         | Projection-related information loss                              | Source-unequal pair produces structurally equal public views; recovery is congruent with that target equality | Hidden provenance is treated as part of the public view                   |
+| Dropped identifier restored as `unknown`          | Not a valid reverse witness                                      | Recovered source is not source-equivalent to original                                                         | Any source-shaped reverse output is accepted                              |
 
 These records are acceptance inputs for a later semantic-test issue. They are
 not executable evidence and MUST NOT gate implementation until they satisfy the
