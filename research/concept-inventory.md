@@ -2,15 +2,22 @@
 
 > **Status: non-normative research notes**
 >
-> This document preserves candidate ideas, remembered design directions, and useful examples from early project discussions. It is not a specification, ADR, compatibility promise, or implementation plan. Nothing here is accepted merely because it appears in this file.
+> This document preserves candidate ideas, remembered design directions, and
+> useful examples from early project discussions. It is not a specification,
+> ADR, compatibility promise, or implementation plan. Nothing here is accepted
+> merely because it appears in this file.
 >
-> Promote an idea into a design issue before turning it into normative clauses or implementation work. Concrete examples, counterexamples, independent review, and executable evidence remain required.
+> Promote an idea into a design issue before turning it into normative clauses
+> or implementation work. Concrete examples, counterexamples, independent
+> review, and executable evidence remain required.
 
 ## Project thesis
 
-Represent is intended to preserve semantic intent while allowing the same application concepts to appear in many concrete forms.
+Represent is intended to preserve semantic intent while allowing the same
+application concepts to appear in many concrete forms.
 
-The project may eventually let teams define domain data and operations once, connect them through explicit relationships, and derive or coordinate:
+The project may eventually let teams define domain data and operations once,
+connect them through explicit relationships, and derive or coordinate:
 
 - runtime validation;
 - value conversion;
@@ -24,36 +31,42 @@ The project may eventually let teams define domain data and operations once, con
 - schema-change impact reports;
 - CI review evidence.
 
-The algebra should be the internal engine. The graph, diagnostics, testing tools, and approachable terminology should be the ordinary developer experience.
+The algebra should be the internal engine. The graph, diagnostics, testing
+tools, and approachable terminology should be the ordinary developer experience.
 
 ## Public terminology candidates
 
-Mathematical concepts may support the design without appearing front-and-center in the public API.
+Mathematical concepts may support the design without appearing front-and-center
+in the public API.
 
-| Approachable term | Mathematical background or related idea |
-| --- | --- |
-| representation | object or interpretation |
-| conversion | morphism or mapping |
-| equivalent | isomorphism-like relationship |
-| lossless | invertible in the claimed direction |
-| validated | partial or fallible mapping |
-| projection | intentionally information-losing mapping |
-| round trip | inverse or retraction law |
-| empty | identity element |
-| combine | associative operation |
-| preserves combine | homomorphism law |
-| preserves pipelines | composition or functoriality |
-| choice | sum type |
-| record | product type |
+| Approachable term   | Mathematical background or related idea  |
+| ------------------- | ---------------------------------------- |
+| representation      | object or interpretation                 |
+| conversion          | morphism or mapping                      |
+| equivalent          | isomorphism-like relationship            |
+| lossless            | invertible in the claimed direction      |
+| validated           | partial or fallible mapping              |
+| projection          | intentionally information-losing mapping |
+| round trip          | inverse or retraction law                |
+| empty               | identity element                         |
+| combine             | associative operation                    |
+| preserves combine   | homomorphism law                         |
+| preserves pipelines | composition or functoriality             |
+| choice              | sum type                                 |
+| record              | product type                             |
 
-The vocabulary must remain honest. In particular, a projection should not be called equivalent, and a validated parse should not be presented as a total conversion.
+The vocabulary must remain honest. In particular, a projection should not be
+called equivalent, and a validated parse should not be presented as a total
+conversion.
 
 ## Domain schemas and representations
 
 Candidate model:
 
-- A domain schema expresses application meaning without assuming Prisma, GraphQL, CSV, or another target.
-- A representation describes one concrete schema or value shape related to the domain concept.
+- A domain schema expresses application meaning without assuming Prisma,
+  GraphQL, CSV, or another target.
+- A representation describes one concrete schema or value shape related to the
+  domain concept.
 - A representation may expose independent capabilities, such as:
   - structural schema information;
   - Standard Schema validation;
@@ -62,12 +75,15 @@ Candidate model:
   - example and arbitrary generation;
   - combine and empty behavior;
   - adapter-owned metadata.
-- Standard Schema is a likely validation interoperability capability, not the universal structural core.
-- The neutral structural model must remain inspectable so schema mappings, diagrams, impact analysis, and generated tests can operate on it.
+- Standard Schema is a likely validation interoperability capability, not the
+  universal structural core.
+- The neutral structural model must remain inspectable so schema mappings,
+  diagrams, impact analysis, and generated tests can operate on it.
 
 Possible domain constructs include:
 
-- scalar concepts such as string, UUID, email, timestamp, decimal, and identifier;
+- scalar concepts such as string, UUID, email, timestamp, decimal, and
+  identifier;
 - records or objects;
 - choices, enumerations, and discriminated unions;
 - arrays and other collections;
@@ -76,11 +92,14 @@ Possible domain constructs include:
 - relations, where a future design proves that they belong in the neutral model;
 - opaque extension metadata owned and interpreted only by adapters.
 
-Adapters should infer ordinary cases and require explicit strategies where target semantics diverge. Unsupported constructs should produce actionable diagnostics rather than silent approximation.
+Adapters should infer ordinary cases and require explicit strategies where
+target semantics diverge. Unsupported constructs should produce actionable
+diagnostics rather than silent approximation.
 
 ## Schema mappings
 
-Schema relationships may be composable programs over the neutral model rather than unrelated generators.
+Schema relationships may be composable programs over the neutral model rather
+than unrelated generators.
 
 Candidate schema transformations include:
 
@@ -96,7 +115,8 @@ Candidate schema transformations include:
 
 A schema adapter may provide both:
 
-1. a mapping from neutral schema concepts into a target artifact or builder API; and
+1. a mapping from neutral schema concepts into a target artifact or builder API;
+   and
 2. corresponding runtime value mappings.
 
 This allows a timestamp, for example, to map coherently to:
@@ -105,7 +125,9 @@ This allows a timestamp, for example, to map coherently to:
 - a Prisma `DateTime` field and JavaScript `Date`;
 - a CSV column and formatted text.
 
-The core should provide traversal, composition, diagnostics, and plugin contracts. Existing target libraries remain responsible for their own generation and runtime behavior.
+The core should provide traversal, composition, diagnostics, and plugin
+contracts. Existing target libraries remain responsible for their own generation
+and runtime behavior.
 
 ## Value conversions
 
@@ -113,10 +135,14 @@ Candidate conversion strengths:
 
 - **projection**: intentionally loses information;
 - **validated**: may reject source values;
-- **lossless**: preserves enough information to reconstruct the source within the stated domain;
-- **equivalent**: both representations round-trip under their stated equality and normalization rules.
+- **lossless**: preserves enough information to reconstruct the source within
+  the stated domain;
+- **equivalent**: both representations round-trip under their stated equality
+  and normalization rules.
 
-These labels need precise future definitions. Composition should calculate the resulting guarantee conservatively rather than preserve the strongest label optimistically.
+These labels need precise future definitions. Composition should calculate the
+resulting guarantee conservatively rather than preserve the strongest label
+optimistically.
 
 A conversion may declare which behavior it preserves, including:
 
@@ -128,7 +154,8 @@ A conversion may declare which behavior it preserves, including:
 - composition;
 - domain or target round trips.
 
-The library cannot generally prove user-written laws through TypeScript. Evidence may come from:
+The library cannot generally prove user-written laws through TypeScript.
+Evidence may come from:
 
 - library combinators that preserve guarantees by construction;
 - explicit declarations;
@@ -162,11 +189,13 @@ The graph may distinguish:
 - artifacts emitted by adapters;
 - tests, fixtures, guarantees, and dependencies associated with nodes and edges.
 
-The visualization should be executable documentation rather than an independently maintained diagram.
+The visualization should be executable documentation rather than an
+independently maintained diagram.
 
 ## Graph visualization and data lineage
 
-A developer should be able to inspect a node or edge and see information such as:
+A developer should be able to inspect a node or edge and see information such
+as:
 
 - kind of representation;
 - fields added, removed, renamed, flattened, or synthesized;
@@ -189,7 +218,8 @@ Possible outputs include:
 
 ## Operations
 
-A domain operation may be represented as structured behavior rather than only a function.
+A domain operation may be represented as structured behavior rather than only a
+function.
 
 Candidate operation information includes:
 
@@ -212,9 +242,15 @@ An operation might then be represented through adapters as:
 - a command-line command;
 - a queue or event handler.
 
-The core should not implement those frameworks. Adapter plugins should translate the operation contract into the target's wrappers, builders, or generated definitions.
+The core should not implement those frameworks. Adapter plugins should translate
+the operation contract into the target's wrappers, builders, or generated
+definitions.
 
-GraphQL deserves special caution because resolver behavior includes parent values, arguments, context, selection sets, nested field resolution, null propagation, batching, subscriptions, and directives. A first adapter should likely generate contracts and wrappers rather than arbitrary resolver business logic.
+GraphQL deserves special caution because resolver behavior includes parent
+values, arguments, context, selection sets, nested field resolution, null
+propagation, batching, subscriptions, and directives. A first adapter should
+likely generate contracts and wrappers rather than arbitrary resolver business
+logic.
 
 ## Operation mappings and operation transformations
 
@@ -235,9 +271,12 @@ Two related higher-order ideas should remain distinct:
    - redact outputs;
    - expand the error set or context requirements.
 
-A lawful operation adapter should preserve meaningful operation composition. Public documentation may describe this as preserving operation pipelines rather than requiring category-theory vocabulary.
+A lawful operation adapter should preserve meaningful operation composition.
+Public documentation may describe this as preserving operation pipelines rather
+than requiring category-theory vocabulary.
 
-Error mappings are likely to be a major adapter concern. The same domain error choice may become:
+Error mappings are likely to be a major adapter concern. The same domain error
+choice may become:
 
 - a GraphQL result union or execution error;
 - a tRPC error code;
@@ -246,7 +285,8 @@ Error mappings are likely to be a major adapter concern. The same domain error c
 
 ## Plugin and adapter system
 
-The core should be a typed intermediate representation and plugin system, not a universal replacement for ecosystem tools.
+The core should be a typed intermediate representation and plugin system, not a
+universal replacement for ecosystem tools.
 
 Candidate plugin capabilities:
 
@@ -272,18 +312,21 @@ Examples:
 - Mermaid plugin: visualization;
 - fast-check plugin: property generators.
 
-The core may preserve opaque plugin metadata but must not interpret target-specific meaning.
+The core may preserve opaque plugin metadata but must not interpret
+target-specific meaning.
 
 ## Fixtures and examples
 
-Fixtures should describe one conceptual value across representations instead of being independently maintained factories.
+Fixtures should describe one conceptual value across representations instead of
+being independently maintained factories.
 
 Possible API behavior:
 
 - create a deterministic domain example from a seed;
 - derive fixtures along valid graph paths;
 - request the fixture as Prisma, GraphQL, CSV, or another representation;
-- retain provenance showing where values were synthesized, removed, normalized, or renamed;
+- retain provenance showing where values were synthesized, removed, normalized,
+  or renamed;
 - refuse reverse derivation through a lossy projection;
 - generate readable examples separately from broad arbitrary values.
 
@@ -312,11 +355,13 @@ One behavioral contract could run against multiple surfaces:
 - service method;
 - HTTP harness.
 
-The same contract should test whether adapters preserve the intended operation behavior.
+The same contract should test whether adapters preserve the intended operation
+behavior.
 
 ## CRUD and stateful testing
 
-Entity-like schemas and operations may support reusable CRUD contracts, including:
+Entity-like schemas and operations may support reusable CRUD contracts,
+including:
 
 - create then read returns an equivalent value;
 - generated fields are populated;
@@ -327,16 +372,19 @@ Entity-like schemas and operations may support reusable CRUD contracts, includin
 - optional and nullable values remain distinct;
 - identifiers remain stable across representations.
 
-More advanced stateful property testing could generate command sequences and compare:
+More advanced stateful property testing could generate command sequences and
+compare:
 
 - an in-memory reference model;
 - the real implementation or adapter harness.
 
-This may reveal bugs that isolated tests miss, such as stale writes, invalid transitions, and inconsistent projections after mutation.
+This may reveal bugs that isolated tests miss, such as stale writes, invalid
+transitions, and inconsistent projections after mutation.
 
 ## Boundary-case generation
 
-The structural schema can generate targeted semantic partitions rather than random noise.
+The structural schema can generate targeted semantic partitions rather than
+random noise.
 
 Candidate partitions include:
 
@@ -349,11 +397,14 @@ Candidate partitions include:
 - ordering and normalization boundaries;
 - flattening and nesting conflicts.
 
-A representation-aware test system should make target differences visible. For example, missing may map differently to GraphQL omission, Prisma `undefined`, CSV empty cells, and absent JSON properties.
+A representation-aware test system should make target differences visible. For
+example, missing may map differently to GraphQL omission, Prisma `undefined`,
+CSV empty cells, and absent JSON properties.
 
 ## Semantic tests and law checks
 
-Testing is intended to define and protect semantics rather than chase line coverage.
+Testing is intended to define and protect semantics rather than chase line
+coverage.
 
 Candidate generated checks include:
 
@@ -366,7 +417,8 @@ Candidate generated checks include:
 - adapter handling of unsupported neutral constructs;
 - consistency between generated schema artifacts and runtime mappings.
 
-Important properties should be tested against deliberately broken subjects, including:
+Important properties should be tested against deliberately broken subjects,
+including:
 
 - dropped fields;
 - swapped fields;
@@ -376,11 +428,13 @@ Important properties should be tested against deliberately broken subjects, incl
 - falsely preserved guarantees;
 - missing impact dependencies.
 
-The testing utilities should eventually be used to build and certify Represent itself.
+The testing utilities should eventually be used to build and certify Represent
+itself.
 
 ## Adapter certification
 
-Third-party adapters may be certified against reusable core obligations plus adapter-owned target profiles.
+Third-party adapters may be certified against reusable core obligations plus
+adapter-owned target profiles.
 
 A certification declaration should remain scoped to:
 
@@ -401,13 +455,15 @@ Certification should distinguish:
 - semantic gap;
 - harness error.
 
-A passing certification is evidence for the declared combination, not a universal badge.
+A passing certification is evidence for the declared combination, not a
+universal badge.
 
 ## Impact analysis
 
 Impact reporting may be one of the project's strongest practical features.
 
-Given a schema, representation, guarantee, adapter, or operation change, the graph could report:
+Given a schema, representation, guarantee, adapter, or operation change, the
+graph could report:
 
 - directly changed nodes and edges;
 - downstream representations;
@@ -441,7 +497,8 @@ Review required
   CSV encoding for missing email
 ```
 
-Impact should be derived from the semantic graph, not maintained as a separate dependency system.
+Impact should be derived from the semantic graph, not maintained as a separate
+dependency system.
 
 ## CI and review integration
 
@@ -460,7 +517,8 @@ A PR report should explain semantic impact rather than only list files changed.
 
 ## Automated issue handling
 
-Candidate automation should follow the repository's reviewed issue workflow rather than allow an issue event to trigger unrestricted coding.
+Candidate automation should follow the repository's reviewed issue workflow
+rather than allow an issue event to trigger unrestricted coding.
 
 A conservative progression:
 
@@ -485,11 +543,14 @@ A conservative progression:
    - never merge automatically at first;
    - return semantic discoveries to design instead of patching around them.
 
-Potential labels include `agent:triage`, `agent:design`, `agent:implement`, `agent:review`, and `agent:blocked`. These names are only candidates until separately designed.
+Potential labels include `agent:triage`, `agent:design`, `agent:implement`,
+`agent:review`, and `agent:blocked`. These names are only candidates until
+separately designed.
 
 ## Initial vertical slice
 
-The first prototype should remain deliberately small and awkward enough to expose real design problems.
+The first prototype should remain deliberately small and awkward enough to
+expose real design problems.
 
 Candidate `User` concept:
 
@@ -521,20 +582,26 @@ Important differences to exercise:
 - direct and indirect paths;
 - a schema change with a meaningful impact report.
 
-The Phase 0 prototype should stop after proving one complete vertical slice. It should then undergo a replace, salvage, or promote review instead of expanding indefinitely.
+The Phase 0 prototype should stop after proving one complete vertical slice. It
+should then undergo a replace, salvage, or promote review instead of expanding
+indefinitely.
 
 ## Process principles remembered from discussion
 
 - Assume replacement until proven otherwise.
-- Specifications, semantic tests, ADRs, and recorded lessons are more durable than prototype code.
+- Specifications, semantic tests, ADRs, and recorded lessons are more durable
+  than prototype code.
 - Never duplicate semantics when one artifact can be derived from another.
 - Concrete examples outrank elegant theory.
-- Every abstraction should earn its existence through at least two independent examples.
+- Every abstraction should earn its existence through at least two independent
+  examples.
 - Prefer removing abstractions to adding speculative ones.
 - A design blocker is evidence, not an inconvenience to patch around.
-- TypeScript type sophistication must not destroy compiler performance or diagnostic readability.
+- TypeScript type sophistication must not destroy compiler performance or
+  diagnostic readability.
 - The graph and production behavior should come from the same definitions.
-- Existing ecosystem tools should remain responsible for what they already do well.
+- Existing ecosystem tools should remain responsible for what they already do
+  well.
 
 ## Questions to promote into future design issues
 
@@ -547,7 +614,8 @@ The following topics need bounded design work before they become specifications:
 - How are conversion guarantees composed?
 - When may the graph choose a path automatically?
 - How are conflicting paths detected and compared?
-- Which algebraic structures belong on a representation, an operation, or a selected behavior?
+- Which algebraic structures belong on a representation, an operation, or a
+  selected behavior?
 - How do schema mappings and value mappings stay synchronized?
 - What is the minimal operation model?
 - How are errors, context requirements, and effects represented?
@@ -556,7 +624,9 @@ The following topics need bounded design work before they become specifications:
 - How should graph provenance and derived edges be represented?
 - What is the minimum useful impact-report model?
 - What testing APIs can remain runner-neutral?
-- How should fixtures preserve provenance and reject impossible reverse derivations?
+- How should fixtures preserve provenance and reject impossible reverse
+  derivations?
 - What should the first automated issue-triage contract permit?
 
-These questions are research inventory, not active blockers. Open a design issue when one becomes the next bounded Phase -1 task.
+These questions are research inventory, not active blockers. Open a design issue
+when one becomes the next bounded Phase -1 task.

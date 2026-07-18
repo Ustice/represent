@@ -10,14 +10,14 @@ const read = (path: string): string =>
 Test case: repository continuity contract
 Classification: workflow validation
 Owning authority: issue #4 candidate exit criteria and Phase -2 success criteria
-Observable/invariant: reviewed public governance artifacts remain discoverable and the phase displays remain synchronized
-Oracle/equality: required artifact inventory plus exact current-phase text equality
-Regression caught: deleted format, missing CI gate, stale README phase, or lost continuity navigation
+Observable/invariant: reviewed public governance artifacts remain discoverable, CI provisions tools in dependency order, and the phase displays remain synchronized
+Oracle/equality: required artifact inventory, ordered CI step positions, plus exact current-phase text equality
+Regression caught: deleted format, missing CI gate, absent Corepack on Node 26, pnpm cache discovery before provisioning, stale README phase, or lost continuity navigation
 Execution boundary: checked-out repository artifacts consumed by a continuation agent
 Static/runtime distinction: TypeScript cannot prove repository files exist or agree
-Cases: phase authority/summary, required formats, CI runtime/gate, README navigation
-Discrimination: delete a required artifact or change one phase display and this test must fail
-Expected diagnostics: the missing path, required fragment, or mismatched phase values
+Cases: phase authority/summary, required formats, CI runtime/provisioning/gate, README navigation
+Discrimination: delete a required artifact, reorder CI provisioning, or change one phase display and this test must fail
+Expected diagnostics: the missing path, missing or misordered CI step position, or mismatched phase values
 Semantic coverage: Phase -2 continuity and workflow evidence only; no product semantics
 
 Source inspection is justified by REP-TEST-006 because these reviewed repository
@@ -60,13 +60,21 @@ describe("Phase -2 repository continuity", () => {
 
   it("pins CI to the declared runtime and complete gate", () => {
     const workflow = read(".github/workflows/ci.yml");
+    const orderedSteps = [
+      "actions/setup-node@v5",
+      "npm install --global corepack@0.35.0",
+      "corepack enable",
+      "pnpm install --frozen-lockfile",
+      "pnpm check",
+    ].map((step) => workflow.indexOf(step));
 
-    expect(read(".nvmrc").trim()).toBe("22");
-    expect(workflow).toContain("actions/setup-node@v5");
-    expect(workflow).toContain("corepack enable");
+    expect(read(".nvmrc").trim()).toBe("26");
+    expect(workflow).toContain("package-manager-cache: false");
     expect(workflow).toContain("node-version-file: .nvmrc");
-    expect(workflow).toContain("pnpm install --frozen-lockfile");
-    expect(workflow).toContain("pnpm check");
+    expect(orderedSteps).not.toContain(-1);
+    expect(orderedSteps).toEqual(
+      [...orderedSteps].sort((left, right) => left - right),
+    );
   });
 
   it("links the primary continuity sources from the repository entrypoint", () => {

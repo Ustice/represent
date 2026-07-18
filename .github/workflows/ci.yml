@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm install --global corepack@0.35.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm check

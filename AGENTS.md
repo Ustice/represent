@@ -97,6 +97,24 @@ Pull requests must report semantic impact and validation evidence using
 handoff. Prototype discoveries return to design review; code presence does not
 grant product or compatibility status.
 
+## Agent skills
+
+### Issue tracker
+
+Engineering skills use GitHub Issues through the `gh` CLI. See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Issues use the canonical `needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human`, and `wontfix` states. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Represent uses a single shared domain context. Read the project authority,
+glossary, architecture, decisions, and specifications described in
+`docs/agents/domain.md`.
+
 ## Testing standards
 
 A test must follow
@@ -180,7 +198,7 @@ and records unresolved disagreement rather than forcing agreement.
 
 ## Validation and handoff
 
-Use Node.js 22 and pnpm. Before handoff run:
+Use Node.js 26 and pnpm. Before handoff run:
 
 ```sh
 pnpm format:check

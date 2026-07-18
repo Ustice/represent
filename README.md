@@ -38,11 +38,12 @@ appropriate at each stage.
 
 ## Development
 
-Use Node.js 22 and pnpm 11. The repository includes `.nvmrc`; use `nvm use` or
-select Node 22 with another version manager before installing dependencies.
+Use Node.js 26 and pnpm 11. The repository includes `.nvmrc`; use `nvm use` or
+select Node 26 with another version manager before installing dependencies.
 
 ```sh
 nvm use
+npm install --global corepack@0.35.0
 corepack enable
 pnpm install
 pnpm check
