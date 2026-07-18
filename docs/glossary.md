@@ -30,8 +30,9 @@ understood by the core.
 **Operation**: Domain behavior with described inputs, outputs, and possibly
 effects or guarantees.
 
-**Projection**: A deliberately lossy view that omits or coarsens declared
-information.
+**Projection**: A deliberately restricted or coarsened view. Whether it loses
+information depends on the declared source domain and equality; shape or field
+count alone is not proof.
 
 **Representation**: One concrete shape or interpretation of a domain concept.
 

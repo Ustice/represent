@@ -1,17 +1,20 @@
 # Design specifications
 
 This directory owns normative, reviewable statements of Represent's observable
-behavior and guarantees. It intentionally contains no schema, representation,
-conversion, or operation design yet.
+behavior and guarantees. Draft specifications are not accepted authority until
+their required independent review is recorded.
 
 Current specifications:
 
+- [Conversion guarantees](conversions.md) is a draft defining directional,
+  scoped losslessness and collision evidence for projection-related information
+  loss. It requires independent review before acceptance.
 - [Testing and certification](testing-and-certification.md) defines semantic
   test quality, discrimination checks, adapter certification, and semantic
   coverage for the engineering system.
 
-Future specifications should give clauses stable identifiers, define relevant
-terms and equality notions, include examples and counterexamples, state expected
+Specifications should give clauses stable identifiers, define relevant terms and
+equality notions, include examples and counterexamples, state expected
 diagnostics, identify executable tests, and list unresolved questions. A
 substantial specification requires a reviewer other than its sole author.
 
