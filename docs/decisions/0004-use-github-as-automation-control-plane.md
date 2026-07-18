@@ -32,6 +32,9 @@ Use GitHub as the canonical control plane for agent automation:
 - Critic publishes a normal `APPROVED` or `CHANGES_REQUESTED` review for
   readable findings and an authoritative `critic` required check bound to the
   allowlisted Review App or integration and exact head SHA;
+- Critic publishes and verifies the exact-head review before completing the
+  `critic` check for either outcome; the check remains pending until the visible
+  review exists, preventing auto-merge from racing ahead of review evidence;
 - Critic reports only its own judgment: a failed `validate` check does not make
   Critic request changes when its independent review passes, while the
   coordinator still routes the CI failure into the one combined rework pass;

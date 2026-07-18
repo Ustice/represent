@@ -259,6 +259,13 @@ Critic produces two outputs for the same exact head:
 - the authoritative named `critic` check produced by the allowlisted Review
   App or integration.
 
+Critic must successfully publish the review, verify that GitHub bound it to the
+expected head SHA, and only then complete the authoritative `critic` check. The
+check remains pending while review publication or verification is pending. This
+ordering applies to both outcomes: publish `APPROVED` before success, and
+publish `CHANGES_REQUESTED` before a terminal non-success result. Failed review
+publication fails closed and cannot produce a terminal `critic` check.
+
 The review is human-readable evidence and a native place for discussion. It is
 not an authority input for merge eligibility, and the GitHub App review is not
 assumed to count toward GitHub's required approving-review count. The `critic`
@@ -535,6 +542,10 @@ Before activation, workflow tests or controlled repository exercises cover:
 - a new head invalidating CI, Critic, and human approval;
 - Critic publishing matching `APPROVED`/successful `critic` and
   `CHANGES_REQUESTED`/non-successful `critic` review-check pairs;
+- the `critic` check remaining pending until GitHub confirms the matching
+  exact-head review, for both passing and rework outcomes;
+- failed or delayed Critic review publication never allowing the `critic` check
+  to complete first;
 - failed `validate` with an independently `APPROVED`/successful Critic pair
   still producing exactly one coordinated rework pass from the CI failure;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
