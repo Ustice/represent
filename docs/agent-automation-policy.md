@@ -32,29 +32,85 @@ acceptance creates a follow-up objective issue for automation governance and
 links this design and its policy artifact to it before implementation intake.
 
 That durable objective is accepted by one explicit route: after the policy lands
-on `main`, Jason either (a) in a foreground manual bootstrap session creates an
-exact whole-body GitHub comment authenticated as user ID `35118` using
-REP-WORKFLOW-006 ASCII/LF, case, whitespace, and canonical-value rules:
+on `main`, Jason creates two exact whole-body GitHub comments in a foreground
+manual bootstrap session. GitHub must authenticate both comments as user ID
+`35118`. The first comment publishes the canonical objective snapshot:
+
+```text
+REPRESENT BOOTSTRAP OBJECTIVE SNAPSHOT v1
+<single-line-rfc8785-json>
+```
+
+The second comment approves that exact snapshot using REP-WORKFLOW-006 ASCII/LF,
+case, whitespace, and canonical-value rules:
 
 ```text
 REPRESENT BOOTSTRAP OBJECTIVE v1
 repository_id=<canonical-decimal>
 issue_id=<canonical-decimal>
+snapshot_comment_id=<canonical-decimal>
 objective_digest=<64-lowercase-hex>
 policy_commit_sha=<40-lowercase-hex>
 ```
 
-`objective_digest` is the standard SHA-256/RFC 8785 digest with domain
-`represent-bootstrap-objective-v1` of a closed
-`represent.bootstrap-objective/1` snapshot containing schema/domain,
-repository/issue IDs, objective, scope, success criteria, exclusions, and exact
-policy commit SHA under REP-WORKFLOW-005 bounds.
+The snapshot is a closed I-JSON object with exactly these members:
 
-The genesis ceremony binds the GitHub-assigned comment ID. Alternatively, once
-the autonomous intake exists, Jason approves the objective's canonical packet
-through REP-WORKFLOW-006. Creating, labelling, or linking the issue alone is not
-acceptance. The manual comment is evidence for this one genesis objective and
-is not reusable autonomous authority.
+- `schema`: string, exactly `represent.bootstrap-objective/1`;
+- `domain`: string, exactly `represent-bootstrap-objective-v1`;
+- `repository_id` and `issue_id`: canonical unsigned decimal strings satisfying
+  the identifier bounds in REP-WORKFLOW-005;
+- `objective`: nonempty UTF-8 string of at most 4,096 bytes;
+- `scope` and `success_criteria`: arrays of 1..100 nonempty UTF-8 strings, each
+  at most 2,048 bytes;
+- `explicit_exclusions`: an array of 0..100 nonempty UTF-8 strings, each at most
+  2,048 bytes; and
+- `policy_commit_sha`: a 40-character lowercase hexadecimal Git commit ID.
+
+Unknown or duplicate members, invalid I-JSON, invalid identifiers, and values
+outside these bounds fail closed. The JSON line must already equal its RFC 8785
+canonical serialization byte for byte; the receiver does not normalize it.
+The canonical JSON line is at most 49,152 UTF-8 bytes so the complete snapshot
+comment remains within the GitHub comment transport boundary.
+`objective_digest` is lowercase hexadecimal SHA-256 over ASCII
+`represent-bootstrap-objective-v1`, one zero byte, and the UTF-8 bytes of that
+exact canonical JSON line.
+
+`policy_commit_sha` is exactly the non-null `merge_commit_sha` returned by GitHub
+for the independently accepted policy pull request that targets `main` and lands
+the revision governing this bootstrap. The verifier requires that exact commit
+to be reachable from `refs/heads/main` and that its
+`docs/agent-automation-policy.md` blob equal the independently reviewed policy
+blob byte for byte. A pre-merge review subject or a later descendant commit is
+not eligible. The snapshot's repository and issue IDs must match the approval
+comment, and its policy SHA must equal the approval comment's
+`policy_commit_sha`.
+
+The one-time manual path is verified from the current GitHub REST issue-comment
+objects because these comments predate the webhook receiver. Both comments must
+belong to the same objective issue, have `user.id=35118` and `user.type=User`,
+and remain present with their exact expected bodies. The snapshot's canonical
+numeric comment ID must be less than the approval's comment ID; the verifier
+parses REST identifier number tokens losslessly under REP-WORKFLOW-006 rather
+than rounding them through IEEE-754 `number`. The snapshot's `created_at` must be
+no later than the approval's `created_at`. At verification,
+each comment must report `created_at=updated_at`; that proves only that the
+current GitHub object reports no edit and is not a substitute for immutable
+history. Absence, deletion, body mismatch, identity mismatch, or timestamp
+mismatch fails closed.
+
+The bootstrap evidence's `accepted_at` is exactly the approval comment REST
+object's `created_at` value. The later ceremony observation time is the genesis
+manifest's top-level `created_at` and does not alter acceptance time.
+
+The snapshot comment has the exact two-line body above with no trailing LF. The
+approval binds its GitHub-assigned ID through `snapshot_comment_id`. The signed
+genesis manifest durably carries both exact comment bodies and both assigned
+comment IDs; durability comes from that signed evidence rather than from mutable
+GitHub comments. Alternatively, once the autonomous intake exists, Jason
+approves the objective's canonical packet through REP-WORKFLOW-006. Creating,
+labelling, linking, or editing the issue alone is not acceptance. These manual
+comments are evidence for this one genesis objective and are not reusable
+autonomous authority.
 
 The repository should support an agentic operating model in which Jason chooses
 or approves bounded objectives and agents execute them autonomously until they
@@ -1105,9 +1161,13 @@ with `role` (`security-admin`, `journal-admin`, `root-custodian`, or
 `recovery-admin`), `principal_type` (`github-user` or `offline-principal`), and
 ASCII `principal_id`; array `initial_capability_gates` of every REP-WORKFLOW-020
 stage with boolean `enabled` (all false except journal observation); UTC
-`created_at`; closed `automation_objective` with decimal-string issue ID and
-acceptance comment ID, objective digest, policy commit SHA, and UTC acceptance
-time; `offline_root_key_id`; `offline_root_public_key` as unpadded
+`created_at`; closed `automation_objective` with exact members decimal-string
+`issue_id`, `snapshot_comment_id`, and `approval_comment_id`;
+`snapshot_comment_body` as a 1..65,536-byte UTF-8 string;
+`approval_comment_body` as a 1..1,024-byte ASCII string; lowercase-hex
+`objective_digest`; 40-lowercase-hex `policy_commit_sha`; and UTC
+`accepted_at` exactly equal to the approval comment's REST `created_at`;
+`offline_root_key_id`; `offline_root_public_key` as unpadded
 base64url raw 32-byte Ed25519 key; `algorithm`=`Ed25519`; `manifest_digest`; and
 closed `root_signature`. Unknown/duplicate fields fail.
 
@@ -1344,7 +1404,11 @@ external checkpoint permits only the declared initial observation gate. Missing
 or mismatched root pin, App/installation/config/admin/objective digest, registry,
 sequence-1 payload, WORM position, or checkpoint blocks all activation.
 Post-genesis changes must appear as later journalled and alerted records.
-Golden vectors cover every closed configuration payload and digest equation;
+Golden vectors cover both exact bootstrap comment bodies and IDs, current REST
+identity/edit/deletion checks, comment order, objective canonicalization and
+digest, exact approval `created_at` to `accepted_at` equality, the uniquely
+recorded policy merge commit and blob, every closed configuration payload, and
+every digest equation;
 unknown members, unsorted arrays, kind/payload mismatch, field mutation, kind
 substitution, registry frame/order/purpose/version/predecessor changes, or root
 signature mismatch fail. Installation fixtures separately reject
