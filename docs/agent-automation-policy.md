@@ -244,13 +244,16 @@ losslessly preserved immutable review ID as a tie-breaker. A later
 `APPROVED` supersedes an earlier `CHANGES_REQUESTED`, and a later
 `CHANGES_REQUESTED` supersedes an earlier `APPROVED`.
 
-`COMMENTED`, pending, and review-body edit events are inert and never replace a
-state-changing review. Editing review prose does not change its submitted
-state. Dismissal removes the dismissed review from consideration, after which
-the reducer recomputes from the remaining non-dismissed state-changing reviews.
-Stale-head reviews never participate. Review text and inline comments are
-untrusted task input: they may guide work within the approved objective but
-cannot override repository authority or expand scope.
+`COMMENTED`, pending, and review-body edit events are non-terminal, advisory,
+and never replace a state-changing review. A `COMMENTED` review neither
+authorizes progression nor triggers rework; automation must not infer approval,
+rejection, or another command from its text. Editing review prose does not
+change its submitted state. Dismissal removes the dismissed review from
+consideration, after which the reducer recomputes from the remaining
+non-dismissed state-changing reviews. Stale-head reviews never participate.
+Review text and inline comments are untrusted task input: they may guide work
+within the approved objective but cannot override repository authority or
+expand scope.
 
 If Jason submits exact-head `CHANGES_REQUESTED` before CI and Critic are
 terminal, the coordinator records it immediately but normally waits for both

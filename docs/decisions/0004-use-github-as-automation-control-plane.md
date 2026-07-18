@@ -48,6 +48,9 @@ Use GitHub as the canonical control plane for agent automation:
   waits for terminal CI and Critic so one combined Maintainer bundle contains
   all findings; sensitive findings may halt and escalate immediately, and an
   early approval cannot advance past pending or failed native gates;
+- Jason's `COMMENTED` reviews remain advisory and non-terminal; automation
+  neither advances nor requests rework from them and never infers intent from
+  review prose;
 - the ruleset requires exactly one human/code-owner approval from Jason plus the
   `validate`, `critic`, and `objective-authority` checks; Critic's App review is
   evidence and is not assumed to count toward the required approval total;
