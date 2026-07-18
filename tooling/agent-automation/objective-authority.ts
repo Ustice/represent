@@ -251,6 +251,24 @@ export interface ObjectiveAuthorityResult {
   readonly diagnostics: readonly string[];
 }
 
+export type GitHubStateAdmission =
+  | "trusted-current-state"
+  | "credentials-unavailable"
+  | "permissions-under-scoped";
+
+export type ObjectiveAuthorityAdmissionResult =
+  | {
+      readonly status: "evaluated";
+      readonly effectsExecutable: false;
+      readonly result: ObjectiveAuthorityResult;
+      readonly diagnostics: readonly string[];
+    }
+  | {
+      readonly status: "recovery";
+      readonly effectsExecutable: false;
+      readonly diagnostics: readonly string[];
+    };
+
 interface ValidCommand {
   readonly command: AuthorityCommand;
   readonly event: CommandCreatedEvent;
@@ -1293,4 +1311,28 @@ export const evaluateObjectiveAuthority = (
       ? ["objective title or body changed; a fresh exact /approve is required"]
       : [],
   });
+};
+
+export const admitObjectiveAuthorityEvaluation = (
+  admission: GitHubStateAdmission,
+  reconstructedInput: ObjectiveAuthorityInput,
+): ObjectiveAuthorityAdmissionResult => {
+  if (admission !== "trusted-current-state") {
+    return {
+      status: "recovery",
+      effectsExecutable: false,
+      diagnostics: [
+        admission === "credentials-unavailable"
+          ? "trusted GitHub state is unavailable"
+          : "GitHub permissions cannot reconstruct trusted current state",
+      ],
+    };
+  }
+
+  return {
+    status: "evaluated",
+    effectsExecutable: false,
+    result: evaluateObjectiveAuthority(reconstructedInput),
+    diagnostics: [],
+  };
 };
