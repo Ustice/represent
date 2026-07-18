@@ -41,6 +41,9 @@ Use GitHub as the canonical control plane for agent automation:
 - each Critic generation publishes one coherent review before its check: all
   inline findings and a concise summary are atomic in `CHANGES_REQUESTED`, and
   neither passing nor failing verdicts receive drip-fed findings afterward;
+- Critic may resolve only its own threads after exact-head rework verification;
+  no bot resolves Jason's threads, which remain blocking until Jason resolves
+  them, with the local watcher notifying when they are the sole remaining gate;
 - Critic reports only its own judgment: a failed `validate` check does not make
   Critic request changes when its independent review passes, while the
   coordinator still routes the CI failure into the one combined rework pass;

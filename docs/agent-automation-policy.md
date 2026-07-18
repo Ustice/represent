@@ -290,6 +290,14 @@ generation likewise uses one coherent `APPROVED` review before completing
 its terminal check. A later discovery waits for the next exact-head Critic
 generation and cannot mutate the completed verdict.
 
+Critic may resolve only review threads created by its allowlisted Review App,
+and only after it verifies the applicable rework on the current exact head. No
+bot may resolve a thread created by Jason. Jason's unresolved human threads
+remain a native blocking gate until Jason resolves them. When those human
+threads are the only remaining gate, the local watcher may notify Jason under
+REP-AUTO-016 using only the fixed work-item payload; it cannot resolve or
+reinterpret the thread.
+
 The review is human-readable evidence and a native place for discussion. It is
 not an authority input for merge eligibility, and the GitHub App review is not
 assumed to count toward GitHub's required approving-review count. The `critic`
@@ -576,6 +584,9 @@ Before activation, workflow tests or controlled repository exercises cover:
 - substantive Critic failure publishing all inline findings and its summary in
   one atomic `CHANGES_REQUESTED` review before the failed check, with no
   drip-fed findings after either terminal verdict;
+- Critic resolving only its own threads after exact-head rework verification,
+  every bot refusing to resolve Jason's threads, and the local watcher notifying
+  when unresolved human threads are the sole remaining gate;
 - failed `validate` with an independently `APPROVED`/successful Critic pair
   still producing exactly one coordinated rework pass from the CI failure;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
