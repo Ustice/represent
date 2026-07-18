@@ -210,7 +210,8 @@ history.
 Immediately before enabling auto-merge or performing any privileged state
 transition, the coordinator re-reads approval, revocation, issue revision, pull
 request head, review, named CI checks, the named Critic check, the named
-objective-authority check, and ruleset state. Any mismatch fails closed.
+objective-authority check, Draft/Ready state, current ready generation and actor,
+and ruleset state. Any mismatch fails closed.
 
 The revocation command becomes effective for integration when its handler makes
 the required objective-authority check non-successful and disables pending
@@ -228,13 +229,23 @@ head makes all earlier CI, Critic, and human approval signals stale.
 
 For each head:
 
-1. CI and Critic start independently.
-2. The coordinator waits for both to reach a terminal result.
-3. If either requests rework, the coordinator schedules at most one Maintainer
-   pass for that head and combines all available findings.
-4. If both pass, the coordinator requests Jason's review.
-5. Jason's `APPROVED` review makes that exact head eligible for auto-merge.
-6. Jason's `CHANGES_REQUESTED` review schedules one bounded Maintainer pass.
+1. The pull request is or returns to Draft; a new head invalidates every earlier
+   ready generation and human approval.
+2. CI and Critic start independently while the pull request remains Draft.
+3. The coordinator waits for independent `validate` and `critic` results and
+   the `objective-authority` authorization prerequisite to reach terminal
+   exact-head results.
+4. If any signal requests rework, the coordinator keeps or returns the pull
+   request to Draft and schedules at most one Maintainer pass for that head,
+   combining all available findings.
+5. Only after all three checks succeed does Publisher record a unique
+   exact-head ready generation and mark the pull request Ready for review.
+6. Any current exact-head Jason `APPROVED` review is the third independent merge
+   signal, including one submitted while Draft. If it already exists, Publisher
+   may enable auto-merge immediately after Ready; otherwise Publisher requests
+   Jason as code owner and his later approval enables it.
+7. Jason's `CHANGES_REQUESTED` review returns the pull request to Draft and
+   enters coordinated rework.
 
 For Jason, the decisive review is the latest non-dismissed **state-changing**
 review by immutable GitHub user ID `35118`, account type `User`, whose
@@ -256,19 +267,46 @@ within the approved objective but cannot override repository authority or
 expand scope.
 
 If Jason submits exact-head `CHANGES_REQUESTED` before CI and Critic are
-terminal, the coordinator records it immediately but normally waits for both
-independent signals. It then issues at most one combined Maintainer rework
-bundle for that head containing the available human, CI, and Critic findings.
-A sensitive finding may halt and escalate immediately under REP-AUTO-019 rather
-than waiting. An early exact-head `APPROVED` review is recorded but cannot
-advance while any other required gate is pending or non-successful.
+terminal, the coordinator records it immediately, returns or keeps the pull
+request Draft, but normally waits for both independent signals. It then issues
+at most one combined Maintainer rework bundle for that head containing the
+available human, CI, and Critic findings. A sensitive finding may halt and
+escalate immediately under REP-AUTO-019 rather than waiting.
+
+An exact-head `APPROVED` review submitted while Draft is valid but cannot merge
+the Draft pull request or override missing gates. An unexpected Ready transition
+or a return to Draft invalidates the ready latch, while only a new head makes the
+exact-head approval stale. Only the allowlisted Publisher may automatically mark
+Ready after all exact-head bot gates pass. A premature or unauthorized Ready
+transition is audited, notified, and returned to Draft; it cannot override a
+missing gate. Jason manually converting the pull request to Draft is an
+administrative stop that cancels pending auto-merge and must not be
+automatically undone. Jason's native Ready-for-review action is the only resume
+request for that pause; no custom resume command exists. The coordinator clears
+the pause and records a new actor-bound ready generation only if every exact-head
+bot gate still passes. Otherwise it restores Draft and reports the remaining
+gates. Outside that manual resume, re-entering Ready requires allowlisted
+Publisher and a new uniquely recorded actor-bound ready generation after the
+exact-head checks are reverified. Repeated observation of the same valid
+transition is idempotent. Draft/Ready is a mutable workflow latch and merge
+safeguard, not durable evidence and never a replacement for bound reviews,
+checks, or transition records.
+
+The ready generation records the Ready transition's immutable timeline/event ID,
+actor ID, timestamp, and exact head SHA. Ready-to-Draft-to-Ready creates a new
+generation even on the same head but does not itself erase a current exact-head
+Jason approval. A newly queued, rerun, missing, or non-successful required
+bot-gate generation observed after Ready invalidates the latch, returns Draft,
+cancels auto-merge, and requires a new ready generation after success. A delayed
+event is reduced against its bound check/review/ready generation rather than
+arrival order.
 
 Critic produces two outputs for the same exact head:
 
 - a normal GitHub pull-request review with state `APPROVED` or
   `CHANGES_REQUESTED` and readable findings; and
-- the authoritative named `critic` check produced by the allowlisted Review
-  App or integration.
+- the authoritative named `critic` check: an immutable attestation by the
+  allowlisted Review App or integration that binds one unique review verdict.
 
 Critic must successfully publish the review, verify that GitHub bound it to the
 expected head SHA, and only then complete the authoritative `critic` check. The
@@ -281,6 +319,17 @@ success—with a sanitized infrastructure diagnostic, and the local notification
 path in REP-AUTO-016 and REP-AUTO-019 requests Jason's attention without raw or
 sensitive finding detail. This outcome is classified as review-publication
 infrastructure failure, not as Critic's review judgment.
+
+Every substantive review body or durable review record carries a unique
+generation marker. The `critic` attestation binds at least the immutable review
+node ID and decimal REST ID, review URL, workflow run ID and attempt, exact head
+SHA, verdict, generation marker, and a digest of the complete review body and
+findings. Authority-bearing decimal IDs are preserved losslessly. The check's
+`external_id`, `details_url`, and output and/or its linked append-only transition
+record must let the coordinator reconstruct and verify that exact tuple. An old
+review paired with a current check, a current review paired with an old check, a
+swapped verdict, a mismatched digest, a wrong generation, or more than one
+candidate review fails closed.
 
 Each Critic generation publishes one coherent review verdict. A substantive
 failure uses one atomic `CHANGES_REQUESTED` review containing every inline
@@ -301,11 +350,26 @@ reinterpret the thread.
 The review is human-readable evidence and a native place for discussion. It is
 not an authority input for merge eligibility, and the GitHub App review is not
 assumed to count toward GitHub's required approving-review count. The `critic`
-check is the machine-enforced Critic signal. A Critic `CHANGES_REQUESTED` review
-must correspond to a non-successful `critic` check, and a Critic `APPROVED`
+check is the machine-enforced immutable attestation, not a live assertion that
+the mutable review object still exists unchanged. A Critic `CHANGES_REQUESTED`
+review must correspond to a failed `critic` check, and a Critic `APPROVED`
 review may correspond to success only when no unresolved Critic finding remains.
-Missing, contradictory, wrong-head, or wrongly authored review/check pairs fail
-closed and cannot request Jason's review or enable auto-merge.
+The implementation never uses `neutral` or `skipped` as an intended passing
+conclusion. Before activation, controlled GitHub exercises must prove the native
+conclusion and required-check behavior for success, failure, cancellation,
+neutral, skipped, missing, and rerun cases.
+
+Later edit, dismissal, or deletion of the bound Critic review is audit-evidence
+loss. It triggers a sanitized transition, local notification, and preservation
+or recovery of available evidence before future automation actions, but it does
+not retroactively contradict a correctly issued immutable `critic` attestation.
+The coordinator verifies the attested tuple from the check and durable
+transition record rather than treating live review presence as a merge gate.
+GitHub cannot guarantee recovery of deleted prose: a digest proves equality
+only when content is available, and the durable record preserves only what it
+actually captured. Missing evidence therefore remains an observable audit gap
+and blocks future actions until the policy's required tuple is independently
+verifiable or Jason resolves recovery.
 
 Critic reports only its own review judgment. It does not copy, summarize, or
 mirror CI's conclusion. If `validate` fails but Critic finds no review defect,
@@ -329,14 +393,24 @@ compared losslessly. A queued or in-progress current generation prevents a
 terminal decision; an older completion arriving later is ignored.
 
 Same-head retries may recover only infrastructure failures that occurred before
-a substantive Critic verdict. Once Critic successfully publishes a substantive
-verdict, no later automated run or attempt may replace it on that head. In
-particular, a `CHANGES_REQUESTED` review is sticky for the SHA: no later
-same-head run may publish an authoritative `APPROVED` review or successful
-`critic` check. The coordinator continues to reduce that head as
-rework-required until Maintainer publishes a new head. Current-generation
-ordering selects among eligible infrastructure-recovery attempts before a
-substantive verdict; it does not supersede a completed substantive review.
+a substantive Critic verdict. A lost publication response or crash after atomic
+review publication but before check completion is reconciled idempotently: find
+the single review matching the generation marker, App identity, exact head SHA,
+verdict, and body/findings digest, then complete the same check and verdict. It
+does not publish another review, perform new substantive evaluation, or choose
+the opposite verdict. If zero or multiple reviews match, reconciliation fails
+closed and wakes Codex.
+
+Once Critic successfully publishes a substantive verdict, no later automated
+run or attempt may replace it on that head. In particular, a
+`CHANGES_REQUESTED` review is sticky for the SHA: reconciliation may complete
+only its failed check, and no later same-head run may publish an authoritative
+`APPROVED` review or successful `critic` check. The coordinator continues to
+reduce that head as rework-required until Maintainer publishes a new head.
+Current-generation ordering selects among eligible infrastructure-recovery
+attempts before substantive evaluation or the idempotent completion of an
+already published verdict; it does not supersede a completed substantive
+review.
 
 Only the current configured completed success conclusion passes. Failure,
 action-required, cancelled, timed-out, neutral, skipped, missing, or wrongly
@@ -371,7 +445,9 @@ pull request only when all of these are currently true for the same head SHA:
 - current-phase and traceability requirements are satisfied;
 - CI passed;
 - Critic passed without unresolved requested changes;
-- Jason submitted an `APPROVED` review for that head;
+- the pull request is Ready under the current allowlisted-Publisher ready
+  generation;
+- Jason submitted a current `APPROVED` review for that exact head;
 - required review threads are resolved; and
 - the repository ruleset reports no unmet requirement.
 
@@ -390,6 +466,9 @@ change it.
 Enabling auto-merge is not a merge bypass. GitHub performs the merge only after
 its native protections remain satisfied. Automation does not push directly to
 `main`, dismiss reviews, reduce required checks, or use bypass authority.
+Auto-merge is cancelled if the pull request returns to Draft, its head changes,
+its ready generation becomes invalid, or Jason issues an administrative Draft
+stop.
 
 ## Maintenance and decision escalation
 
@@ -545,7 +624,9 @@ object IDs plus the immutable target and revision. Repeated delivery, restart,
 delayed completion, or out-of-order observation must converge on one approval
 state, one mutable status summary, one append-only transition per logical
 event, one branch and pull request per work item, one current Critic result per
-head, and at most one Maintainer pass per failed head.
+head, one uniquely bound ready generation per eligible transition, and at most
+one Maintainer pass per failed head. Lost responses reconcile by immutable IDs
+and generation markers rather than creating replacement substantive events.
 
 ### REP-AUTO-024 — State model
 
@@ -558,10 +639,13 @@ edit returns an approved or executing objective to `proposed` before new work.
 
 An automation-owned pull request has these per-head states:
 
-`new-head → ci-and-critic-running → rework-required | human-review-required → auto-merge-enabled → merged`
+`new-head/draft → bot-gates-running/draft → rework-required/draft | ready-generation/ready → human-review-required/ready → auto-merge-enabled/ready → merged`
 
-Every transition compares the current GitHub object IDs and head SHA. An
-unexpected state or missing prerequisite stops rather than guessing.
+Any new head or authorized rework returns to Draft and invalidates the earlier
+ready generation. Jason's manual Draft transition is an administrative stop.
+Every transition compares the current GitHub object IDs, head SHA, actor, and
+ready generation. An unexpected state or missing prerequisite stops rather than
+guessing.
 
 ### REP-AUTO-025 — Trust roots and recovery
 
@@ -593,6 +677,10 @@ Before activation, workflow tests or controlled repository exercises cover:
 - a new head invalidating CI, Critic, and human approval;
 - Critic publishing matching `APPROVED`/successful `critic` and
   `CHANGES_REQUESTED`/non-successful `critic` review-check pairs;
+- the `critic` attestation uniquely binding review node/REST IDs, URL, workflow
+  run/attempt, exact SHA, verdict, generation marker, and body/findings digest;
+- old-review/current-check, current-review/old-check, swapped-verdict,
+  wrong-digest, wrong-generation, duplicate-review, and lost-response cases;
 - the `critic` check remaining pending until GitHub confirms the matching
   exact-head review, for both passing and rework outcomes;
 - failed or delayed Critic review publication never allowing the `critic` check
@@ -600,6 +688,14 @@ Before activation, workflow tests or controlled repository exercises cover:
 - bounded review-publication retries exhausting into a failed `critic` check,
   sanitized infrastructure evidence, and a content-free local Codex
   notification rather than a fabricated Critic judgment;
+- crash after atomic `APPROVED` or `CHANGES_REQUESTED` publication but before
+  check completion reconciling the uniquely marked review into the same verdict
+  and check without new evaluation or a duplicate review;
+- post-attestation Critic review edit, dismissal, or deletion preserving the
+  immutable check outcome, recording honest audit-evidence loss, notifying, and
+  blocking future action until the required tuple is verifiable or recovered;
+- native GitHub exercises proving that `critic` success passes, failure blocks,
+  and `neutral` or `skipped` never serve as an intended passing conclusion;
 - substantive Critic failure publishing all inline findings and its summary in
   one atomic `CHANGES_REQUESTED` review before the failed check, with no
   drip-fed findings after either terminal verdict;
@@ -612,15 +708,30 @@ Before activation, workflow tests or controlled repository exercises cover:
   failing `critic` with only a sanitized role-conflict diagnostic, waking Codex,
   and requiring a new independent Critic run without an approval;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
-  review-check pairs failing closed;
+  review-check pairs at issuance or reconciliation failing closed, distinct
+  from separately handled post-attestation evidence loss;
 - a Critic App `APPROVED` review never satisfying the one required
   human/code-owner approval;
 - Jason approving, requesting changes, commenting, editing, and dismissing a
   review;
 - early Jason `CHANGES_REQUESTED` waiting for terminal CI and Critic before one
   combined human/CI/Critic rework bundle, except immediate sensitive escalation;
-- early Jason `APPROVED` remaining unable to advance while another required
-  gate is pending or non-successful;
+- Jason exact-head `APPROVED` while Draft remaining unable to merge or override
+  pending gates, then becoming usable immediately after Publisher marks Ready;
+- Ready without a current Jason approval requesting review and advancing only
+  after his later exact-head approval;
+- Publisher marking Ready only after exact-head `validate`, `critic`, and
+  `objective-authority` success, with repeated observation idempotent;
+- premature or unauthorized Ready returning to Draft with audit/notification,
+  and Jason's manual Draft stop cancelling auto-merge without automatic undo;
+- Jason's native Ready-for-review action resuming a manual Draft pause only when
+  all exact-head bot gates still pass, otherwise restoring Draft and reporting
+  remaining gates, with no custom resume command;
+- Ready-to-Draft-to-Ready toggles creating a new ready generation while
+  preserving current same-head approval, a new head forcing Draft and staling
+  that approval, and stale events never advancing;
+- review/check evidence arriving after a Ready transition being reduced against
+  the recorded exact-head generation rather than the mutable Draft/Ready latch;
 - same-head `APPROVED → COMMENTED`, `CHANGES_REQUESTED → COMMENTED`, edited
   approval, dismissal, and alternating approval/change-request sequences;
 - queued infrastructure recovery attempts and out-of-order completion from an
