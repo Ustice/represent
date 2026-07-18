@@ -313,6 +313,15 @@ Critic still submits `APPROVED` and a successful `critic` check. The independent
 failed `validate` check blocks progression, and the coordinator combines all
 terminal findings into the single Maintainer pass for that head.
 
+Before reviewing, Critic verifies that its GitHub App/integration identity did
+not author, co-author, or push any commit in the exact head transition under
+review. A role conflict prohibits approval and substantive review. The
+`critic` check fails with a sanitized `role-conflict` diagnostic, the local
+watcher notifies Jason under REP-AUTO-016, and progression requires a new run by
+an independent Critic identity. This preflight failure is not a Critic judgment
+and is the explicit exception to review-before-check publication; it must never
+produce an `APPROVED` review or successful check.
+
 The current `critic` generation is the latest configured workflow run by
 `(created_at, workflow_run_id)`, then highest `run_attempt`, with the named check
 selected by `(created_at, check_run_id)` inside that attempt. All IDs are
@@ -589,6 +598,9 @@ Before activation, workflow tests or controlled repository exercises cover:
   when unresolved human threads are the sole remaining gate;
 - failed `validate` with an independently `APPROVED`/successful Critic pair
   still producing exactly one coordinated rework pass from the CI failure;
+- Critic authorship, co-authorship, or push involvement in the exact head
+  failing `critic` with only a sanitized role-conflict diagnostic, waking Codex,
+  and requiring a new independent Critic run without an approval;
 - missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
   review-check pairs failing closed;
 - a Critic App `APPROVED` review never satisfying the one required

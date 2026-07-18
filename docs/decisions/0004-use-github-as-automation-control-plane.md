@@ -47,6 +47,9 @@ Use GitHub as the canonical control plane for agent automation:
 - Critic reports only its own judgment: a failed `validate` check does not make
   Critic request changes when its independent review passes, while the
   coordinator still routes the CI failure into the one combined rework pass;
+- a Critic identity that authored, co-authored, or pushed the exact head cannot
+  approve or substantively review it; `critic` fails with a sanitized role
+  conflict, wakes Codex, and requires a new independent Critic run;
 - Jason's early exact-head change request is recorded immediately but normally
   waits for terminal CI and Critic so one combined Maintainer bundle contains
   all findings; sensitive findings may halt and escalate immediately, and an
