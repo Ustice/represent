@@ -162,26 +162,24 @@ const result = (
   state: DecisionWatcherResult["state"],
   diagnostics: string,
   overrides: Partial<DecisionWatcherResult> = {},
-): DecisionWatcherResult => ({
-  state,
-  activationStatus: "default-off",
-  effectsExecutable: false,
-  authorityStateChanged: false,
-  reads: [],
-  notifications: [],
-  validators: [],
-  notifiedState: [],
-  nextPollAt: null,
-  retryAt: null,
-  retryAttempt: input.retryAttempt,
-  diagnostics: [diagnostics],
-  ...overrides,
-});
+) =>
+  ({
+    state,
+    activationStatus: "default-off",
+    effectsExecutable: false,
+    authorityStateChanged: false,
+    reads: [],
+    notifications: [],
+    validators: [],
+    notifiedState: [],
+    nextPollAt: null,
+    retryAt: null,
+    retryAttempt: input.retryAttempt,
+    diagnostics: [diagnostics],
+    ...overrides,
+  }) as const;
 
-const stopped = (
-  input: DecisionWatcherInput,
-  diagnostic: string,
-): DecisionWatcherResult =>
+const stopped = (input: DecisionWatcherInput, diagnostic: string) =>
   result(input, "stopped", diagnostic, {
     validators: input.validators,
     notifiedState: input.previouslyNotified,
@@ -194,36 +192,32 @@ const validatorFor = (
   const matches = validators.filter((stored) =>
     sameEndpoint(stored.endpoint, endpoint),
   );
-  return matches.length === 1 ? validatorSchema.parse(matches[0]) : null;
+  if (matches.length !== 1) {
+    return null;
+  }
+  const { etag, lastModified } = matches[0]!;
+  return {
+    ...(etag === undefined ? {} : { etag }),
+    ...(lastModified === undefined ? {} : { lastModified }),
+  } as const;
 };
 
 const plannedRead = (
   input: DecisionWatcherInput,
   endpoint: WatchEndpoint,
   unconditional = false,
-): PlannedGitHubRead => ({
-  method: "GET",
-  endpoint,
-  conditional: unconditional ? null : validatorFor(input.validators, endpoint),
-  credentialCapability: "github-read-only",
-  serialized: true,
-});
+) =>
+  ({
+    method: "GET",
+    endpoint,
+    conditional: unconditional
+      ? null
+      : validatorFor(input.validators, endpoint),
+    credentialCapability: "github-read-only",
+    serialized: true,
+  }) as const;
 
-type ReconciliationProgress =
-  | { readonly kind: "invalid"; readonly diagnostic: string }
-  | {
-      readonly kind: "pending";
-      readonly nextEndpoint: WatchEndpoint;
-      readonly roots: readonly WatchEndpoint[];
-    }
-  | {
-      readonly kind: "complete";
-      readonly roots: readonly WatchEndpoint[];
-    };
-
-const responseProgress = (
-  input: DecisionWatcherInput,
-): ReconciliationProgress => {
+const responseProgress = (input: DecisionWatcherInput) => {
   type Progress = {
     readonly rootIndex: number;
     readonly expected: WatchEndpoint | undefined;
@@ -276,15 +270,15 @@ const responseProgress = (
   );
 
   if (progress.diagnostic) {
-    return { kind: "invalid", diagnostic: progress.diagnostic };
+    return { kind: "invalid", diagnostic: progress.diagnostic } as const;
   }
   return progress.expected
-    ? {
+    ? ({
         kind: "pending",
         nextEndpoint: progress.expected,
         roots: progress.roots,
-      }
-    : { kind: "complete", roots: progress.roots };
+      } as const)
+    : ({ kind: "complete", roots: progress.roots } as const);
 };
 
 const updatedValidators = (
@@ -332,7 +326,7 @@ const backoff = (
     { readonly kind: "rate-limited" }
   > | null,
   reason: "rate-limit" | "outage",
-): DecisionWatcherResult => {
+) => {
   const attempt = input.retryAttempt + 1;
   if (attempt > input.config.maxRetryAttempts) {
     return stopped(
@@ -577,14 +571,17 @@ export const evaluateDecisionWatcher = (
         !earlier || actionFingerprint(earlier) !== actionFingerprint(action)
       );
     })
-    .map((action): PlannedNotificationLaunch => ({
-      payload: action.payload,
-      sandbox: "read-only",
-      repositoryMutationCredentials: false,
-      externalConnectors: false,
-      toolCapableWorkPermitted: false,
-      requiresFreshJasonInstruction: true,
-    }));
+    .map(
+      (action) =>
+        ({
+          payload: action.payload,
+          sandbox: "read-only",
+          repositoryMutationCredentials: false,
+          externalConnectors: false,
+          toolCapableWorkPermitted: false,
+          requiresFreshJasonInstruction: true,
+        }) as const,
+    );
   const pollInterval = currentActions.length
     ? input.config.activePollIntervalMs
     : input.config.idlePollIntervalMs;

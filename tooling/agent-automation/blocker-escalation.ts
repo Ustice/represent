@@ -1,11 +1,11 @@
 import * as z from "zod";
+import { isDeepStrictEqual } from "node:util";
 
 import {
   blockerClassificationSchema,
   canonicalDecimalIdSchema,
   githubObjectIdSchema,
   nonBlankStringSchema,
-  notificationPayloadSchema,
   repositoryUrlSchema,
   revisionMarkerSchema,
   sameGitHubObject,
@@ -34,20 +34,27 @@ const publicEvidenceShape = {
   smallestDecisionRequired: nonBlankStringSchema,
 } as const;
 const publicEvidenceSchema = z.object(publicEvidenceShape);
+const ordinarySignalSchema = z.object({
+  kind: z.literal("ordinary-implementation-failure"),
+  code: z.literal("implementation-failure"),
+});
+const designBlockerSignalSchema = z.object({
+  kind: z.literal("design-blocker"),
+  code: blockerClassificationSchema,
+  evidence: publicEvidenceSchema,
+});
+const sensitiveBlockerSignalSchema = z.object({
+  kind: z.literal("sensitive-blocker"),
+  code: sensitiveClassificationSchema,
+});
+const blockerSignalSchema = z.discriminatedUnion("kind", [
+  designBlockerSignalSchema,
+  sensitiveBlockerSignalSchema,
+]);
 const signalSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("ordinary-implementation-failure"),
-    code: z.literal("implementation-failure"),
-  }),
-  z.object({
-    kind: z.literal("design-blocker"),
-    code: blockerClassificationSchema,
-    evidence: publicEvidenceSchema,
-  }),
-  z.object({
-    kind: z.literal("sensitive-blocker"),
-    code: sensitiveClassificationSchema,
-  }),
+  ordinarySignalSchema,
+  designBlockerSignalSchema,
+  sensitiveBlockerSignalSchema,
 ]);
 const publicRecordSchema = z.discriminatedUnion("disclosure", [
   z.object({
@@ -106,6 +113,10 @@ const inputWithoutTransitionsSchema = z.object({
   signal: signalSchema,
 });
 const transitionsSchema = z.array(transitionRecordSchema);
+const blockerInputSchema = inputWithoutTransitionsSchema.extend({
+  signal: blockerSignalSchema,
+  existingTransitions: transitionsSchema,
+});
 
 export type PublicBlockerEvidence = DeepReadonly<
   z.infer<typeof publicEvidenceSchema>
@@ -132,6 +143,7 @@ export type BlockerEscalationInput = DeepReadonly<
     existingTransitions: z.infer<typeof transitionsSchema>;
   }
 >;
+type BlockerSignal = DeepReadonly<z.infer<typeof blockerSignalSchema>>;
 
 export interface BlockerEscalationResult {
   readonly state: "continue" | "blocked" | "recovery";
@@ -147,19 +159,20 @@ export interface BlockerEscalationResult {
 const outcome = (
   state: BlockerEscalationResult["state"],
   overrides: Partial<BlockerEscalationResult> = {},
-): BlockerEscalationResult => ({
-  state,
-  dependentWorkPermitted: false,
-  activationStatus: "default-off",
-  effectsExecutable: false,
-  transitionsToAppend: [],
-  notification: null,
-  rotationOrRevocationRequired: false,
-  diagnostics: [],
-  ...overrides,
-});
+) =>
+  ({
+    state,
+    dependentWorkPermitted: false,
+    activationStatus: "default-off",
+    effectsExecutable: false,
+    transitionsToAppend: [],
+    notification: null,
+    rotationOrRevocationRequired: false,
+    diagnostics: [],
+    ...overrides,
+  }) as const;
 
-const recovery = (diagnostic: string): BlockerEscalationResult =>
+const recovery = (diagnostic: string) =>
   outcome("recovery", { diagnostics: [diagnostic] });
 
 const authorityLinksAllowed = (
@@ -170,26 +183,21 @@ const authorityLinksAllowed = (
     prefixes.some((prefix) => link.startsWith(prefix)),
   );
 
-const publicRecordFor = (
-  signal: Exclude<
-    EscalationSignal,
-    { readonly kind: "ordinary-implementation-failure" }
-  >,
-): PublicBlockerRecord =>
+const publicRecordFor = (signal: BlockerSignal) =>
   signal.kind === "design-blocker"
-    ? {
+    ? ({
         disclosure: "reviewed-public-evidence",
         marker: "<!-- represent-design-blocker -->",
         title: "Automation stopped for a design decision",
         classification: signal.code,
         ...signal.evidence,
-      }
-    : {
+      } as const)
+    : ({
         disclosure: "fixed-sensitive-marker",
         marker: "<!-- represent-sensitive-blocker -->",
         title: "Private human review required",
         classification: signal.code,
-      };
+      } as const);
 
 const logicalKey = (payload: BlockerTransitionPayload) =>
   `blocker:${payload.workItemId.nodeId}:${payload.workItemRevision.eventId}:${payload.sourceEventId}:${payload.classification}`;
@@ -237,22 +245,11 @@ export const evaluateBlockerEscalation = (
     });
   }
 
-  const transitions = transitionsSchema.safeParse(
-    untrustedInput.existingTransitions,
-  );
-  if (!transitions.success) {
+  const blocker = blockerInputSchema.safeParse(untrustedInput);
+  if (!blocker.success) {
     return recovery("blocker evidence contains invalid fixed fields");
   }
-  const input: BlockerEscalationInput & {
-    readonly signal: Exclude<
-      EscalationSignal,
-      { readonly kind: "ordinary-implementation-failure" }
-    >;
-  } = {
-    ...parsed.data,
-    signal: parsed.data.signal,
-    existingTransitions: transitions.data,
-  };
+  const input = blocker.data;
 
   if (
     input.signal.kind === "design-blocker" &&
@@ -274,7 +271,7 @@ export const evaluateBlockerEscalation = (
 
   const rotationOrRevocationRequired =
     input.signal.code === "suspected-credential-exposure";
-  const payload: BlockerTransitionPayload = {
+  const payload = {
     kind: "blocker-escalated",
     repositoryId: input.config.repositoryId,
     workItemId: input.workItemId,
@@ -289,7 +286,7 @@ export const evaluateBlockerEscalation = (
     activationStatus: "default-off",
     publicRecord: publicRecordFor(input.signal),
     rotationOrRevocationRequired,
-  };
+  } as const;
   const key = logicalKey(payload);
   const matching = input.existingTransitions.filter(
     (record) => record.logicalKey === key,
@@ -301,10 +298,7 @@ export const evaluateBlockerEscalation = (
     );
   }
   const existing = matching[0];
-  if (
-    existing &&
-    JSON.stringify(existing.payload) !== JSON.stringify(payload)
-  ) {
+  if (existing && !isDeepStrictEqual(existing.payload, payload)) {
     return recovery(
       "blocker transition conflicts with current immutable evidence",
     );
@@ -314,13 +308,13 @@ export const evaluateBlockerEscalation = (
     transitionsToAppend: existing ? [] : [{ logicalKey: key, payload }],
     notification: existing
       ? null
-      : notificationPayloadSchema.parse({
+      : ({
           repositoryId: input.config.repositoryId.restId,
           workItemId: input.workItemId.restId,
           workItemNumber: input.workItemId.number,
           classification: input.signal.code,
           githubUrl: `${input.config.publicRepositoryUrl}/issues/${input.workItemId.number}`,
-        }),
+        } as const),
     rotationOrRevocationRequired,
     diagnostics: [
       rotationOrRevocationRequired
