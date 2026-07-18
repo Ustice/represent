@@ -1,4 +1,5 @@
 node_modules
 coverage
 dist
+docs/agent-automation-policy.md
 pnpm-lock.yaml

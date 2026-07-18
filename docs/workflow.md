@@ -4,6 +4,9 @@ GitHub issues are the traceable bridge from project intent to reviewed design,
 semantic tests, implementation, and evidence. Chat history is not part of the
 chain of authority.
 
+Autonomous agent decision rights and execution are governed by the
+[agent automation policy](agent-automation-policy.md).
+
 ## Traceability convention
 
 Every design and implementation issue links to a project objective issue. Use
