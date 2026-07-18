@@ -287,8 +287,8 @@ failure uses one atomic `CHANGES_REQUESTED` review containing every inline
 finding plus a concise summary, then completes `critic` as failure. A passing
 generation likewise uses one coherent `APPROVED` review before completing
 `critic` as success. Critic does not drip-feed comments or new findings after
-its terminal check. A later discovery waits for the next exact-head Critic
-generation and cannot mutate the completed verdict.
+its terminal check. A later discovery waits for a new head and its Critic
+generation; it cannot mutate or rerun the completed substantive verdict.
 
 Critic may resolve only review threads created by its allowlisted Review App,
 and only after it verifies the applicable rework on the current exact head. No
@@ -327,6 +327,16 @@ The current `critic` generation is the latest configured workflow run by
 selected by `(created_at, check_run_id)` inside that attempt. All IDs are
 compared losslessly. A queued or in-progress current generation prevents a
 terminal decision; an older completion arriving later is ignored.
+
+Same-head retries may recover only infrastructure failures that occurred before
+a substantive Critic verdict. Once Critic successfully publishes a substantive
+verdict, no later automated run or attempt may replace it on that head. In
+particular, a `CHANGES_REQUESTED` review is sticky for the SHA: no later
+same-head run may publish an authoritative `APPROVED` review or successful
+`critic` check. The coordinator continues to reduce that head as
+rework-required until Maintainer publishes a new head. Current-generation
+ordering selects among eligible infrastructure-recovery attempts before a
+substantive verdict; it does not supersede a completed substantive review.
 
 Only the current configured completed success conclusion passes. Failure,
 action-required, cancelled, timed-out, neutral, skipped, missing, or wrongly
@@ -613,8 +623,14 @@ Before activation, workflow tests or controlled repository exercises cover:
   gate is pending or non-successful;
 - same-head `APPROVED → COMMENTED`, `CHANGES_REQUESTED → COMMENTED`, edited
   approval, dismissal, and alternating approval/change-request sequences;
-- Critic success followed by a queued rerun and failure, plus out-of-order
-  completion from an older run/attempt;
+- queued infrastructure recovery attempts and out-of-order completion from an
+  older run/attempt before any substantive verdict;
+- same-head infrastructure failure recovering before any substantive verdict;
+- same-head automated rerun after substantive `APPROVED` being rejected rather
+  than replacing the completed verdict;
+- same-head reruns after substantive `CHANGES_REQUESTED` remaining
+  rework-required and unable to publish authoritative approval/success until a
+  new head exists;
 - authority-bearing GitHub IDs above `2^53`;
 - absent, renamed, wrongly integrated, or non-successful `validate`, `critic`,
   or `objective-authority` checks;

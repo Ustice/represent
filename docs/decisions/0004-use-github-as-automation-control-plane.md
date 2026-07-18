@@ -50,6 +50,11 @@ Use GitHub as the canonical control plane for agent automation:
 - a Critic identity that authored, co-authored, or pushed the exact head cannot
   approve or substantively review it; `critic` fails with a sanitized role
   conflict, wakes Codex, and requires a new independent Critic run;
+- same-head Critic retries may recover infrastructure failures only before a
+  substantive verdict; no automated rerun replaces a completed substantive pass
+  or failure, and after `CHANGES_REQUESTED` that SHA cannot receive an
+  authoritative approval or successful `critic` check until rework publishes a
+  new head;
 - Jason's early exact-head change request is recorded immediately but normally
   waits for terminal CI and Critic so one combined Maintainer bundle contains
   all findings; sensitive findings may halt and escalate immediately, and an
