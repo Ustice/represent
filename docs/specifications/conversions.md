@@ -2,10 +2,25 @@
 
 ## Status and scope
 
-Status: draft. Owning design issue:
-[#17](https://github.com/Ustice/represent/issues/17). This draft requires
-independent algebraic-consistency and application-developer review before
-acceptance.
+Status: accepted. Owning design issue:
+[#17](https://github.com/Ustice/represent/issues/17). `REP-CONV-001` through
+`REP-CONV-007` were accepted at exact commit
+[`02fb190`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7)
+and merged in [pull request #18](https://github.com/Ustice/represent/pull/18).
+
+## Review record
+
+- Reviewers: independent algebraic-consistency reviewer; independent skeptical
+  application-developer and terminology reviewer.
+- Outcome: Accepted.
+- Clauses reviewed: `REP-CONV-001` through `REP-CONV-007`.
+- Exact reviewed commit:
+  [`02fb190c7e3cc2d003baddc18d708d616f270ac7`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7).
+- Evidence:
+  [independent review record](https://github.com/Ustice/represent/issues/17#issuecomment-5009728811)
+  and
+  [exact-commit Review Agent approval](https://github.com/Ustice/represent/pull/18#pullrequestreview-4727593025).
+- Unresolved disagreements: None recorded.
 
 This specification defines the evidence needed to describe one direction of a
 conversion as lossless and to demonstrate information loss through a projection.
