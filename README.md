@@ -56,6 +56,7 @@ design or implementation changes.
 
 The repository contains the engineering process, architecture boundaries, a
 normative testing and certification specification, and a reference
-acceptance-case outline. Conversion guarantees `REP-CONV-001` through
-`REP-CONV-007` are accepted; schema, representation, and operation
-specifications remain deferred.
+acceptance-case outline. See the
+[specification index](docs/specifications/README.md) for current specification
+status. Semantic design remains Phase -1 work with no production or
+compatibility status.

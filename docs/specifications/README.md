@@ -6,9 +6,9 @@ their required independent review is recorded.
 
 Current specifications:
 
-- [Conversion guarantees](conversions.md) is an accepted, independently reviewed
-  specification defining directional, scoped losslessness and collision evidence
-  for projection-related information loss.
+- [Conversion guarantees](conversions.md) is the accepted specification for
+  directional, scoped losslessness and collision evidence for projection-related
+  information loss.
 - [Testing and certification](testing-and-certification.md) defines semantic
   test quality, discrimination checks, adapter certification, and semantic
   coverage for the engineering system.

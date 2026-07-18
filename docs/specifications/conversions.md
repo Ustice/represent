@@ -274,16 +274,3 @@ executable semantic tests require a separately linked issue after acceptance.
 None within this issue's bounded scope. Broader equality selection, fallible
 conversions, guarantee composition, and multiple-path consistency remain
 deferred in [`research/open-questions.md`](../../research/open-questions.md).
-
-## Review record
-
-- Reviewers: independent algebraic-consistency reviewer; independent skeptical
-  application-developer and terminology reviewer.
-- Outcome: Accepted.
-- Decision: accepted `REP-CONV-001` through `REP-CONV-007` at exact commit
-  [`02fb190c7e3cc2d003baddc18d708d616f270ac7`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7).
-- Evidence:
-  [independent review record](https://github.com/Ustice/represent/issues/17#issuecomment-5009728811)
-  and
-  [exact-commit Review Agent approval](https://github.com/Ustice/represent/pull/18#pullrequestreview-4727593025).
-- Unresolved disagreements: None recorded.
