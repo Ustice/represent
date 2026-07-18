@@ -277,9 +277,13 @@ deferred in [`research/open-questions.md`](../../research/open-questions.md).
 
 ## Review record
 
-- Reviewer: pending independent review
-- Outcome: pending
-- Decision: review `REP-CONV-001` through `REP-CONV-007`
-- Evidence: [issue #17](https://github.com/Ustice/represent/issues/17) and the
-  acceptance examples above
-- Unresolved disagreements: None recorded; review pending
+- Reviewers: independent algebraic-consistency reviewer; independent skeptical
+  application-developer and terminology reviewer.
+- Outcome: Accepted.
+- Decision: accepted `REP-CONV-001` through `REP-CONV-007` at exact commit
+  [`02fb190c7e3cc2d003baddc18d708d616f270ac7`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7).
+- Evidence:
+  [independent review record](https://github.com/Ustice/represent/issues/17#issuecomment-5009728811)
+  and
+  [exact-commit Review Agent approval](https://github.com/Ustice/represent/pull/18#pullrequestreview-4727593025).
+- Unresolved disagreements: None recorded.
