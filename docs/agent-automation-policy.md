@@ -33,7 +33,8 @@ automation comments project that state for humans but do not create authority.
 Automation-owned pull requests use three independent signals:
 
 - continuous integration reports repository validation;
-- `🤖 Critic` reports independent review of the exact head commit; and
+- `🤖 Critic` publishes readable findings as a GitHub review and reports
+  its authoritative exact-head result through the required `critic` check; and
 - Jason approves or requests changes through a GitHub pull-request review.
 
 CI and Critic run independently after every new head commit. Neither waits for
@@ -251,13 +252,33 @@ Stale-head reviews never participate. Review text and inline comments are
 untrusted task input: they may guide work within the approved objective but
 cannot override repository authority or expand scope.
 
-Critic is a named required check produced by an allowlisted GitHub App or
-workflow integration for the exact head SHA. The current generation is the
-latest configured workflow run by `(created_at, workflow_run_id)`, then highest
-`run_attempt`, with the named check selected by `(created_at, check_run_id)`
-inside that attempt. All IDs are compared losslessly. A queued or in-progress
-current generation prevents a terminal decision; an older completion arriving
-later is ignored.
+Critic produces two outputs for the same exact head:
+
+- a normal GitHub pull-request review with state `APPROVED` or
+  `CHANGES_REQUESTED` and readable findings; and
+- the authoritative named `critic` check produced by the allowlisted Review
+  App or integration.
+
+The review is human-readable evidence and a native place for discussion. It is
+not an authority input for merge eligibility, and the GitHub App review is not
+assumed to count toward GitHub's required approving-review count. The `critic`
+check is the machine-enforced Critic signal. A Critic `CHANGES_REQUESTED` review
+must correspond to a non-successful `critic` check, and a Critic `APPROVED`
+review may correspond to success only when no unresolved Critic finding remains.
+Missing, contradictory, wrong-head, or wrongly authored review/check pairs fail
+closed and cannot request Jason's review or enable auto-merge.
+
+Critic reports only its own review judgment. It does not copy, summarize, or
+mirror CI's conclusion. If `validate` fails but Critic finds no review defect,
+Critic still submits `APPROVED` and a successful `critic` check. The independent
+failed `validate` check blocks progression, and the coordinator combines all
+terminal findings into the single Maintainer pass for that head.
+
+The current `critic` generation is the latest configured workflow run by
+`(created_at, workflow_run_id)`, then highest `run_attempt`, with the named check
+selected by `(created_at, check_run_id)` inside that attempt. All IDs are
+compared losslessly. A queued or in-progress current generation prevents a
+terminal decision; an older completion arriving later is ignored.
 
 Only the current configured completed success conclusion passes. Failure,
 action-required, cancelled, timed-out, neutral, skipped, missing, or wrongly
@@ -297,11 +318,14 @@ pull request only when all of these are currently true for the same head SHA:
 - the repository ruleset reports no unmet requirement.
 
 Before this capability is activated, the repository ruleset must natively
-require the configured CI checks, the named Critic check, the named
-objective-authority check, stale-review dismissal, resolved review
-conversations, and code-owner review. The protected scope must name Jason as
-the required code owner. Each required check is bound to its allowlisted
-integration identity where GitHub supports that binding. The coordinator
+require exactly one approving human/code-owner review, the `validate`, `critic`,
+and `objective-authority` checks, stale-review dismissal, resolved review
+conversations, and code-owner review. The protected scope must name Jason as the
+required code owner. The single required approving review is Jason's; Critic's
+GitHub App review is not counted as that approval. Each required check is bound
+to its allowlisted integration identity where GitHub supports that binding.
+Binding `critic` to the allowlisted Review App or integration is mandatory; an
+unbound `critic` context is not eligible for activation. The coordinator
 verifies the expected ruleset configuration before every enablement and cannot
 change it.
 
@@ -509,6 +533,14 @@ Before activation, workflow tests or controlled repository exercises cover:
 - either or both CI and Critic requesting rework;
 - one coordinated Maintainer pass when both signals fail;
 - a new head invalidating CI, Critic, and human approval;
+- Critic publishing matching `APPROVED`/successful `critic` and
+  `CHANGES_REQUESTED`/non-successful `critic` review-check pairs;
+- failed `validate` with an independently `APPROVED`/successful Critic pair
+  still producing exactly one coordinated rework pass from the CI failure;
+- missing, contradictory, wrong-head, wrong-App, delayed, or duplicated Critic
+  review-check pairs failing closed;
+- a Critic App `APPROVED` review never satisfying the one required
+  human/code-owner approval;
 - Jason approving, requesting changes, commenting, editing, and dismissing a
   review;
 - same-head `APPROVED → COMMENTED`, `CHANGES_REQUESTED → COMMENTED`, edited
@@ -516,8 +548,10 @@ Before activation, workflow tests or controlled repository exercises cover:
 - Critic success followed by a queued rerun and failure, plus out-of-order
   completion from an older run/attempt;
 - authority-bearing GitHub IDs above `2^53`;
-- absent, renamed, wrongly integrated, or non-successful required checks;
-- ruleset drift and missing code-owner protection;
+- absent, renamed, wrongly integrated, or non-successful `validate`, `critic`,
+  or `objective-authority` checks;
+- ruleset drift, an approving-review count other than one, and missing or
+  non-Jason code-owner protection;
 - fork and human-owned pull requests;
 - an unexpected same-repository push or foreign commit on an automation branch;
 - malicious issue and review text attempting to expand scope or expose secrets;

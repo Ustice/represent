@@ -29,6 +29,15 @@ Use GitHub as the canonical control plane for agent automation:
 - immutable GitHub user, repository, issue, comment, review, workflow, and
   delivery identifiers establish provenance;
 - pull-request head SHAs bind CI, Critic, human review, and rework outcomes;
+- Critic publishes a normal `APPROVED` or `CHANGES_REQUESTED` review for
+  readable findings and an authoritative `critic` required check bound to the
+  allowlisted Review App or integration and exact head SHA;
+- Critic reports only its own judgment: a failed `validate` check does not make
+  Critic request changes when its independent review passes, while the
+  coordinator still routes the CI failure into the one combined rework pass;
+- the ruleset requires exactly one human/code-owner approval from Jason plus the
+  `validate`, `critic`, and `objective-authority` checks; Critic's App review is
+  evidence and is not assumed to count toward the required approval total;
 - GitHub rulesets and auto-merge remain the final integration gate;
 - timelines, workflow runs, check runs, reviews, and audit records supply the
   durable evidence trail; and
@@ -88,6 +97,11 @@ rate headers and backoff behavior.
   canonicalization ceremony.
 - Rulesets, exact head SHAs, independent checks, and immutable actor IDs still
   fail closed around publication and merge.
+- Critic findings remain readable in GitHub review UI while the App-bound
+  `critic` check supplies the native merge gate; Jason remains the sole required
+  human/code-owner approval.
+- `validate` and `critic` remain independent evidence rather than one signal
+  echoing the other, so their disagreement remains visible and actionable.
 - GitHub account or platform compromise remains inside the trust boundary. The
   project accepts that risk at its current scale.
 - Local notification is unavailable while Jason's Mac is offline, but the
@@ -100,7 +114,9 @@ rate headers and backoff behavior.
 - Decision owner: Jason
 - Decision outcome: Accepted in the design session on 2026-07-18
 - Independent reviewer: adversarial security and workflow reviewer
-- Independent review outcome: Accepted after three review rounds on 2026-07-18
+- Independent review outcome: The original GitHub-first decision was accepted
+  after three review rounds on 2026-07-18. Independent review of the later
+  Critic review-plus-check refinement is pending.
 - Evidence reviewed: #9, #10 through #15, #25, #26, #27, PR #19, the live
   repository ruleset, the historical REP-WORKFLOW clauses, and replacement
   REP-AUTO clauses
@@ -111,7 +127,9 @@ rate headers and backoff behavior.
 - Second-review findings: state-changing human-review reduction; requested
   versus effective revocation and ordered administrative shutdown; exact
   check-generation ordering; and lossless authority-bearing GitHub IDs
-- Final review: all findings resolved without a remaining authority, security,
-  phase, or traceability defect
-- Unresolved disagreements: None
+- Final review: Original findings were resolved without a remaining authority,
+  security, phase, or traceability defect. The Critic review-plus-check
+  refinement must not be activated until its independent review is recorded.
+- Unresolved disagreements: None recorded; independent review of the current
+  refinement remains outstanding.
 - Accepted on: 2026-07-18
