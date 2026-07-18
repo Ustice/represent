@@ -69,85 +69,83 @@ const evaluation = {
   observedAt: "2026-07-18T14:00:00.000Z",
 } as const;
 
-const authorityComment = (
-  overrides: Partial<AuthorityComment> = {},
-): AuthorityComment => ({
-  id: { nodeId: "C_approve", restId: "900719925474099312347" },
-  author: { id: JASON_GITHUB_USER_ID, type: "User" },
-  body: "/approve",
-  createdAt: "2026-07-18T11:27:26.000Z",
-  updatedAt: "2026-07-18T11:27:26.000Z",
-  deleted: false,
-  ...overrides,
-});
+const authorityComment = (overrides: Partial<AuthorityComment> = {}) =>
+  ({
+    id: { nodeId: "C_approve", restId: "900719925474099312347" },
+    author: { id: JASON_GITHUB_USER_ID, type: "User" },
+    body: "/approve",
+    createdAt: "2026-07-18T11:27:26.000Z",
+    updatedAt: "2026-07-18T11:27:26.000Z",
+    deleted: false,
+    ...overrides,
+  }) as const satisfies AuthorityComment;
 
 const commandEvent = (
   comment = authorityComment(),
   overrides: Partial<CommandCreatedEvent> = {},
-): CommandCreatedEvent => ({
-  deliveryId: `delivery-${comment.id.nodeId}`,
-  eventId: `event-${comment.id.nodeId}`,
-  action: "created",
-  repositoryId,
-  issueId,
-  issueState: "OPEN",
-  issueDisposition: "active",
-  capturedRevision: revisionA,
-  comment,
-  ...overrides,
-});
-
-const input = (
-  overrides: Partial<ObjectiveAuthorityInput> = {},
-): ObjectiveAuthorityInput => ({
-  config: {
+) =>
+  ({
+    deliveryId: `delivery-${comment.id.nodeId}`,
+    eventId: `event-${comment.id.nodeId}`,
+    action: "created",
     repositoryId,
-    objectiveIssueId: issueId,
-    authorityUserId: JASON_GITHUB_USER_ID,
-    automationActorId,
-    objectiveAuthorityCheck: {
-      context: "objective-authority",
-      integrationId: automationActorId,
+    issueId,
+    issueState: "OPEN",
+    issueDisposition: "active",
+    capturedRevision: revisionA,
+    comment,
+    ...overrides,
+  }) as const satisfies CommandCreatedEvent;
+
+const input = (overrides: Partial<ObjectiveAuthorityInput> = {}) =>
+  ({
+    config: {
+      repositoryId,
+      objectiveIssueId: issueId,
+      authorityUserId: JASON_GITHUB_USER_ID,
+      automationActorId,
+      objectiveAuthorityCheck: {
+        context: "objective-authority",
+        integrationId: automationActorId,
+      },
+      scopeLinks: ["#26", "#11", "REP-AUTO-005..011"],
     },
-    scopeLinks: ["#26", "#11", "REP-AUTO-005..011"],
-  },
-  current: {
-    repository: { ...repositoryId, isFork: false },
-    issue: {
-      ...issueId,
-      state: "OPEN",
-      disposition: "active",
-      revision: revisionA,
+    current: {
+      repository: { ...repositoryId, isFork: false },
+      issue: {
+        ...issueId,
+        state: "OPEN",
+        disposition: "active",
+        revision: revisionA,
+      },
     },
-  },
-  commandEvents: [commandEvent()],
-  currentComments: [authorityComment()],
-  transitions: [],
-  evaluation,
-  ...overrides,
-});
+    commandEvents: [commandEvent()],
+    currentComments: [authorityComment()],
+    transitions: [],
+    evaluation,
+    ...overrides,
+  }) as const satisfies ObjectiveAuthorityInput;
 
 const record = (
   draft: AuthorityTransitionDraft,
   restId = "900719925474099312348",
-): AuthorityTransitionRecord => ({
-  id: { nodeId: `T_${draft.logicalKey}`, restId },
-  automationActorId,
-  logicalKey: draft.logicalKey,
-  payload: draft.payload,
-});
+) =>
+  ({
+    id: { nodeId: `T_${draft.logicalKey}`, restId },
+    automationActorId,
+    logicalKey: draft.logicalKey,
+    payload: draft.payload,
+  }) as const satisfies AuthorityTransitionRecord;
 
-const withRecordedDrafts = (
-  source: ObjectiveAuthorityInput,
-): ObjectiveAuthorityInput => ({
-  ...source,
-  transitions: evaluateObjectiveAuthority(source).transitionsToAppend.map(
-    (draft, index) => record(draft, `90071992547409931234${8 + index}`),
-  ),
-});
+const withRecordedDrafts = (source: ObjectiveAuthorityInput) =>
+  ({
+    ...source,
+    transitions: evaluateObjectiveAuthority(source).transitionsToAppend.map(
+      (draft, index) => record(draft, `90071992547409931234${8 + index}`),
+    ),
+  }) as const satisfies ObjectiveAuthorityInput;
 
-const approvedInput = (): ObjectiveAuthorityInput =>
-  withRecordedDrafts(input());
+const approvedInput = () => withRecordedDrafts(input());
 
 const revokeComment = authorityComment({
   id: { nodeId: "C_revoke", restId: "900719925474099312351" },
@@ -157,17 +155,17 @@ const revokeComment = authorityComment({
 });
 const revokeEvent = commandEvent(revokeComment);
 
-const withRevocationRequest = (): ObjectiveAuthorityInput => {
+const withRevocationRequest = () => {
   const approved = approvedInput();
 
   return {
     ...approved,
     commandEvents: [...approved.commandEvents, revokeEvent],
     currentComments: [...approved.currentComments, revokeComment],
-  };
+  } as const satisfies ObjectiveAuthorityInput;
 };
 
-const withRecordedRevocationRequest = (): ObjectiveAuthorityInput => {
+const withRecordedRevocationRequest = () => {
   const requested = withRevocationRequest();
   const requestDraft =
     evaluateObjectiveAuthority(requested).transitionsToAppend[0];
@@ -182,49 +180,50 @@ const withRecordedRevocationRequest = (): ObjectiveAuthorityInput => {
       ...requested.transitions,
       record(requestDraft, "900719925474099312352"),
     ],
-  };
+  } as const satisfies ObjectiveAuthorityInput;
 };
 
 const nativePullRequest = (
   conclusion: NativePullRequestObservation["objectiveAuthorityCheck"]["conclusion"],
   autoMergeState: NativePullRequestObservation["autoMerge"]["state"],
-): NativePullRequestObservation => ({
-  repositoryId,
-  pullRequestId: {
-    nodeId: "PR_30",
-    restId: "900719925474099312430",
-    number: 30,
-  },
-  headSha: "16ba191454cde37a1cafdd754cc98bfeac1ce22a",
-  observation: {
-    eventId: "observe-pr-30-head",
-    workflowRun: evaluation.workflowRun,
-    observedAt: evaluation.observedAt,
-  },
-  objectiveAuthorityCheck: {
-    context: "objective-authority",
-    checkRunId:
-      conclusion === "missing"
-        ? null
-        : {
-            nodeId: "CHECK_30",
-            restId: "900719925474099312530",
-          },
-    integrationId: conclusion === "missing" ? null : automationActorId,
+) =>
+  ({
+    repositoryId,
+    pullRequestId: {
+      nodeId: "PR_30",
+      restId: "900719925474099312430",
+      number: 30,
+    },
     headSha: "16ba191454cde37a1cafdd754cc98bfeac1ce22a",
-    conclusion,
-  },
-  autoMerge: {
-    state: autoMergeState,
-    requestId:
-      autoMergeState === "enabled"
-        ? {
-            nodeId: "MERGE_30",
-            restId: "900719925474099312630",
-          }
-        : null,
-  },
-});
+    observation: {
+      eventId: "observe-pr-30-head",
+      workflowRun: evaluation.workflowRun,
+      observedAt: evaluation.observedAt,
+    },
+    objectiveAuthorityCheck: {
+      context: "objective-authority",
+      checkRunId:
+        conclusion === "missing"
+          ? null
+          : {
+              nodeId: "CHECK_30",
+              restId: "900719925474099312530",
+            },
+      integrationId: conclusion === "missing" ? null : automationActorId,
+      headSha: "16ba191454cde37a1cafdd754cc98bfeac1ce22a",
+      conclusion,
+    },
+    autoMerge: {
+      state: autoMergeState,
+      requestId:
+        autoMergeState === "enabled"
+          ? {
+              nodeId: "MERGE_30",
+              restId: "900719925474099312630",
+            }
+          : null,
+    },
+  }) as const satisfies NativePullRequestObservation;
 
 interface CampaignObservation {
   readonly state: ObjectiveAuthorityResult["state"];
@@ -237,18 +236,19 @@ interface CampaignObservation {
   readonly diagnostics: readonly string[];
 }
 
-const observe = (result: ObjectiveAuthorityResult): CampaignObservation => ({
-  state: result.state,
-  transitionKinds: result.transitionsToAppend.map(
-    (draft) => draft.payload.kind,
-  ),
-  stateLabel: result.projection.stateLabel,
-  activationStatus: result.activationStatus,
-  schedulingPermitted: result.schedulingPermitted,
-  effectsExecutable: result.effectsExecutable,
-  nativeActionCount: result.nativeActions.length,
-  diagnostics: result.diagnostics,
-});
+const observe = (result: ObjectiveAuthorityResult) =>
+  ({
+    state: result.state,
+    transitionKinds: result.transitionsToAppend.map(
+      (draft) => draft.payload.kind,
+    ),
+    stateLabel: result.projection.stateLabel,
+    activationStatus: result.activationStatus,
+    schedulingPermitted: result.schedulingPermitted,
+    effectsExecutable: result.effectsExecutable,
+    nativeActionCount: result.nativeActions.length,
+    diagnostics: result.diagnostics,
+  }) as const satisfies CampaignObservation;
 
 type ExpectedObservation = Partial<CampaignObservation>;
 
@@ -266,9 +266,7 @@ const campaignOracle = (
   );
 };
 
-const expectInertBoundary = (
-  results: readonly ObjectiveAuthorityResult[],
-): void => {
+const expectInertBoundary = (results: readonly ObjectiveAuthorityResult[]) => {
   results.map((result) => {
     expect(result.activationStatus).toBe("default-off");
     expect(result.effectsExecutable).toBe(false);
@@ -276,12 +274,7 @@ const expectInertBoundary = (
   });
 };
 
-const freshApprovalFor = (
-  revision: ObjectiveRevision,
-): {
-  readonly comment: AuthorityComment;
-  readonly event: CommandCreatedEvent;
-} => {
+const freshApprovalFor = (revision: ObjectiveRevision) => {
   const comment = authorityComment({
     id: { nodeId: "C_fresh", restId: "900719925474099312355" },
     createdAt: "2026-07-18T12:30:00.000Z",
@@ -295,7 +288,7 @@ const freshApprovalFor = (
       eventId: "event-fresh",
       capturedRevision: revision,
     }),
-  };
+  } as const;
 };
 
 describe("objective-authority adversarial campaign", () => {
