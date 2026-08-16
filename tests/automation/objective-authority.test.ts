@@ -10,6 +10,7 @@ import {
   type CommandCreatedEvent,
   type NativePullRequestObservation,
   type ObjectiveAuthorityInput,
+  type RevocationNativeState,
 } from "../../tooling/agent-automation/objective-authority.js";
 
 /*
@@ -61,133 +62,132 @@ const evaluation = {
   observedAt: "2026-07-18T14:00:00.000Z",
 } as const;
 
-const comment = (
-  overrides: Partial<AuthorityComment> = {},
-): AuthorityComment => ({
-  id: {
-    nodeId: "C_approve",
-    restId: "900719925474099312347",
-  },
-  author: { id: JASON_GITHUB_USER_ID, type: "User" },
-  body: "/approve",
-  createdAt: "2026-07-18T11:27:26.000Z",
-  updatedAt: "2026-07-18T11:27:26.000Z",
-  deleted: false,
-  ...overrides,
-});
+const comment = (overrides: Partial<AuthorityComment> = {}) =>
+  ({
+    id: {
+      nodeId: "C_approve",
+      restId: "900719925474099312347",
+    },
+    author: { id: JASON_GITHUB_USER_ID, type: "User" },
+    body: "/approve",
+    createdAt: "2026-07-18T11:27:26.000Z",
+    updatedAt: "2026-07-18T11:27:26.000Z",
+    deleted: false,
+    ...overrides,
+  }) as const satisfies AuthorityComment;
 
 const event = (
   authorityComment = comment(),
   overrides: Partial<CommandCreatedEvent> = {},
-): CommandCreatedEvent => ({
-  deliveryId: "delivery-approve",
-  eventId: "event-approve",
-  action: "created",
-  repositoryId,
-  issueId,
-  issueState: "OPEN",
-  issueDisposition: "active",
-  capturedRevision: revision,
-  comment: authorityComment,
-  ...overrides,
-});
-
-const baseInput = (
-  overrides: Partial<ObjectiveAuthorityInput> = {},
-): ObjectiveAuthorityInput => ({
-  config: {
+) =>
+  ({
+    deliveryId: "delivery-approve",
+    eventId: "event-approve",
+    action: "created",
     repositoryId,
-    objectiveIssueId: issueId,
-    authorityUserId: JASON_GITHUB_USER_ID,
-    automationActorId,
-    objectiveAuthorityCheck: {
-      context: "objective-authority",
-      integrationId: automationActorId,
+    issueId,
+    issueState: "OPEN",
+    issueDisposition: "active",
+    capturedRevision: revision,
+    comment: authorityComment,
+    ...overrides,
+  }) as const satisfies CommandCreatedEvent;
+
+const baseInput = (overrides: Partial<ObjectiveAuthorityInput> = {}) =>
+  ({
+    config: {
+      repositoryId,
+      objectiveIssueId: issueId,
+      authorityUserId: JASON_GITHUB_USER_ID,
+      automationActorId,
+      objectiveAuthorityCheck: {
+        context: "objective-authority",
+        integrationId: automationActorId,
+      },
+      scopeLinks: ["#26", "#10", "REP-AUTO-005..010"],
     },
-    scopeLinks: ["#26", "#10", "REP-AUTO-005..010"],
-  },
-  current: {
-    repository: { ...repositoryId, isFork: false },
-    issue: {
-      ...issueId,
-      state: "OPEN",
-      disposition: "active",
-      revision,
+    current: {
+      repository: { ...repositoryId, isFork: false },
+      issue: {
+        ...issueId,
+        state: "OPEN",
+        disposition: "active",
+        revision,
+      },
     },
-  },
-  commandEvents: [event()],
-  currentComments: [comment()],
-  transitions: [],
-  evaluation,
-  ...overrides,
-});
+    commandEvents: [event()],
+    currentComments: [comment()],
+    transitions: [],
+    evaluation,
+    ...overrides,
+  }) as const satisfies ObjectiveAuthorityInput;
 
 const nativePullRequest = (
   number: number,
   headSha: string,
   conclusion: NativePullRequestObservation["objectiveAuthorityCheck"]["conclusion"],
   autoMergeState: NativePullRequestObservation["autoMerge"]["state"],
-): NativePullRequestObservation => ({
-  repositoryId,
-  pullRequestId: {
-    nodeId: `PR_${number}`,
-    restId: `9007199254740993124${number}`,
-    number,
-  },
-  headSha,
-  observation: {
-    eventId: `observe-pr-${number}-${headSha}`,
-    workflowRun: evaluation.workflowRun,
-    observedAt: evaluation.observedAt,
-  },
-  objectiveAuthorityCheck: {
-    context: "objective-authority",
-    checkRunId:
-      conclusion === "missing"
-        ? null
-        : {
-            nodeId: `CHECK_${number}`,
-            restId: `9007199254740993125${number}`,
-          },
-    integrationId: conclusion === "missing" ? null : automationActorId,
+) =>
+  ({
+    repositoryId,
+    pullRequestId: {
+      nodeId: `PR_${number}`,
+      restId: `9007199254740993124${number}`,
+      number,
+    },
     headSha,
-    conclusion,
-  },
-  autoMerge: {
-    state: autoMergeState,
-    requestId:
-      autoMergeState === "enabled"
-        ? {
-            nodeId: `MERGE_${number}`,
-            restId: `9007199254740993126${number}`,
-          }
-        : null,
-  },
-});
+    observation: {
+      eventId: `observe-pr-${number}-${headSha}`,
+      workflowRun: evaluation.workflowRun,
+      observedAt: evaluation.observedAt,
+    },
+    objectiveAuthorityCheck: {
+      context: "objective-authority",
+      checkRunId:
+        conclusion === "missing"
+          ? null
+          : {
+              nodeId: `CHECK_${number}`,
+              restId: `9007199254740993125${number}`,
+            },
+      integrationId: conclusion === "missing" ? null : automationActorId,
+      headSha,
+      conclusion,
+    },
+    autoMerge: {
+      state: autoMergeState,
+      requestId:
+        autoMergeState === "enabled"
+          ? {
+              nodeId: `MERGE_${number}`,
+              restId: `9007199254740993126${number}`,
+            }
+          : null,
+    },
+  }) as const satisfies NativePullRequestObservation;
 
 const record = (
   draft: AuthorityTransitionDraft,
   overrides: Partial<AuthorityTransitionRecord> = {},
-): AuthorityTransitionRecord => ({
-  id: {
-    nodeId: `T_${draft.logicalKey}`,
-    restId: "900719925474099312348",
-  },
-  automationActorId,
-  logicalKey: draft.logicalKey,
-  payload: draft.payload,
-  ...overrides,
-});
+) =>
+  ({
+    id: {
+      nodeId: `T_${draft.logicalKey}`,
+      restId: "900719925474099312348",
+    },
+    automationActorId,
+    logicalKey: draft.logicalKey,
+    payload: draft.payload,
+    ...overrides,
+  }) as const satisfies AuthorityTransitionRecord;
 
-const withPlannedTransitions = (
-  input: ObjectiveAuthorityInput,
-): ObjectiveAuthorityInput => {
+const withPlannedTransitions = (input: ObjectiveAuthorityInput) => {
   const planned = evaluateObjectiveAuthority(input).transitionsToAppend;
 
   return {
     ...input,
     transitions: planned.map((draft) => record(draft)),
-  };
+  } as const satisfies ObjectiveAuthorityInput;
 };
 
 describe("GitHub-native objective authority", () => {
@@ -692,6 +692,98 @@ describe("GitHub-native objective authority", () => {
     expect(evaluateObjectiveAuthority(fork).state).toBe("recovery");
     expect(evaluateObjectiveAuthority(closed).state).toBe("closed");
     expect(evaluateObjectiveAuthority(lossyId).state).toBe("recovery");
+  });
+
+  it("defers native-state admission until a persisted revocation needs it", () => {
+    const malformedNativeState = {
+      handler: "available",
+      pullRequests: [{ pullRequestId: { number: 0 } }],
+    } as unknown as RevocationNativeState;
+    const unavailableNativeState = {
+      handler: "unavailable",
+      pullRequests: "unavailable evidence is intentionally unreadable",
+    } as unknown as RevocationNativeState;
+
+    expect(
+      evaluateObjectiveAuthority(
+        baseInput({
+          commandEvents: [],
+          currentComments: [],
+          revocationNativeState: malformedNativeState,
+        }),
+      ),
+    ).toMatchObject({ state: "proposed", diagnostics: [] });
+
+    const requested = withPlannedTransitions(baseInput());
+    const revokeComment = comment({
+      id: { nodeId: "C_revoke_deferred", restId: "900719925474099312391" },
+      body: "/revoke",
+      createdAt: "2026-07-18T13:00:00.000Z",
+      updatedAt: "2026-07-18T13:00:00.000Z",
+    });
+    const revokeEvent = event(revokeComment, {
+      deliveryId: "delivery-revoke-deferred",
+      eventId: "event-revoke-deferred",
+    });
+    const pending = {
+      ...requested,
+      commandEvents: [...requested.commandEvents, revokeEvent],
+      currentComments: [...requested.currentComments, revokeComment],
+    } as const satisfies ObjectiveAuthorityInput;
+    const requestDraft =
+      evaluateObjectiveAuthority(pending).transitionsToAppend[0];
+
+    if (!requestDraft) {
+      throw new Error("fixture did not produce a revocation request");
+    }
+
+    const requestRecord = record(requestDraft, {
+      id: {
+        nodeId: "T_revocation_deferred",
+        restId: "900719925474099312392",
+      },
+    });
+    const requestedWithRecord = {
+      ...pending,
+      transitions: [...pending.transitions, requestRecord],
+    } as const satisfies ObjectiveAuthorityInput;
+
+    expect(
+      evaluateObjectiveAuthority({
+        ...requestedWithRecord,
+        revocationNativeState: unavailableNativeState,
+      }),
+    ).toMatchObject({
+      state: "recovery",
+      diagnostics: ["revocation handler or native head state is unavailable"],
+    });
+
+    const effectiveDraft = evaluateObjectiveAuthority({
+      ...requestedWithRecord,
+      revocationNativeState: { handler: "available", pullRequests: [] },
+    }).transitionsToAppend[0];
+
+    if (!effectiveDraft) {
+      throw new Error("fixture did not produce an effective revocation");
+    }
+
+    expect(
+      evaluateObjectiveAuthority({
+        ...requestedWithRecord,
+        transitions: [
+          ...requestedWithRecord.transitions,
+          record(effectiveDraft, {
+            id: {
+              nodeId: "T_revocation_effective_deferred",
+              restId: "900719925474099312393",
+            },
+          }),
+        ],
+      }),
+    ).toMatchObject({
+      state: "recovery",
+      diagnostics: ["revocation handler or native head state is unavailable"],
+    });
   });
 
   it("keeps revocation requested until native gates and auto-merge are secured", () => {
