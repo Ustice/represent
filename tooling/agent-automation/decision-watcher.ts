@@ -387,11 +387,11 @@ const snapshotActions = (
         rootKey,
         new Set([...(state.observedPages.get(rootKey) ?? []), pageKey]),
       );
+      if (response.kind === "page" && firstForRoot) {
+        state.authoritativeRoots.add(rootKey);
+      }
       if (response.kind === "page") {
         state.refreshedPages.add(pageKey);
-        if (firstForRoot) {
-          state.authoritativeRoots.add(rootKey);
-        }
         state.refreshedActions.push(
           ...response.actionable.map((action) => ({
             sourceRootEndpoint: root,
