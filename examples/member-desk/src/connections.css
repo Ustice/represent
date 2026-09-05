@@ -114,3 +114,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+.trace-steps {
+  padding-left: 1.3rem;
+}
+.trace-steps > li {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f0f3ee;
+  border-radius: 6px;
+}
+.trace-types {
+  font: 0.75rem/1.6 monospace;
+  color: #52643f;
+  overflow-wrap: anywhere;
+}
+.playground-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.playground-result details {
+  margin-top: 1rem;
+}

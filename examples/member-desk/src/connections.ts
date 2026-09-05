@@ -1,3 +1,4 @@
+import { playgroundPanel, bindPlayground } from "./playground-panel.js";
 import { changePanel, bindChanges } from "./change-panel.js";
 import { contractPanel, bindContract } from "./contract-panel.js";
 import { createExplorer } from "@represent/explorer";
@@ -22,14 +23,15 @@ const explorer = createExplorer(workspaceGraph, {
     },
   ],
 });
-let view: "model" | "contract" | "changes" = "model";
+let view: "model" | "contract" | "changes" | "playground" = "model";
 export function connectionsPanel() {
-  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button><button type="button" data-workbench="changes" aria-pressed="${view === "changes"}">Change preview</button></div>${view === "model" ? explorer.render() : view === "contract" ? contractPanel() : changePanel()}`;
+  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button><button type="button" data-workbench="changes" aria-pressed="${view === "changes"}">Change preview</button><button type="button" data-workbench="playground" aria-pressed="${view === "playground"}">Conversion playground</button></div>${view === "model" ? explorer.render() : view === "contract" ? contractPanel() : view === "changes" ? changePanel() : playgroundPanel()}`;
 }
 export function bindConnections(render: () => void) {
   explorer.bind(document, render);
   bindContract(render);
   bindChanges(render);
+  bindPlayground(render);
   document
     .querySelectorAll<HTMLButtonElement>("[data-workbench]")
     .forEach((button) =>
@@ -37,7 +39,8 @@ export function bindConnections(render: () => void) {
         if (
           button.dataset.workbench === "model" ||
           button.dataset.workbench === "contract" ||
-          button.dataset.workbench === "changes"
+          button.dataset.workbench === "changes" ||
+          button.dataset.workbench === "playground"
         )
           view = button.dataset.workbench;
         render();

@@ -313,3 +313,35 @@ does not inspect conversion/operation bodies or graph-link changes and does not
 classify compatibility, data migration needs, or runtime breakage. Fieldwork's
 Change preview compares real required/optional attendance-note parsers and JSON
 contracts against examples, alongside dependencies from both model snapshots.
+
+`tracePath([first, second], input, { snapshot })` executes an explicit sequence
+and records its boundary values. Adjacent endpoints must be the same
+representation object, as with `compose`; a disconnected or empty path fails
+before execution. Each listed conversion runs once, using its ordinary parser
+and mapping behavior. A failed step retains the actual error and stops the path,
+with preceding steps still available.
+
+```ts
+const trace = tracePath(
+  [eventExchange.decode, eventExchange.encode],
+  incomingJson,
+  { snapshot: (value: unknown) => structuredClone(value) },
+);
+```
+
+The caller chooses snapshots because domain values need not be JSON or
+cloneable. Capture independent values if later conversions might mutate earlier
+results. The result retains `initial`, per-step `output` snapshots, and a final
+`output` snapshot on success. Its `value` is the live final result, typed as
+`unknown` because inspection accepts dynamic paths; snapshot types remain
+inferred. Snapshot failures propagate separately from conversion failures.
+Tracing runs real mappings and does not undo their effects; it is not a dry run.
+Nested field conversions and composed conversions retain their normal execution
+but are not expanded into additional trace steps.
+
+A trace reports one execution, not a losslessness guarantee. Fieldwork's
+Conversion playground compares JSON values without depending on object key
+order, then separately checks named domain equality. It shows timestamp/title
+normalization, intermediate Date versus string types, and fields omitted by a
+public projection. Those observations apply to the supplied example and stated
+comparison only.
