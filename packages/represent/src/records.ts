@@ -3,7 +3,7 @@ import {
   representation,
   type Codec,
   type Representation,
-} from "./index.js";
+} from "./conversions.js";
 
 interface FieldCodec {
   readonly encode: {
@@ -84,6 +84,17 @@ export function recordCodec<
   const { name, from, to, validate } = definition;
   const fields: Fields = { ...definition.fields };
   Object.freeze(fields);
+  if (Object.getOwnPropertySymbols(fields).length)
+    throw new Error("Record fields must have string keys");
+  for (const [key, field] of Object.entries(fields)) {
+    if (
+      !("parse" in field) &&
+      (field.encode.from !== field.decode.to ||
+        field.encode.to !== field.decode.from)
+    ) {
+      throw new Error(`${key}: codec directions must share opposite endpoints`);
+    }
+  }
   const source = representation({
     name: from,
     parse(input: unknown) {
@@ -114,7 +125,7 @@ export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
     });
   }
   return codec({
-    name: `${subject.encode.name} (optional)`,
+    name: `Optional ${subject.encode.from.name} ↔ ${subject.encode.to.name}`,
     from: optional(subject.encode.from),
     to: optional(subject.encode.to),
     encode: (value) =>

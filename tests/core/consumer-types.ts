@@ -3,6 +3,8 @@ import {
   compose,
   conversion,
   representation,
+  recordCodec,
+  optionalCodec,
 } from "../../packages/represent/src/index.js";
 
 // This consumer program is checked by tsc, not executed by Vitest.
@@ -54,6 +56,31 @@ const numberText = codec({
   encode: (value) => value.toFixed(2),
   decode: (value) => Number(value),
 });
+
+const record = recordCodec({
+  name: "Measurement",
+  from: "Measurement",
+  to: "Measurement API",
+  fields: { label: text, amount: numberText, limit: optionalCodec(numberText) },
+  validate(value) {
+    value.amount.toFixed(2);
+    value.limit?.toFixed(2);
+  },
+});
+record.encode.convert({ label: "Length", amount: 12 }).amount.toUpperCase();
+record.decode.convert({ label: "Length", amount: "12" }).amount.toFixed(2);
+record.encode.convert({ label: "Length", amount: 12, limit: undefined });
+record.decode.run({}).limit?.toFixed(2);
+// @ts-expect-error Required fields remain required.
+record.encode.convert({ label: "Length" });
+// @ts-expect-error Optional fields still have a specific source type.
+record.encode.convert({ label: "Length", amount: 12, limit: "14" });
+// @ts-expect-error Decode inputs use the encoded field type.
+record.decode.convert({ label: "Length", amount: 12 });
+// @ts-expect-error Unknown fields are not part of the inferred record.
+record.encode.convert({ label: "Length", amount: 12, extra: true });
+// @ts-expect-error Decoded output retains its field types.
+numberText.decode.convert(record.decode.run({}).amount);
 numberText.encode.convert(42).toUpperCase();
 numberText.decode.convert("42").toFixed(2);
 compose(numberText.encode, numberText.decode).convert(42).toFixed(2);
