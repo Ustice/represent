@@ -18,6 +18,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const release = join(root, "dist/release");
 rmSync(release, { recursive: true, force: true });
 mkdirSync(release, { recursive: true });
+execFileSync("pnpm", ["build:packages"], { cwd: root, stdio: "inherit" });
 const output = execFileSync(
   "pnpm",
   [

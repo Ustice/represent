@@ -175,6 +175,7 @@ importers:
       '@represent/json-schema':
         specifier: workspace:*
         version: link:../json-schema
+    devDependencies:
       zod:
         specifier: 4.4.3
         version: 4.4.3

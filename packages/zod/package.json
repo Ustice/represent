@@ -8,8 +8,7 @@
   },
   "dependencies": {
     "@represent/core": "workspace:*",
-    "@represent/json-schema": "workspace:*",
-    "zod": "4.4.3"
+    "@represent/json-schema": "workspace:*"
   },
   "files": [
     "dist"
@@ -25,5 +24,11 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json"
+  },
+  "peerDependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "zod": "4.4.3"
   }
 }

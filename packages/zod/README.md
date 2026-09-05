@@ -43,3 +43,8 @@ nonempty wire titles decode through a trimming, nonblank domain parser, and
 valid timestamp strings decode into Dates before checking event chronology. The
 Contract lab displays contract rejection, domain rejection, and decoded values
 separately. No persistence happens in this experiment.
+
+Zod 4.4.3 is an exact peer dependency. Install that version in the consuming
+application so its schemas and this adapter share the tested runtime. A
+different Zod version requires revalidating the export profile before widening
+the peer.

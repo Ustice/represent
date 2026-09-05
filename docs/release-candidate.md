@@ -15,9 +15,14 @@ pnpm release:check
 This rebuilds the seven libraries, packs them with pnpm, installs the archives
 into a fresh temporary project using npm, compiles a strict TypeScript consumer,
 runs it as ordinary Node ESM, exercises an actual Fastify handler, and builds a
-browser consumer with Vite. The terminal prints the independent project path.
-`dist/release/verification.json` records archive hashes, the Git revision and
-whether the worktree was changed, runtime, and checks performed.
+browser consumer with Vite. The verifier rebuilds first even when invoked
+directly; it does not certify existing, potentially stale output. The terminal
+prints the independent project path. `dist/release/verification.json` records
+archive hashes, the Git revision and whether the worktree was changed, runtime,
+and checks performed. Third-party transitive dependencies are resolved from the
+registry during verification; the temporary consumer retains its resulting
+`package-lock.json`. This is not an offline or fully locked dependency-tree
+reproducibility claim.
 
 To try the same archives in your own ESM project, substitute your checkout path:
 
