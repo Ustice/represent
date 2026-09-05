@@ -8,7 +8,8 @@ export {
   type Conversion,
   type Representation,
 } from "./conversions.js";
-export { optionalCodec, recordCodec, record } from "./records.js";
+export { recordCodec, record } from "./records.js";
+export { optionalCodec, nullableCodec, listCodec } from "./wrappers.js";
 export {
   operation,
   asyncOperation,
@@ -30,7 +31,15 @@ export type {
   DependencyReason,
 } from "./graph-model.js";
 
-export { text, dateValue, optional } from "./values.js";
+export {
+  text,
+  dateValue,
+  optional,
+  nullable,
+  list,
+  numberValue,
+  booleanValue,
+} from "./values.js";
 export type { Structure, Presence } from "./structure.js";
 
 export { presenceOf } from "./structure.js";

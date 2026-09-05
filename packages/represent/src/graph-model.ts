@@ -48,7 +48,8 @@ export type DependencyReason =
         | "reference-use"
         | "conversion-use"
         | "call"
-        | "wrapped-value";
+        | "wrapped-value"
+        | "list-element";
     }
   | {
       readonly kind:

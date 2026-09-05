@@ -6,6 +6,15 @@ export type Presence = "required" | "optional" | "unknown";
 export type Structure<Reference = string> =
   | { readonly kind: "text"; readonly nonempty: boolean }
   | { readonly kind: "date" }
+  | { readonly kind: "boolean" }
+  | {
+      readonly kind: "number";
+      readonly min: number | null;
+      readonly max: number | null;
+      readonly integer: boolean;
+    }
+  | { readonly kind: "list"; readonly element: Reference }
+  | { readonly kind: "nullable"; readonly inner: Reference }
   | {
       readonly kind: "record";
       readonly fields: readonly {
@@ -29,8 +38,11 @@ export function mapStructure<From, To>(
           representation: map(field.representation),
         })),
       };
+    case "nullable":
     case "optional":
       return { ...structure, inner: map(structure.inner) };
+    case "list":
+      return { ...structure, element: map(structure.element) };
     default:
       return { ...structure };
   }
@@ -40,18 +52,33 @@ export function structureReferences<Ref>(structure: Structure<Ref>) {
   switch (structure.kind) {
     case "record":
       return structure.fields.map(({ representation }) => representation);
+    case "nullable":
     case "optional":
       return [structure.inner];
+    case "list":
+      return [structure.element];
     default:
       return [];
   }
 }
 
-export function presenceOf(subject: {
-  readonly structure?: Structure<unknown>;
-}): Presence {
-  if (!subject.structure) return "unknown";
-  return subject.structure.kind === "optional" ? "optional" : "required";
+type PresenceSubject = {
+  readonly structure?: Structure<string | Representation<unknown>>;
+};
+export function presenceOf(
+  subject: PresenceSubject,
+  resolve?: (name: string) => PresenceSubject | undefined,
+): Presence {
+  const seen = new Set<string | Representation<unknown>>();
+  let current: PresenceSubject | undefined = subject;
+  while (current?.structure?.kind === "nullable") {
+    const inner: string | Representation<unknown> = current.structure.inner;
+    if (seen.has(inner)) return "unknown";
+    seen.add(inner);
+    current = typeof inner === "string" ? resolve?.(inner) : inner;
+  }
+  if (!current?.structure) return "unknown";
+  return current.structure.kind === "optional" ? "optional" : "required";
 }
 
 export function recordStructure(

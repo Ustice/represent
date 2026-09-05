@@ -71,9 +71,16 @@ export function indexGraph(model: Graph) {
           field: field.key,
         });
     }
-    if (node.structure?.kind === "optional")
+    if (
+      node.structure?.kind === "optional" ||
+      node.structure?.kind === "nullable"
+    )
       connect(item("representation", node.structure.inner), parent, {
         kind: "wrapped-value",
+      });
+    if (node.structure?.kind === "list")
+      connect(item("representation", node.structure.element), parent, {
+        kind: "list-element",
       });
   }
   for (const edge of model.edges) {

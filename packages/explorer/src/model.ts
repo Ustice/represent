@@ -15,6 +15,8 @@ export function relationship(link: DependencyLink) {
     switch (reason.kind) {
       case "record-field":
         return `field ${reason.field}`;
+      case "list-element":
+        return "elements";
       case "wrapped-value":
         return "wraps value";
       case "input":
@@ -38,7 +40,9 @@ export function relationship(link: DependencyLink) {
     }
   })();
   const family =
-    reason.kind === "record-field" || reason.kind === "wrapped-value"
+    reason.kind === "record-field" ||
+    reason.kind === "wrapped-value" ||
+    reason.kind === "list-element"
       ? "structure"
       : reason.kind === "call" || reason.kind === "read"
         ? "operation"

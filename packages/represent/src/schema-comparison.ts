@@ -21,7 +21,19 @@ function normalize(structure: Structure | undefined): Structure | null {
     case "text":
       return { kind: "text", nonempty: structure.nonempty };
     case "date":
-      return { kind: "date" };
+    case "boolean":
+      return { kind: structure.kind };
+    case "number":
+      return {
+        kind: "number",
+        min: structure.min,
+        max: structure.max,
+        integer: structure.integer,
+      };
+    case "list":
+      return { kind: "list", element: structure.element };
+    case "nullable":
+      return { kind: "nullable", inner: structure.inner };
     case "optional":
       return { kind: "optional", inner: structure.inner };
     case "record":
@@ -32,6 +44,46 @@ function normalize(structure: Structure | undefined): Structure | null {
           .map(({ key, representation }) => ({ key, representation }))
           .sort((a, b) => order(a.key, b.key)),
       };
+  }
+}
+function sameStructure(
+  left: Structure | null | undefined,
+  right: Structure | null | undefined,
+): boolean {
+  if (!left || !right) return left === right;
+  if (left.kind !== right.kind) return false;
+  switch (left.kind) {
+    case "date":
+    case "boolean":
+      return true;
+    case "text":
+      return right.kind === "text" && left.nonempty === right.nonempty;
+    case "number":
+      return (
+        right.kind === "number" &&
+        left.min === right.min &&
+        left.max === right.max &&
+        left.integer === right.integer
+      );
+    case "list":
+      return right.kind === "list" && left.element === right.element;
+    case "optional":
+    case "nullable":
+      return (
+        (right.kind === "optional" || right.kind === "nullable") &&
+        left.inner === right.inner
+      );
+    case "record":
+      return (
+        right.kind === "record" &&
+        left.refined === right.refined &&
+        left.fields.length === right.fields.length &&
+        left.fields.every(
+          (field, index) =>
+            field.key === right.fields[index]?.key &&
+            field.representation === right.fields[index]?.representation,
+        )
+      );
   }
 }
 function fieldsOf(structure: Structure | null) {
@@ -83,7 +135,7 @@ export function compareSchemas(before: Graph, after: Graph) {
     )
       reasons.push("refinement");
     if (reasons.length) unverified.push({ representation: name, reasons });
-    if (JSON.stringify(oldShape) === JSON.stringify(newShape)) continue;
+    if (sameStructure(oldShape, newShape)) continue;
     changes.push({
       representation: name,
       kind: !previous.has(name)
