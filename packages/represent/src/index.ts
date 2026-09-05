@@ -15,6 +15,11 @@ export interface Conversion<Source, Target> {
   readonly convert: (value: Source) => Target;
 }
 
+export interface Codec<Source, Target> {
+  readonly encode: Conversion<Source, Target>;
+  readonly decode: Conversion<Target, Source>;
+}
+
 type Stage = "input" | "map" | "output";
 
 export class ConversionError extends Error {
@@ -84,7 +89,7 @@ export function codec<Source, Target>(definition: {
   to: Representation<Target>;
   encode: (value: NoInfer<Source>) => NoInfer<Target>;
   decode: (value: NoInfer<Target>) => NoInfer<Source>;
-}) {
+}): Codec<Source, Target> {
   const { name, from, to, encode, decode } = definition;
   return Object.freeze({
     encode: conversion({ name: `${name}: encode`, from, to, map: encode }),
@@ -96,6 +101,8 @@ export function codec<Source, Target>(definition: {
     }),
   });
 }
+
+export { optionalCodec, recordCodec } from "./records.js";
 
 interface GraphConversion {
   readonly name: string;
