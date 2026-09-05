@@ -73,8 +73,10 @@ describe("Fieldwork connections", () => {
       { kind: "field", field: "rsvpBy" },
     ]);
     expect(
-      result.dependents.some(({ item }) => item.kind === "operation"),
-    ).toBe(false);
+      result.dependents
+        .filter(({ item }) => item.kind === "operation")
+        .map(({ item }) => item.name),
+    ).toEqual(["Prepare attendee roster"]);
     expect(
       result.dependents.some(
         ({ item }) =>
@@ -91,6 +93,7 @@ describe("Fieldwork connections", () => {
         output: "RSVP",
         reads: ["Member", "Event", "RSVP"],
         references: ["RSVP member", "RSVP event"],
+        calls: [],
       },
       {
         name: "Cancel RSVP",
@@ -98,6 +101,7 @@ describe("Fieldwork connections", () => {
         output: "RSVP",
         reads: ["RSVP"],
         references: [],
+        calls: [],
       },
       {
         name: "Prepare attendee roster",
@@ -105,13 +109,18 @@ describe("Fieldwork connections", () => {
         output: "Attendee roster",
         reads: ["Event", "RSVP", "Member"],
         references: ["RSVP event", "RSVP member"],
+        calls: [
+          { kind: "conversion", name: "Event exchange: encode" },
+          { kind: "conversion", name: "Date and ISO timestamp: encode" },
+        ],
       },
       {
         name: "Register RSVP by email",
         input: "RSVP email request",
         output: "RSVP",
-        reads: ["Member", "Event", "RSVP"],
-        references: ["RSVP member", "RSVP event"],
+        reads: ["Member"],
+        references: [],
+        calls: [{ kind: "operation", name: "Register RSVP" }],
       },
     ]);
     expect(workspaceGraph.references).toEqual([

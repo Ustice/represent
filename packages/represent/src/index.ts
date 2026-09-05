@@ -16,7 +16,8 @@ export { reference } from "./references.js";
 
 export { runBatch, type BatchRow } from "./batch.js";
 
-export { dependents } from "./dependency-query.js";
+export { inspectGraph } from "./graph-index.js";
+export { dependents, requirements } from "./dependency-query.js";
 export type {
   Graph,
   GraphItem,

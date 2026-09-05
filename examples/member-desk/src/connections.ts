@@ -32,6 +32,8 @@ let selected: GraphItem = { kind: "representation", name: "Member" };
 
 function reasonLabel(reason: DependencyReason) {
   switch (reason.kind) {
+    case "call":
+      return "Declares a call to";
     case "input":
       return "Uses input contract";
     case "output":

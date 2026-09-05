@@ -80,23 +80,40 @@ export function graph(
     });
   }
   options.references?.forEach(addReference);
-  const operationNames = new Set<string>();
-  const operations = (options.operations ?? []).map((subject) => {
-    if (operationNames.has(subject.name))
+  const operationNames = new Map<string, OperationDescriptor>();
+  const operations: Array<Graph["operations"][number]> = [];
+  const operationRoots = new Set<string>();
+  for (const subject of options.operations ?? []) {
+    if (operationRoots.has(subject.name))
       throw new Error(`Duplicate operation name: ${subject.name}`);
-    operationNames.add(subject.name);
+    operationRoots.add(subject.name);
+  }
+  function visitOperation(subject: OperationDescriptor) {
+    const existing = operationNames.get(subject.name);
+    if (existing === subject) return;
+    if (existing) throw new Error(`Duplicate operation name: ${subject.name}`);
+    operationNames.set(subject.name, subject);
     [subject.input, subject.output, ...subject.reads].forEach(
       addRepresentation,
     );
     subject.references.forEach(addReference);
-    return {
+    operations.push({
       name: subject.name,
       input: subject.input.name,
       output: subject.output.name,
       reads: subject.reads.map(({ name }) => name),
       references: subject.references.map(({ name }) => name),
-    };
-  });
+      calls: subject.calls.map((call) => ({
+        kind: "input" in call ? "operation" : "conversion",
+        name: call.name,
+      })),
+    });
+    for (const call of subject.calls) {
+      if ("input" in call) visitOperation(call);
+      else visit(call);
+    }
+  }
+  options.operations?.forEach(visitOperation);
   const nodes = [...representations.keys()].map((name) => ({ name }));
   return { nodes, edges, dependencies, operations, references };
 }

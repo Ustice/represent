@@ -34,6 +34,7 @@ export const prepareAttendeeRoster = operation({
   output: field("Attendee roster", z.array(rowSchema)),
   reads: [eventExchange.encode.from, rsvpExchange.encode.from, member],
   references: [rsvpEvent, rsvpMember],
+  calls: [eventExchange.encode, dateTime.encode],
   perform(request, context: AttendeeContext) {
     const event = rsvpEvent.resolve(request, context.events);
     if (!event) throw new Error("This event is not in the schedule.");
