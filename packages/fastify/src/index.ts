@@ -11,9 +11,12 @@ export class InvalidOperationInput extends Error {
 }
 
 /** Adapt an operation to a Fastify handler; routes, hooks, and error policy remain Fastify's. */
-export function operationHandler<Context, Result>(
+export function operationHandler<Context, Output>(
   subject: OperationDescriptor & {
-    readonly run: (input: unknown, context: Context) => Result;
+    readonly run: (
+      input: unknown,
+      context: Context,
+    ) => Output | PromiseLike<Output>;
   },
   options: {
     readonly input: (request: FastifyRequest) => unknown;
