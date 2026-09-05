@@ -9,31 +9,6 @@ import {
   type WatchEndpoint,
 } from "../../tooling/agent-automation/decision-watcher.js";
 
-/*
-Test case: read-only local decision watcher
-Classification: engineering-workflow validation
-Owning authority: REP-AUTO-007, REP-AUTO-016 through REP-AUTO-021, REP-AUTO-023; issue #15 acceptance criteria
-Observable/invariant: bounded serialized GitHub observations update context-bound validators and produce only fixed, deduplicated, read-only notification plans
-Oracle/equality: exact planned reads, notifications, timers, validator state, and invariant false authority/effect flags
-Regression caught: wake acting without reread, notification on 304, validator reuse across contexts, pagination escape, unbounded retry, mutation-capable launch, raw prose leakage, or stale notification replay
-Execution boundary: pure watcher protocol consumed by future read-only HTTP and Codex-launch adapters
-Static/runtime distinction: TypeScript cannot prove response ordering, pagination provenance, conditional behavior, rate headers, runtime payload sanitation, or restart convergence
-Cases: startup/wake, 304, actionable and cleared snapshots, pagination, invalid validator, 403/429 headers and exponential fallback, exhaustion, unavailable GitHub, sensitive extra fields, IDs above 2^53
-Discrimination: DIRECT_WAKE, NOTIFY_304, CROSS_CONTEXT_ETAG, PAGINATION_ESCAPE, UNBOUNDED_RETRY, MUTATING_LAUNCH, LEAK_PROSE, and REPLAY_NOTIFY controlled variants must fail these assertions
-Expected diagnostics: fixed watcher-state guidance without issue, review, or sensitive prose
-Semantic coverage: conditional-read, validator, reconciliation, pagination, backoff, outage, action-change, notification, sandbox, and suppression edges
-
-Discrimination obligation matrix:
-- DIRECT_WAKE -> wake test observes only a fresh read plan
-- NOTIFY_304 -> 304 test observes no notification
-- CROSS_CONTEXT_ETAG -> request plan ignores validator from another auth context
-- PAGINATION_ESCAPE -> hostile next URL stops the watcher
-- UNBOUNDED_RETRY -> retry exhaustion stops without another request
-- MUTATING_LAUNCH -> actionable test observes read-only/no-connectors/no-tools launch contract
-- LEAK_PROSE -> extra raw fields do not survive the output projection
-- REPLAY_NOTIFY -> repeated exact action fingerprint emits no notification
-*/
-
 const repositoryId = "900719925474099312345";
 const apiPrefix = "https://api.github.com/repos/Ustice/represent";
 

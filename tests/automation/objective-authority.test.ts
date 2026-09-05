@@ -13,31 +13,6 @@ import {
   type RevocationNativeState,
 } from "../../tooling/agent-automation/objective-authority.js";
 
-/*
-Test case: GitHub-native objective authority reducer
-Classification: engineering-workflow validation
-Owning authority: REP-AUTO-005 through REP-AUTO-010 and REP-AUTO-021 through REP-AUTO-025; issue #10 acceptance criteria
-Observable/invariant: current GitHub evidence deterministically produces a fail-closed authority state, append-only transition plan, mirrored projection, and bounded native revocation plan
-Oracle/equality: exact public result fields and convergence equality after input permutation
-Regression caught: display-name trust, loose command parsing, edited approval reuse, issue-edit authority leakage, lossy numeric IDs, duplicate transitions, premature effective revocation, or metadata-driven authority
-Execution boundary: pure objective-authority capability consumed by a future GitHub adapter
-Static/runtime distinction: TypeScript cannot prove external event identity, exact command text, evidence consistency, temporal convergence, or native-effect completion
-Cases: valid/invalid approval, issue edit and reapproval, sticky revocation, native recovery, duplicate/reordered delivery, untrusted metadata and prose, IDs above 2^53, fork/closed/wrong-object evidence
-Discrimination: WRONG_IDENTITY, LOOSE_COMMAND, EDITED_EVIDENCE, ISSUE_EDIT, LABEL_AUTHORITY, LOSSY_ID, DUPLICATE_TRANSITION, PREMATURE_REVOCATION, and PROMPT_INJECTION fixture variants must fail or remain unauthorized
-Expected diagnostics: actionable state-level reason without interpreting untrusted issue or comment prose
-Semantic coverage: objective, approval, revision invalidation, requested/effective revocation, recovery, transition-record, projection, and scheduling edges
-
-Discrimination obligation matrix:
-- WRONG_IDENTITY -> "rejects wrong identity" observes proposed/unauthorized
-- LOOSE_COMMAND -> "rejects surrounding whitespace/additional text" observes no transition
-- EDITED_EVIDENCE -> "rejects edited or deleted approval evidence" observes no scheduling
-- ISSUE_EDIT -> "invalidates approval after a title or body edit" observes fresh approval required
-- LABEL_AUTHORITY and PROMPT_INJECTION -> "does not derive authority from labels..." observes no authority/effects
-- LOSSY_ID -> "fails closed for ... non-canonical IDs" observes recovery
-- DUPLICATE_TRANSITION -> "fails closed for duplicate or forged transition records" observes recovery
-- PREMATURE_REVOCATION -> "keeps revocation requested..." observes native actions before effective state
-*/
-
 const repositoryId = {
   nodeId: "R_repo",
   restId: "900719925474099312345",

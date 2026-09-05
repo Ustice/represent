@@ -21,7 +21,6 @@ product direction, and [AGENTS.md](AGENTS.md) for how we work.
 ## Project navigation
 
 - [Project-specific agent context](AGENTS.md)
-- [Architecture decisions](docs/decisions/README.md)
 - [Normative specifications](docs/specifications/README.md)
 - [Open questions](research/open-questions.md)
 - [CI](.github/workflows/ci.yml)

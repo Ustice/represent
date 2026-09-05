@@ -7,29 +7,6 @@ import {
   type EscalationSignal,
 } from "../../tooling/agent-automation/blocker-escalation.js";
 
-/*
-Test case: fail-closed blocker escalation
-Classification: engineering-workflow validation
-Owning authority: REP-AUTO-002, REP-AUTO-016, REP-AUTO-019, REP-AUTO-020, REP-AUTO-022, REP-AUTO-023; issue #15 acceptance criteria
-Observable/invariant: classified signals produce a deterministic stop/continue result, append-only transition plan, sanitized public record, and fixed notification payload
-Oracle/equality: exact public result fields and convergence after replay
-Regression caught: implementation failures mislabeled as design blockers, raw sensitive text crossing the boundary, forged authority links, duplicate transitions, lossy IDs, or credential findings without rotation guidance
-Execution boundary: pure escalation capability consumed by future GitHub and notification adapters
-Static/runtime distinction: TypeScript cannot prove external identity validity, evidence completeness, replay convergence, or sanitized runtime output
-Cases: ordinary failure, public design blocker, sensitive review, credential exposure, incomplete evidence, replay, duplicate/conflicting transitions, IDs above 2^53
-Discrimination: MISCLASSIFY_FAILURE, LEAK_SENSITIVE, FORGED_AUTHORITY, DUPLICATE_TRANSITION, LOSSY_ID, and OMIT_ROTATION controlled variants must fail these assertions
-Expected diagnostics: fixed state-level guidance without untrusted finding content
-Semantic coverage: classification, stop, public-record, sensitive-marker, notification, rotation, transition, replay, and recovery edges
-
-Discrimination obligation matrix:
-- MISCLASSIFY_FAILURE -> ordinary failure test observes continue/no effects
-- LEAK_SENSITIVE -> sensitive tests recursively reject the attacker sentinel
-- FORGED_AUTHORITY -> invalid authority link observes recovery
-- DUPLICATE_TRANSITION -> duplicate record observes recovery
-- LOSSY_ID -> numeric/non-canonical identity observes recovery
-- OMIT_ROTATION -> credential exposure observes mandatory rotation/revocation flag and diagnostic
-*/
-
 const repositoryId = {
   nodeId: "R_repo",
   restId: "900719925474099312345",

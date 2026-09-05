@@ -67,20 +67,6 @@ const nameProjectionClaim = {
   }),
 } as const satisfies DirectionalLosslessnessClaim<NamedUser, UserNameParts>;
 
-/*
-Test case: accepted conversion guarantee examples
-Classification: semantic evidence
-Owning authority: REP-CONV-001 through REP-CONV-007; issue #21
-Observable/invariant: directional claims exercise their declared source domain, equality, forward conversion, reverse witness, recovered-domain membership, and source round trip; collision claims preserve a source-distinct, target-equivalent pair and the applicable recovery boundary
-Oracle/equality: each claim's named source equality and, for collisions, named target equality
-Regression caught: field-count-as-loss, off-image recovery requirements, wrong equality, inferred opposite-direction losslessness, hidden-provenance recovery, fabricated placeholders, or unactionable diagnostics
-Execution boundary: test-only conversion-evidence harness with concrete forward and reverse functions
-Static/runtime distinction: TypeScript cannot prove runtime domain membership, execute round trips, compare values under declared equalities, observe collisions, or validate diagnostic reproduction data
-Cases: derivable fullName, forward-image-only strings, Date round trip, equivalent date spellings, public-view collision, fabricated placeholder, hidden-provenance recovery, and a non-collision negative control
-Discrimination: the adjacent obligation matrix kills FALSE_GUARANTEE plus six domain-specific broken subjects
-Expected diagnostics: rejected claims identify direction, domain, equalities, clause, reason, and recovered value or collision witness as applicable
-Semantic coverage: source/target representation nodes; forward, reverse, round-trip, collision, recovery-boundary, diagnostic, and bounded-inference edges; REP-CONV-001 through REP-CONV-007
-*/
 describe("accepted conversion guarantees", () => {
   it("REP-CONV-001/004: preserves a derivable fullName despite reducing shape", () => {
     const evidence = evaluateDirectionalLosslessness(nameProjectionClaim, [
@@ -566,20 +552,6 @@ const mutationObligations = [
   },
 ] as const satisfies readonly MutationObligation[];
 
-/*
-Test case: conversion-guarantee discrimination campaign
-Classification: semantic evidence
-Owning authority: REP-CONV-001 through REP-CONV-006; REP-TEST-010 through REP-TEST-013; issue #21
-Observable/invariant: each selected controlled broken subject disagrees with the accepted semantic oracle on its asymmetric fixture
-Oracle/equality: the named losslessness, collision, and recovery-boundary evaluators above
-Regression caught: a suite that passes while shape, off-image, equality, direction, provenance, or placeholder semantics are wrong
-Execution boundary: the same test-only evidence boundary used by the semantic cases
-Static/runtime distinction: TypeScript cannot execute the controlled defects or prove that the semantic oracle rejects them
-Cases: all rows in mutationObligations
-Discrimination: FIELD_COUNT_AS_LOSS, OFF_IMAGE_RECOVERY_REQUIREMENT, WRONG_DATE_EQUALITY, INFER_OPPOSITE_DIRECTION, HIDDEN_PROVENANCE_RECOVERY, and FALSE_GUARANTEE
-Expected diagnostics: observedFailure records the semantic disagreement; rejected claims separately assert actionable diagnostic fields
-Semantic coverage: mutation-to-clause, fixture, killing-test, and observed-failure edges for every selected obligation; no surviving mutation
-*/
 describe("conversion-guarantee discrimination", () => {
   it.each(mutationObligations)(
     "$id violates $violatedClause and is killed by $killingTest",

@@ -4,11 +4,6 @@ This contract defines Represent's adapter-certification claims. It does not
 prescribe contributor workflow or require a certification system before product
 implementation.
 
-The former universal test rubric and coverage-reporting procedure are
-[historical reference](../archive/testing-and-certification.md), including
-`REP-TEST-001`–`010`, `012`–`013`, and `020`–`025`. Existing citations retain
-their historical meaning.
-
 ## Adapter-certification contract
 
 These clauses apply to certification claims. A profile declares the adapter's

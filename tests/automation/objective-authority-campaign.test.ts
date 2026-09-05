@@ -14,28 +14,6 @@ import {
   type ObjectiveRevision,
 } from "../../tooling/agent-automation/objective-authority.js";
 
-/*
-Test case: GitHub-native objective-authority adversarial campaign
-Classification: engineering-workflow validation
-Owning authority: REP-AUTO-005 through REP-AUTO-011 and REP-AUTO-020 through REP-AUTO-025; issue #11
-Phase allowance: Phase -1 permits this default-off engineering tooling because it makes accepted workflow clauses executable; it has no product or compatibility status
-Observable/invariant: thirteen controlled GitHub fixture groups produce the recorded fail-closed transition, projection, permission-boundary, idempotency, and recovery evidence without executing effects
-Oracle/equality: exact authority states, transition kinds, projection labels, activation flags, native action prerequisites, and deep equality under repeated or permuted observation
-Regression caught: authority from mutable identity or prose, edited evidence reuse, revision revival, replay divergence, local-state dependence, prompt-injection scope expansion, credential-failure execution, forbidden I/O, premature revocation, unsafe shutdown ordering, or lossy GitHub IDs
-Execution boundary: pure objective-authority reducer plus a controlled credential-admission and effect-observation harness; no live GitHub adapter
-Static/runtime distinction: TypeScript cannot prove actor identity, event history, evidence availability, temporal convergence, effect non-execution, or ordered recovery from GitHub fixtures
-Cases: all thirteen scenario groups required by issue #11 and the linked campaign report
-Discrimination: AUTHORITY_FAIL_OPEN, REPLAY_DUPLICATION, RECOVERY_FAIL_OPEN, and EFFECT_BOUNDARY_BREACH mutants must be rejected by the same campaign oracle
-Expected diagnostics: stable state-level diagnostics only; untrusted issue prose and credentials never enter diagnostics
-Semantic coverage: objective/revision nodes; approval, invalidation, fresh approval, revocation request/effect, recovery, reconstruction, projection, native-plan, shutdown-order, and forbidden-effect edges
-
-Discrimination obligation matrix:
-- AUTHORITY_FAIL_OPEN -> invalid-command scenario detects unauthorized approved state
-- REPLAY_DUPLICATION -> replay scenario detects a duplicate append-only transition
-- RECOVERY_FAIL_OPEN -> unavailable-handler scenario detects recovery changed to approved
-- EFFECT_BOUNDARY_BREACH -> forbidden-effect scenario detects executable effects
-*/
-
 const repositoryId = {
   nodeId: "R_repo",
   restId: "900719925474099312345",
