@@ -1,3 +1,4 @@
+import { contractPanel, bindContract } from "./contract-panel.js";
 import { createExplorer } from "@represent/explorer";
 import "@represent/explorer/style.css";
 import { workspaceGraph } from "./workspace-graph.js";
@@ -20,9 +21,26 @@ const explorer = createExplorer(workspaceGraph, {
     },
   ],
 });
+let view: "model" | "contract" = "model";
 export function connectionsPanel() {
-  return explorer.render();
+  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button></div>${view === "model" ? explorer.render() : contractPanel()}`;
 }
 export function bindConnections(render: () => void) {
   explorer.bind(document, render);
+  bindContract(render);
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-workbench]")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        if (
+          button.dataset.workbench === "model" ||
+          button.dataset.workbench === "contract"
+        )
+          view = button.dataset.workbench;
+        render();
+        document
+          .querySelector<HTMLButtonElement>(`[data-workbench="${view}"]`)
+          ?.focus();
+      }),
+    );
 }
