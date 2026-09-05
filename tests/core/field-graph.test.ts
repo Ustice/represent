@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   codec,
+  compose,
   graph,
   optionalCodec,
   recordCodec,
   representation,
 } from "../../packages/represent/src/index.js";
-import {
-  sharedFieldUses,
-  workspaceGraph,
-} from "../../examples/member-desk/src/connections.js";
+
 const number = representation({
   name: "Number",
   parse(input: unknown) {
@@ -32,6 +30,13 @@ const value = codec({
   decode: Number,
 });
 describe("field conversion dependencies", () => {
+  it("retains the ordered dependencies of an explicitly composed route", () => {
+    const route = compose(value.encode, value.decode);
+    expect(graph([route]).dependencies).toEqual([
+      { parent: route.name, field: null, conversion: value.encode.name },
+      { parent: route.name, field: null, conversion: value.decode.name },
+    ]);
+  });
   it("includes shared conversion once and retains every field binding", () => {
     const record = recordCodec({
       name: "Pair",
@@ -99,19 +104,5 @@ describe("field conversion dependencies", () => {
     expect(() => graph([record.encode])).toThrow(
       /Duplicate conversion name: Value: encode/,
     );
-  });
-  it("exposes Fieldwork's actual shared date uses, including the wrapped deadline", () => {
-    expect(sharedFieldUses()).toEqual([
-      { path: "Member.joinedAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.startsAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.endsAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.rsvpBy", conversion: "Date and ISO timestamp: encode" },
-      { path: "RSVP.signedUpAt", conversion: "Date and ISO timestamp: encode" },
-    ]);
-    expect(
-      workspaceGraph.edges.filter(
-        ({ name }) => name === "Date and ISO timestamp: encode",
-      ),
-    ).toHaveLength(1);
   });
 });

@@ -1,4 +1,4 @@
-import { dependenciesOf } from "./dependencies.js";
+import { dependenciesOf, setDependencies } from "./dependencies.js";
 
 export interface Representation<Value> {
   readonly name: string;
@@ -76,13 +76,18 @@ export function compose<Source, Middle, Target>(
     );
   }
   const run = (input: unknown) => second.convert(first.run(input));
-  return Object.freeze({
+  const result = Object.freeze({
     name: `${first.name} → ${second.name}`,
     from: first.from,
     to: second.to,
     run,
     convert: run,
   });
+  setDependencies(result, [
+    { field: null, conversion: first },
+    { field: null, conversion: second },
+  ]);
+  return result;
 }
 
 export function codec<Source, Target>(definition: {

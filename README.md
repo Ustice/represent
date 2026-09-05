@@ -7,8 +7,8 @@ application data to other systems without replacing their runtimes.
 The working example is [Fieldwork](examples/member-desk/), a browser application
 built alongside [the core](packages/represent/). It edits members, exchanges API
 records through a codec, previews public profiles, exports a CSV roster, and
-edits community events with optional RSVP deadlines. Both models share field
-codecs and display the conversions behind their views. There is no stable API or
+edits community events, and manages RSVPs with signup deadlines. The models
+share field codecs, and Connections traces that reuse. There is no stable API or
 compatibility commitment.
 
 ## Run it

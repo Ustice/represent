@@ -30,8 +30,23 @@ The [event model](src/events/model.ts) and member model each declare fields once
 using `recordCodec`. Both use the [shared date codec](src/fields.ts); event
 timing rules stay in the event model. Represent assembles the domain and API
 parsers, infers their types, and converts the fields. Zod remains a consumer
-dependency. The graph currently exposes whole-record conversions, not the shared
-field dependencies inside them.
+dependency. Connections traces the shared date codec across members, events, and
+RSVPs, following the optional deadline wrapper. It also displays the input and
+output representations of signup and cancel operations. Domain reference
+relationships remain in the application model.
+
+The [RSVP model](src/rsvps/model.ts) connects a member to an event, with one
+signup per pair. All directory members can RSVP. Signups close at the explicit
+deadline, or at event start when no deadline is set; the exact cutoff instant is
+closed. Cancellation remains available after closing. Attendee names resolve
+from saved member records, so editing a name updates the list. Operations use
+the saved event, not an unsaved form draft.
+
+RSVPs persist separately in local storage. Resetting member/event samples keeps
+their existing IDs and does not cancel RSVPs; Cancel removes an individual
+signup. The persistence seam rereads and validates saved RSVPs before each
+change and writes only after the operation succeeds. It does not provide
+cross-tab transactions or a server-side concurrency guarantee.
 
 The [CSV export](src/roster.ts) belongs to this consumer. It quotes every field,
 escapes embedded quotes, and uses CRLF record separators. Formula-like text
