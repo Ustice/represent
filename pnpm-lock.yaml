@@ -32,6 +32,9 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.7(@types/node@22.20.1)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   examples/member-desk:
     dependencies:
@@ -44,6 +47,9 @@ importers:
       '@represent/json-schema':
         specifier: workspace:*
         version: link:../../packages/json-schema
+      '@represent/zod':
+        specifier: workspace:*
+        version: link:../../packages/zod
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
@@ -68,6 +74,18 @@ importers:
         version: link:../represent
 
   packages/represent: {}
+
+  packages/zod:
+    dependencies:
+      '@represent/core':
+        specifier: workspace:*
+        version: link:../represent
+      '@represent/json-schema':
+        specifier: workspace:*
+        version: link:../json-schema
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
 packages:
 

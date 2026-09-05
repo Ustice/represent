@@ -1,0 +1,14 @@
+{
+  "name": "@represent/zod",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@represent/core": "workspace:*",
+    "@represent/json-schema": "workspace:*",
+    "zod": "4.4.3"
+  }
+}

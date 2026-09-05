@@ -48,3 +48,26 @@ The adapter tests compare Ajv and the real request parser over meaningful JSON
 cases. See
 [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/json-schema-core)
 and [Ajv's draft support](https://ajv.js.org/json-schema.html).
+
+## Existing schema libraries
+
+Opaque leaves can opt into a target-specific provider:
+
+```ts
+import { zodJsonSchema } from "@represent/zod";
+const schema = toJsonSchema(request, { providers: [zodJsonSchema] });
+```
+
+A `JsonSchemaProvider` has a name and `contract(representation)` method. It
+returns `undefined` for representations it does not own, or
+`{ schema, presence }` for an owned leaf. Presence is `required` or `optional`
+and describes whether its parser accepts a missing property. Providers are
+trusted to match their parser's JSON acceptance. They cannot override native
+core structure or refinements. Failures and competing claims produce
+path-specific export issues.
+
+This initial provider seam accepts leaf validation keywords only. References,
+identifiers, nested schemas, and unknown keywords are rejected so embedding
+cannot silently change their scope. See the Zod bridge's narrower supported
+profile. Fieldwork's Contract lab also exports the Event API and compares JSON
+acceptance with its actual decoder's normalization and domain validation.
