@@ -1,6 +1,6 @@
 {
   "name": "@represent/explorer",
-  "version": "0.0.0",
+  "version": "0.1.0-rc.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -9,5 +9,21 @@
   },
   "dependencies": {
     "@represent/core": "workspace:*"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./style.css": "./dist/style.css"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('node:fs').copyFileSync('src/style.css', 'dist/style.css')\""
   }
 }

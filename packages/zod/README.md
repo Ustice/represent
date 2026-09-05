@@ -1,5 +1,8 @@
 # Zod bridge
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 Use an existing Zod parser as a Represent representation. Zod retains ownership
 of validation and normalization; the core does not depend on Zod.
 
@@ -40,3 +43,8 @@ nonempty wire titles decode through a trimming, nonblank domain parser, and
 valid timestamp strings decode into Dates before checking event chronology. The
 Contract lab displays contract rejection, domain rejection, and decoded values
 separately. No persistence happens in this experiment.
+
+Zod 4.4.3 is an exact peer dependency. Install that version in the consuming
+application so its schemas and this adapter share the tested runtime. A
+different Zod version requires revalidating the export profile before widening
+the peer.

@@ -1,8 +1,13 @@
 # Represent core
 
-See the [member model](../../examples/member-desk/src/model.ts) and
-[event model](../../examples/member-desk/src/events/model.ts) for working
-examples of representations, codecs, composition, and graphing.
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
+See the
+[member model](https://github.com/Ustice/represent/blob/main/examples/member-desk/src/model.ts)
+and
+[event model](https://github.com/Ustice/represent/blob/main/examples/member-desk/src/events/model.ts)
+for working examples of representations, codecs, composition, and graphing.
 
 A representation pairs a name with a parser. A conversion connects two
 representations and a typed mapping. `convert(value)` checks the source type at
@@ -60,10 +65,6 @@ It does not add support for `null`. Records preserve an absent optional key
 versus an explicitly present `undefined`; JSON serialization omits both. No
 default value is invented. Parsers still run at each enclosing record and field
 boundary, so normalization must tolerate repeated parsing, as with composition.
-
-The record assembler has one internal type assertion after all fields have been
-parsed or converted: TypeScript cannot express the key/value relationship
-returned by `Object.fromEntries`. Consumers need no casts.
 
 `text`, `dateValue`, `optional`, and `record` build parsers with inspectable,
 framework-neutral structure:
@@ -280,12 +281,13 @@ coverage.
 
 This is a value-conversion experiment. Record codecs derive runtime parsers,
 TypeScript record shapes, and neutral structural descriptions. The experimental
-[JSON Schema adapter](../json-schema/) derives supported JSON contracts and
-rejects opaque or unexpressible constraints. A scoped JSON acceptance
-certification profile is available in
-[Sensor Bench](../../examples/sensor-bench/); it does not certify other adapters
-or profiles. Definition dependency queries are available; field-level impact
-analysis and guarantee composition remain unproven.
+[JSON Schema adapter](https://github.com/Ustice/represent/tree/main/packages/json-schema)
+derives supported JSON contracts and rejects opaque or unexpressible
+constraints. A scoped JSON acceptance certification profile is available in
+[Sensor Bench](https://github.com/Ustice/represent/tree/main/examples/sensor-bench);
+it does not certify other adapters or profiles. Definition dependency queries
+are available; field-level impact analysis and guarantee composition remain
+unproven.
 
 `compareSchemas(beforeGraph, afterGraph)` compares declared representation
 structure by name. It returns `changes` (added, removed, or changed) with before
@@ -397,10 +399,12 @@ endpoints, as does `optionalCodec`. Null bypasses the inner nullable codec; list
 conversions preserve order. Ordinary validation still runs at each enclosing
 boundary.
 
-See [Sensor Bench](../../examples/sensor-bench/README.md) for an independent CLI
-that composes these declarations into telemetry parsing, temperature conversion,
-summary output, a wire contract, and a graph. Schema comparison uses explicit
-structural comparisons, including numeric constraints and collection references.
+See
+[Sensor Bench](https://github.com/Ustice/represent/blob/main/examples/sensor-bench/README.md)
+for an independent CLI that composes these declarations into telemetry parsing,
+temperature conversion, summary output, a wire contract, and a graph. Schema
+comparison uses explicit structural comparisons, including numeric constraints
+and collection references.
 
 `findRoutes(conversions, { from, to, limits? })` discovers simple paths between
 **distinct representation objects** without executing conversions. Supply the

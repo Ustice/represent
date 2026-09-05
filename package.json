@@ -11,14 +11,25 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "vitest run",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build:app && pnpm test:packages",
     "dev": "pnpm --filter @represent/member-desk dev",
-    "build": "pnpm --filter @represent/member-desk build",
+    "build": "pnpm build:packages && pnpm build:app",
     "server": "pnpm --filter @represent/member-desk server",
-    "sensor": "pnpm --filter @represent/sensor-bench start"
+    "sensor": "pnpm --filter @represent/sensor-bench start",
+    "build:packages": "node scripts/build-packages.ts",
+    "test:packages": "node scripts/verify-packages.ts",
+    "release:check": "pnpm test:packages",
+    "build:app": "pnpm --filter @represent/member-desk build"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@represent/core": "workspace:*",
+    "@represent/explorer": "workspace:*",
+    "@represent/fast-check": "workspace:*",
+    "@represent/fastify": "workspace:*",
+    "@represent/json-schema": "workspace:*",
+    "@represent/testing": "workspace:*",
+    "@represent/zod": "workspace:*",
     "@types/node": "^22.20.1",
     "ajv": "^8.20.0",
     "eslint": "^9.0.0",
@@ -29,5 +40,8 @@
     "typescript-eslint": "^8.0.0",
     "vitest": "^3.0.0",
     "zod": "4.4.3"
+  },
+  "engines": {
+    "node": "26.x"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "noEmitOnError": true,
+    "declaration": true,
+    "paths": {
+      "@represent/core": ["./packages/represent/dist/index.d.ts"],
+      "@represent/*": ["./packages/*/dist/index.d.ts"]
+    }
+  }
+}

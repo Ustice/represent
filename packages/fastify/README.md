@@ -1,5 +1,8 @@
 # Fastify adapter
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 `operationHandler` turns a Represent operation into an ordinary Fastify handler.
 Fastify owns routing, hooks, request parsing, serialization, and error policy.
 

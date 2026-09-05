@@ -11,6 +11,27 @@ importers:
       '@eslint/js':
         specifier: ^9.0.0
         version: 9.39.5
+      '@represent/core':
+        specifier: workspace:*
+        version: link:packages/represent
+      '@represent/explorer':
+        specifier: workspace:*
+        version: link:packages/explorer
+      '@represent/fast-check':
+        specifier: workspace:*
+        version: link:packages/fast-check
+      '@represent/fastify':
+        specifier: workspace:*
+        version: link:packages/fastify
+      '@represent/json-schema':
+        specifier: workspace:*
+        version: link:packages/json-schema
+      '@represent/testing':
+        specifier: workspace:*
+        version: link:packages/testing
+      '@represent/zod':
+        specifier: workspace:*
+        version: link:packages/zod
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
@@ -154,6 +175,7 @@ importers:
       '@represent/json-schema':
         specifier: workspace:*
         version: link:../json-schema
+    devDependencies:
       zod:
         specifier: 4.4.3
         version: 4.4.3

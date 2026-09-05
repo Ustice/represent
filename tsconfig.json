@@ -24,6 +24,8 @@
     "examples/**/*.ts",
     "vitest.config.ts",
     "eslint.config.js",
-    "tests/**/*.ts"
-  ]
+    "tests/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": ["**/dist/**"]
 }

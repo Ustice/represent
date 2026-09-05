@@ -1,5 +1,8 @@
 # fast-check adapter
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 `toArbitrary(representation, options?)` derives a fast-check 4.9.0 arbitrary
 from Represent's neutral structure. The resulting values retain the
 representation's parsed TypeScript type. Use fast-check's existing sampling,
@@ -52,9 +55,10 @@ shrinking context through the mapping. Preserve the seed and reported
 counterexample/path when recording a failed property; finite runs are evidence
 for the supplied domain and predicate, not universal proofs.
 
-[Sensor Bench](../../examples/sensor-bench/) derives telemetry fixtures,
-supplies explicit device/timestamp generators, and injects a reproducible mock
-data source into a real asynchronous inspection operation.
+[Sensor Bench](https://github.com/Ustice/represent/tree/main/examples/sensor-bench)
+derives telemetry fixtures, supplies explicit device/timestamp generators, and
+injects a reproducible mock data source into a real asynchronous inspection
+operation.
 
 API references:
 [arbitraries](https://fast-check.dev/docs/core-blocks/arbitraries/),
