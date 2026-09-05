@@ -78,7 +78,7 @@ export const experiments = {
 } satisfies Record<string, Experiment>;
 export type ExperimentKind = keyof typeof experiments;
 
-export function runExperiment(kind: ExperimentKind, source: string) {
+export function runExperiment(experiment: Experiment, source: string) {
   let input: unknown;
   try {
     input = JSON.parse(source);
@@ -88,18 +88,17 @@ export function runExperiment(kind: ExperimentKind, source: string) {
       message: "Enter a complete JSON value.",
     } as const;
   }
-  const experiment = experiments[kind];
   const result = tracePath(experiment.path, input, {
     snapshot: (value: unknown): unknown => structuredClone(value),
   });
   if (result.status === "failed") return result;
   const changes = jsonChanges(
-    z.json().parse(input),
-    z.json().parse(result.value),
+    z.json().parse(result.initial),
+    z.json().parse(result.output),
   );
   const comparison = experiment.comparison && {
     name: experiment.comparison.name,
-    equivalent: experiment.comparison.equivalent(input, result.value),
+    equivalent: experiment.comparison.equivalent(result.initial, result.output),
   };
   return { ...result, changes, comparison };
 }

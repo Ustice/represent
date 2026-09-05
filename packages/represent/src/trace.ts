@@ -13,7 +13,7 @@ export type ConversionTraceStep<Snapshot> = {
   | { readonly status: "failed"; readonly error: unknown }
 );
 
-/** Execute an explicit path once, retaining caller-defined snapshots at its boundaries. */
+/** Execute an explicit path once. Use independent snapshots if values may mutate. */
 export function tracePath<Snapshot>(
   path: readonly ConversionRunner[],
   input: unknown,
@@ -32,6 +32,7 @@ export function tracePath<Snapshot>(
   const initial = options.snapshot(input);
   const steps: ConversionTraceStep<Snapshot>[] = [];
   let value = input;
+  let output = initial;
   for (const [index, conversion] of route.entries()) {
     const description = {
       index,
@@ -46,11 +47,8 @@ export function tracePath<Snapshot>(
       return { status: "failed", initial, steps } as const;
     }
     // Snapshot failures belong to the inspection boundary, not the conversion.
-    steps.push({
-      ...description,
-      status: "completed",
-      output: options.snapshot(value),
-    });
+    output = options.snapshot(value);
+    steps.push({ ...description, status: "completed", output });
   }
-  return { status: "completed", initial, steps, value } as const;
+  return { status: "completed", initial, steps, output, value } as const;
 }

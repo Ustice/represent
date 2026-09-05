@@ -58,7 +58,7 @@ export function playgroundPanel() {
     )
     .join(
       "",
-    )}</select><div class="contract-grid"><div><label for="playground-input">Source JSON</label><textarea id="playground-input" rows="12" spellcheck="false">${escapeHtml(source())}</textarea><button type="button" class="button primary" id="run-playground">Run conversions</button><p class="muted">Each listed conversion runs once. This example uses pure conversions and does not save or publish data.</p></div><div class="playground-result" role="status">${outcome()}</div></div></section>`;
+    )}</select><div class="contract-grid"><div><label for="playground-input">Source JSON</label><textarea id="playground-input" rows="${kind === "timestamp" ? 3 : 12}" spellcheck="false">${escapeHtml(source())}</textarea><button type="button" class="button primary" id="run-playground">Run conversions</button><p class="muted">Each listed conversion runs once. This example uses pure conversions and does not save or publish data.</p></div><div class="playground-result" role="status">${outcome()}</div></div></section>`;
 }
 export function bindPlayground(render: () => void) {
   const select = document.querySelector<HTMLSelectElement>("#playground-kind");
@@ -83,7 +83,7 @@ export function bindPlayground(render: () => void) {
     if (status) status.textContent = "Source changed. Run again.";
   });
   document.querySelector("#run-playground")?.addEventListener("click", () => {
-    result = runExperiment(kind, source());
+    result = runExperiment(experiments[kind], source());
     render();
     document.querySelector<HTMLButtonElement>("#run-playground")?.focus();
   });

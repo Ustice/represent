@@ -331,7 +331,10 @@ const trace = tracePath(
 
 The caller chooses snapshots because domain values need not be JSON or
 cloneable. Capture independent values if later conversions might mutate earlier
-results. Snapshot failures propagate separately from conversion failures.
+results. The result retains `initial`, per-step `output` snapshots, and a final
+`output` snapshot on success. Its `value` is the live final result, typed as
+`unknown` because inspection accepts dynamic paths; snapshot types remain
+inferred. Snapshot failures propagate separately from conversion failures.
 Tracing runs real mappings and does not undo their effects; it is not a dry run.
 Nested field conversions and composed conversions retain their normal execution
 but are not expanded into additional trace steps.
