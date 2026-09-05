@@ -46,3 +46,61 @@
     grid-template-columns: 1fr;
   }
 }
+
+.workbench-tabs {
+  flex-wrap: wrap;
+}
+.change-lab {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.change-lab select {
+  display: block;
+  max-width: 100%;
+  margin: 0.5rem 0 1.5rem;
+}
+.change-lab details {
+  margin: 0.75rem 0;
+}
+.change-lab pre {
+  max-height: 28rem;
+  overflow: auto;
+  font-size: 0.8rem;
+}
+.change-table {
+  overflow: auto;
+}
+.change-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.change-table th,
+.change-table td {
+  text-align: left;
+  padding: 0.8rem;
+  border-bottom: 1px solid #d4dbd2;
+  vertical-align: top;
+}
+.change-table pre {
+  max-width: 18rem;
+  font-weight: normal;
+}
+.change-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.change-columns section {
+  background: #f0f3ee;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.change-columns ul,
+.change-columns ol {
+  padding-left: 1.2rem;
+}
+@media (max-width: 720px) {
+  .change-columns {
+    grid-template-columns: 1fr;
+  }
+}

@@ -13,7 +13,9 @@ hosts a reusable explorer with relationship and dependency views through shared
 field codecs, declared operation calls, reads, and references. It also inspects
 record fields and known value structure, leaving opaque parser behavior unknown.
 Connections also includes a Contract lab that validates generated RSVP JSON
-Schema with Ajv. There is no stable API or compatibility commitment.
+Schema with Ajv, plus a Change preview comparing proposed attendance-note
+contracts and their declared dependencies. There is no stable API or
+compatibility commitment.
 
 ## Run it
 

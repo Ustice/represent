@@ -284,3 +284,32 @@ TypeScript record shapes, and neutral structural descriptions. The experimental
 rejects opaque or unexpressible constraints. General adapter certification is
 not implemented. Definition dependency queries are available; field-level impact
 analysis and guarantee composition remain unproven.
+
+`compareSchemas(beforeGraph, afterGraph)` compares declared representation
+structure by name. It returns `changes` (added, removed, or changed) with before
+and after shapes and direct field bindings, plus `unverified` opaque/refined
+representations with one entry per name and all applicable `reasons` from either
+snapshot, including additions and removals. Null shapes mean absent or opaque;
+`kind` distinguishes addition and removal. Graph and field registration order do
+not create differences; renaming a definition is a removal plus addition. A
+changed child constraint is reported on the child; use dependency paths to see
+the enclosing records.
+
+```ts
+const comparison = compareSchemas(before, after);
+for (const change of comparison.changes) {
+  if (change.kind !== "removed") {
+    const affected = dependents(after, {
+      kind: "representation",
+      name: change.representation,
+    });
+  }
+}
+```
+
+Inspect both snapshots' dependents when reviewing a change, including removed
+relationships. Equal declarations do not prove equal parser behavior. Comparison
+does not inspect conversion/operation bodies or graph-link changes and does not
+classify compatibility, data migration needs, or runtime breakage. Fieldwork's
+Change preview compares real required/optional attendance-note parsers and JSON
+contracts against examples, alongside dependencies from both model snapshots.

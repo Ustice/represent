@@ -29,3 +29,8 @@ export { text, dateValue, optional } from "./values.js";
 export type { Structure, Presence } from "./structure.js";
 
 export { presenceOf } from "./structure.js";
+export {
+  compareSchemas,
+  type SchemaChange,
+  type FieldChange,
+} from "./schema-comparison.js";
