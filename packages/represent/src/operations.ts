@@ -27,15 +27,34 @@ export class OperationError extends Error {
   }
 }
 
-export function operation<Input, Output, Context>(definition: {
-  name: string;
-  input: Representation<Input>;
-  output: Representation<Output>;
-  reads?: readonly Representation<unknown>[];
-  references?: readonly ReferenceDescriptor[];
-  calls?: readonly (ConversionDescriptor | OperationDescriptor)[];
-  perform: (value: NoInfer<Input>, context: Context) => NoInfer<Output>;
-}) {
+interface OperationDefinition<Input, Output> {
+  readonly name: string;
+  readonly input: Representation<Input>;
+  readonly output: Representation<Output>;
+  readonly reads?: readonly Representation<unknown>[];
+  readonly references?: readonly ReferenceDescriptor[];
+  readonly calls?: readonly (ConversionDescriptor | OperationDescriptor)[];
+}
+
+function descriptor<Input, Output>(
+  definition: OperationDefinition<Input, Output>,
+) {
+  return {
+    kind: "operation" as const,
+    name: definition.name,
+    input: definition.input,
+    output: definition.output,
+    reads: Object.freeze([...(definition.reads ?? [])]),
+    calls: Object.freeze([...(definition.calls ?? [])]),
+    references: Object.freeze([...(definition.references ?? [])]),
+  };
+}
+
+export function operation<Input, Output, Context>(
+  definition: OperationDefinition<Input, Output> & {
+    perform: (value: NoInfer<Input>, context: Context) => NoInfer<Output>;
+  },
+) {
   const { name, input, output, perform } = definition;
   function step<Value>(
     stage: "input" | "perform" | "output",
@@ -53,15 +72,37 @@ export function operation<Input, Output, Context>(definition: {
     return step("output", () => output.parse(result));
   };
   const execute = (value: Input, context: Context) => run(value, context);
-  return Object.freeze({
-    kind: "operation" as const,
-    name,
-    input,
-    output,
-    run,
-    execute,
-    reads: Object.freeze([...(definition.reads ?? [])]),
-    calls: Object.freeze([...(definition.calls ?? [])]),
-    references: Object.freeze([...(definition.references ?? [])]),
-  });
+  return Object.freeze({ ...descriptor(definition), run, execute });
+}
+
+export function asyncOperation<Input, Output, Context>(
+  definition: OperationDefinition<Input, Output> & {
+    perform: (
+      value: NoInfer<Input>,
+      context: Context,
+    ) => PromiseLike<NoInfer<Output>>;
+  },
+) {
+  const { name, input, output, perform } = definition;
+  const run = async (value: unknown, context: Context) => {
+    let parsed: Input;
+    try {
+      parsed = input.parse(value);
+    } catch (cause) {
+      throw new OperationError(name, "input", cause);
+    }
+    let result: Output;
+    try {
+      result = await perform(parsed, context);
+    } catch (cause) {
+      throw new OperationError(name, "perform", cause);
+    }
+    try {
+      return output.parse(result);
+    } catch (cause) {
+      throw new OperationError(name, "output", cause);
+    }
+  };
+  const execute = (value: Input, context: Context) => run(value, context);
+  return Object.freeze({ ...descriptor(definition), run, execute });
 }

@@ -9,7 +9,12 @@ export {
   type Representation,
 } from "./conversions.js";
 export { optionalCodec, recordCodec, record } from "./records.js";
-export { operation, OperationError } from "./operations.js";
+export {
+  operation,
+  asyncOperation,
+  OperationError,
+  type OperationDescriptor,
+} from "./operations.js";
 
 export { graph } from "./graph.js";
 export { reference } from "./references.js";

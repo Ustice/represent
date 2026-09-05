@@ -106,3 +106,19 @@ reverse conversion. JSON remains the full record exchange format.
 There is no backend, authentication, or server-side privacy boundary. The public
 profile is a local preview; private data remains in the same browser
 application.
+
+## A real event endpoint
+
+Run `pnpm server` from the repository root alongside `pnpm dev`. Connections →
+Server lab calls `GET /api/events/:id` through Vite's proxy to Fastify on
+port 5175. Try `evt_01`, `evt_02`, or a missing identifier. Restart an
+already-running Vite process after first adding its proxy configuration.
+
+The async Look up event operation reads `server/events.json`, validates Events,
+and returns the Event API representation. The browser decodes that response back
+into a domain Event. The server reads the file on each request, so edits to this
+synthetic fixture appear immediately. Missing events return 404; a broken
+fixture returns a generic server error. This read-only fixture is separate from
+local-storage members, events, and RSVPs. The main example continues to work
+without the API; only Server lab requires it. Production `vite build` emits the
+browser bundle; this API experiment currently uses the development proxy.

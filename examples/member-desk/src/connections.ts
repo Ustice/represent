@@ -1,3 +1,4 @@
+import { serverPanel, bindServer } from "./server-panel.js";
 import { playgroundPanel, bindPlayground } from "./playground-panel.js";
 import { changePanel, bindChanges } from "./change-panel.js";
 import { contractPanel, bindContract } from "./contract-panel.js";
@@ -23,26 +24,43 @@ const explorer = createExplorer(workspaceGraph, {
     },
   ],
 });
-let view: "model" | "contract" | "changes" | "playground" = "model";
+const views = {
+  model: {
+    label: "Model explorer",
+    panel: () => explorer.render(),
+    bind: (render: () => void) => explorer.bind(document, render),
+  },
+  contract: { label: "Contract lab", panel: contractPanel, bind: bindContract },
+  changes: { label: "Change preview", panel: changePanel, bind: bindChanges },
+  playground: {
+    label: "Conversion playground",
+    panel: playgroundPanel,
+    bind: bindPlayground,
+  },
+  server: { label: "Server lab", panel: serverPanel, bind: bindServer },
+};
+let view: keyof typeof views = "model";
+function isView(value: string | undefined): value is keyof typeof views {
+  return value !== undefined && Object.hasOwn(views, value);
+}
 export function connectionsPanel() {
-  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button><button type="button" data-workbench="changes" aria-pressed="${view === "changes"}">Change preview</button><button type="button" data-workbench="playground" aria-pressed="${view === "playground"}">Conversion playground</button></div>${view === "model" ? explorer.render() : view === "contract" ? contractPanel() : view === "changes" ? changePanel() : playgroundPanel()}`;
+  const tabs = Object.entries(views)
+    .map(
+      ([key, value]) =>
+        `<button type="button" data-workbench="${key}" aria-pressed="${view === key}">${value.label}</button>`,
+    )
+    .join("");
+  return `<div class="workbench-tabs" role="group" aria-label="Development views">${tabs}</div>${views[view].panel()}`;
 }
 export function bindConnections(render: () => void) {
-  explorer.bind(document, render);
-  bindContract(render);
-  bindChanges(render);
-  bindPlayground(render);
+  views[view].bind(render);
   document
     .querySelectorAll<HTMLButtonElement>("[data-workbench]")
     .forEach((button) =>
       button.addEventListener("click", () => {
-        if (
-          button.dataset.workbench === "model" ||
-          button.dataset.workbench === "contract" ||
-          button.dataset.workbench === "changes" ||
-          button.dataset.workbench === "playground"
-        )
-          view = button.dataset.workbench;
+        const next = button.dataset.workbench;
+        if (!isView(next)) return;
+        view = next;
         render();
         document
           .querySelector<HTMLButtonElement>(`[data-workbench="${view}"]`)

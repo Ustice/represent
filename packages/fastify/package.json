@@ -1,0 +1,15 @@
+{
+  "name": "@represent/fastify",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@represent/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "fastify": "5.12.3"
+  }
+}
