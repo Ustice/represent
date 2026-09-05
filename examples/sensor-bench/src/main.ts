@@ -1,3 +1,5 @@
+import { generateBatch, mockSensorSource } from "./fixtures.js";
+import { inspectSensor } from "./model.js";
 import { parseArgs } from "node:util";
 import { temperatureRoute } from "./routing.js";
 import { readFile } from "node:fs/promises";
@@ -10,6 +12,21 @@ import {
 
 async function main() {
   const [command = "summary", ...args] = process.argv.slice(2);
+  if (command === "generate" || command === "mock") {
+    const { values } = parseArgs({
+      args,
+      options: {
+        seed: { type: "string", default: "162" },
+        device: { type: "string", default: "greenhouse-mock" },
+      },
+    });
+    const seed = Number(values.seed);
+    if (command === "generate") return generateBatch(seed);
+    return inspectSensor.execute(
+      { device: values.device },
+      mockSensorSource(seed),
+    );
+  }
   if (command === "route") {
     const { values } = parseArgs({
       args,
@@ -29,7 +46,9 @@ async function main() {
   if (command === "schema") return sensorContract();
   if (command === "graph") return sensorGraph;
   if (command !== "summary" && command !== "round-trip")
-    throw new Error("Choose summary, round-trip, schema, graph, or route");
+    throw new Error(
+      "Choose summary, round-trip, schema, graph, route, generate, or mock",
+    );
   const source = await readFile(
     file ?? new URL("../sample.json", import.meta.url),
     "utf8",
