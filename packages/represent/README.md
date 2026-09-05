@@ -288,11 +288,12 @@ analysis and guarantee composition remain unproven.
 `compareSchemas(beforeGraph, afterGraph)` compares declared representation
 structure by name. It returns `changes` (added, removed, or changed) with before
 and after shapes and direct field bindings, plus `unverified` opaque/refined
-representations. Null shapes mean absent or opaque; `kind` distinguishes
-addition and removal. Graph and field registration order do not create
-differences; renaming a definition is a removal plus addition. A changed child
-constraint is reported on the child; use dependency paths to see the enclosing
-records.
+representations with one entry per name and all applicable `reasons` from either
+snapshot, including additions and removals. Null shapes mean absent or opaque;
+`kind` distinguishes addition and removal. Graph and field registration order do
+not create differences; renaming a definition is a removal plus addition. A
+changed child constraint is reported on the child; use dependency paths to see
+the enclosing records.
 
 ```ts
 const comparison = compareSchemas(before, after);

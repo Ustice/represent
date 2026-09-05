@@ -34,7 +34,7 @@ export function changePanel() {
     <p class="muted">These definitions need review. Paths follow declared requirements; they do not prove that runtime behavior changes or that every dependency was declared.</p>
     <details><summary>Inspect the structural change</summary><pre>${json(change)}</pre></details>
     <details><summary>Generated proposed contract</summary><pre>${json(proposal.schema)}</pre></details>
-    <details><summary>${proposal.comparison.unverified.length} opaque or refined definitions remain unverified</summary><p>Parser bodies and custom rules are absent from graph snapshots. Equal declarations do not prove equal behavior. Conversion and operation bodies are not compared.</p><ul>${proposal.comparison.unverified.map((item) => `<li>${escapeHtml(item.representation)} · ${item.reason}</li>`).join("")}</ul></details></section>`;
+    <details><summary>${proposal.comparison.unverified.length} opaque or refined definitions remain unverified</summary><p>Parser bodies and custom rules are absent from graph snapshots. Equal declarations do not prove equal behavior. Conversion and operation bodies are not compared.</p><ul>${proposal.comparison.unverified.map((item) => `<li>${escapeHtml(item.representation)} · ${item.reasons.join(", ")}</li>`).join("")}</ul></details></section>`;
 }
 export function bindChanges(render: () => void) {
   document

@@ -74,7 +74,7 @@ describe("schema comparison", () => {
     const snapshot = structuredClone(before);
     expect(compareSchemas(before, after)).toEqual({
       changes: [],
-      unverified: [{ representation: "Opaque", reason: "opaque" }],
+      unverified: [{ representation: "Opaque", reasons: ["opaque"] }],
     });
     expect(before).toEqual(snapshot);
     const added = compareSchemas(graph([]), before);
@@ -126,9 +126,17 @@ describe("schema comparison", () => {
       operations: [],
       references: [],
     } as const;
+    const unknownLoop = graph([], {
+      representations: [
+        representation({ name: "Loop", parse: (value) => value }),
+      ],
+    });
+    expect(compareSchemas(unknownLoop, recursive).unverified).toEqual([
+      { representation: "Loop", reasons: ["opaque", "refinement"] },
+    ]);
     expect(compareSchemas(recursive, structuredClone(recursive))).toEqual({
       changes: [],
-      unverified: [{ representation: "Loop", reason: "refinement" }],
+      unverified: [{ representation: "Loop", reasons: ["refinement"] }],
     });
   });
 });

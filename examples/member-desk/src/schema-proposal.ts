@@ -21,13 +21,13 @@ export function attendanceNoteProposal(mode: "optional" | "required") {
   const declarations = graph([], { representations: [request] });
   const names = new Set(declarations.nodes.map((node) => node.name));
   const before = structuredClone(workspaceGraph);
-  const after = {
-    ...structuredClone(before),
+  const after = structuredClone({
+    ...before,
     nodes: [
       ...before.nodes.filter((node) => !names.has(node.name)),
       ...declarations.nodes,
     ],
-  };
+  });
   const schema = toJsonSchema(request);
   const ajv = new Ajv2020({ strict: true, ownProperties: true });
   const validateBefore = ajv.compile(toJsonSchema(registerRsvp.input));

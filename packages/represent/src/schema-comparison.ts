@@ -70,18 +70,19 @@ export function compareSchemas(before: Graph, after: Graph) {
   const changes: SchemaChange[] = [];
   const unverified: Array<{
     representation: string;
-    reason: "opaque" | "refinement";
+    reasons: Array<"opaque" | "refinement">;
   }> = [];
   for (const name of names) {
     const oldShape = previous.get(name),
       newShape = next.get(name);
-    if (oldShape === null || newShape === null)
-      unverified.push({ representation: name, reason: "opaque" });
+    const reasons: Array<"opaque" | "refinement"> = [];
+    if (oldShape === null || newShape === null) reasons.push("opaque");
     if (
       (oldShape?.kind === "record" && oldShape.refined) ||
       (newShape?.kind === "record" && newShape.refined)
     )
-      unverified.push({ representation: name, reason: "refinement" });
+      reasons.push("refinement");
+    if (reasons.length) unverified.push({ representation: name, reasons });
     if (JSON.stringify(oldShape) === JSON.stringify(newShape)) continue;
     changes.push({
       representation: name,
