@@ -12,7 +12,8 @@ Directory and event attendee CSV exports use the saved records. Connections
 hosts a reusable explorer with relationship and dependency views through shared
 field codecs, declared operation calls, reads, and references. It also inspects
 record fields and known value structure, leaving opaque parser behavior unknown.
-There is no stable API or compatibility commitment.
+Connections also includes a Contract lab that validates generated RSVP JSON
+Schema with Ajv. There is no stable API or compatibility commitment.
 
 ## Run it
 

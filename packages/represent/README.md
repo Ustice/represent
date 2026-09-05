@@ -279,7 +279,8 @@ field-level impact, runtime value changes, persistence, or complete dependency
 coverage.
 
 This is a value-conversion experiment. Record codecs derive runtime parsers,
-TypeScript record shapes, and neutral structural descriptions. Target-library
-schemas and artifacts are not generated yet. Automatic adapters and
-certification are not implemented. Definition dependency queries are available;
-field-level impact analysis and guarantee composition remain unproven.
+TypeScript record shapes, and neutral structural descriptions. The experimental
+[JSON Schema adapter](../json-schema/) derives supported JSON contracts and
+rejects opaque or unexpressible constraints. General adapter certification is
+not implemented. Definition dependency queries are available; field-level impact
+analysis and guarantee composition remain unproven.

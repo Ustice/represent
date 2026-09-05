@@ -1,0 +1,50 @@
+# JSON Schema adapter
+
+`toJsonSchema(representation)` derives a JSON Schema 2020-12 document from the
+core's declared structure. The adapter owns all JSON Schema semantics; the core
+has no JSON Schema or Ajv dependency.
+
+```ts
+import { record, text, optional } from "@represent/core";
+import { toJsonSchema } from "@represent/json-schema";
+import { Ajv2020 } from "ajv/dist/2020.js";
+
+const request = record("Request", {
+  id: text("ID", { nonempty: true }),
+  note: optional(text("Note")),
+});
+const schema = toJsonSchema(request);
+const validate = new Ajv2020({ strict: true, ownProperties: true }).compile(
+  schema,
+);
+validate({ id: "example" }); // true
+validate({ id: "" }); // false
+```
+
+Supported: text, nonempty text, strict records, optional record fields, shared
+children, and recursive record declarations. Optional means a JSON property may
+be absent; it does not make null valid. Fields and definitions are emitted in
+stable name order. Schema references escape JSON Pointer and URI-fragment names.
+
+`SchemaExportError.issues` identifies unsupported structure by field path,
+representation name, and reason. Dates, opaque parsers, custom record
+refinements, root-level optional values, and cycles consisting only of optional
+wrappers cannot be exported. The property name `__proto__` also produces an
+`unsupported-field` issue: Ajv ignores it in `properties`, so this experimental
+adapter refuses a contract its demonstrated consumer cannot validate faithfully.
+JSON Schema itself permits that name. No permissive fallback schema is returned.
+Shared unsupported children report their first encountered path. Export never
+executes a parser.
+
+The contract covers **JSON values**. It does not reproduce JavaScript undefined,
+prototypes, getters, parser normalization, defaults, or effects. Structural
+metadata is trusted and must describe its parser honestly. A valid target record
+can still fail a conversion or operation's domain rules. No general adapter
+certification or conversion-success guarantee is implied.
+
+Fieldwork's Connections → Contract lab validates pasted JSON with Ajv using the
+actual signup operation's generated input contract. It does not execute signups.
+The adapter tests compare Ajv and the real request parser over meaningful JSON
+cases. See
+[JSON Schema 2020-12](https://json-schema.org/draft/2020-12/json-schema-core)
+and [Ajv's draft support](https://ajv.js.org/json-schema.html).

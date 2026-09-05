@@ -1,6 +1,48 @@
-.work-area:has(.rx) > .editor {
+.work-area:has(.workbench-tabs) > .editor {
   display: none;
 }
-.work-area:has(.rx) > .preview {
+.work-area:has(.workbench-tabs) > .preview {
   grid-column: 1 / -1;
+}
+
+.workbench-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.workbench-tabs button[aria-pressed="true"] {
+  background: #283e35;
+  color: white;
+}
+.contract-lab {
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.contract-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+.contract-grid textarea {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  font: 0.9rem/1.6 monospace;
+}
+.contract-grid pre {
+  max-height: 32rem;
+  overflow: auto;
+  font-size: 0.8rem;
+}
+.contract-result {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f0f3ee;
+  border-radius: 0.5rem;
+}
+@media (max-width: 720px) {
+  .contract-grid {
+    grid-template-columns: 1fr;
+  }
 }
