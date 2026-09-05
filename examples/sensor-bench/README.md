@@ -16,8 +16,9 @@ pnpm --silent sensor graph > sensor.graph.json
 The sample protocol reports Fahrenheit temperatures. The domain model uses
 Celsius and Date objects. Each conversion direction rounds temperature to one
 decimal: the sample's 68.1°F becomes 20.1°C and returns as 68.2°F. The
-round-trip command shows captured boundary values and changed reading indexes,
-including timestamp normalization. It makes no general losslessness claim.
+round-trip command shows captured boundary values and reports temperature
+changes separately from timestamp-spelling changes for each affected reading. It
+makes no general losslessness claim.
 
 `temperature: null` means a reading is unavailable; a missing temperature field
 is invalid. False online status and zero battery remain real values. Empty
