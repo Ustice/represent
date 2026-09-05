@@ -7,10 +7,10 @@ application data to other systems without replacing their runtimes.
 The working example is [Fieldwork](examples/member-desk/), a browser application
 built alongside [the core](packages/represent/). It edits members, exchanges API
 records through a codec, previews public profiles, edits community events, and
-manages RSVPs with signup deadlines. Directory and event attendee CSV exports
-use the saved records. Connections traces shared field codecs, operation reads,
-and the references used to join members and events. There is no stable API or
-compatibility commitment.
+manages RSVPs with signup deadlines and bulk email-list preview/import.
+Directory and event attendee CSV exports use the saved records. Connections
+traces shared field codecs, operation reads, and the references used to join
+members and events. There is no stable API or compatibility commitment.
 
 ## Run it
 

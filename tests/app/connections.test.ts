@@ -27,6 +27,13 @@ describe("Fieldwork connections", () => {
         reads: ["Event", "RSVP", "Member"],
         references: ["RSVP event", "RSVP member"],
       },
+      {
+        name: "Register RSVP by email",
+        input: "RSVP email request",
+        output: "RSVP",
+        reads: ["Member", "Event", "RSVP"],
+        references: ["RSVP member", "RSVP event"],
+      },
     ]);
     expect(workspaceGraph.references).toEqual([
       {

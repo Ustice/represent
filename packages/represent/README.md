@@ -87,6 +87,40 @@ and input/perform/output stage, retaining the underlying cause. The consumer
 owns clock selection, domain rules, missing-reference policy, and persistence.
 Operations provide no transaction, rollback, concurrency, or purity guarantee.
 
+`runBatch(operation, inputs, { context, advance })` runs an ordered list of
+external inputs through an existing synchronous operation:
+
+```ts
+const result = runBatch(registerRsvpByEmail, requests, {
+  context,
+  advance: (current, rsvp) => ({
+    ...current,
+    rsvps: [...current.rsvps, rsvp],
+  }),
+});
+
+for (const row of result.rows) {
+  if (row.status === "accepted") useRsvp(row.value);
+  else showProblem(row.index, row.error.stage, row.error.message);
+}
+```
+
+`rows` contains one `BatchRow<Value>` per input, in order, with a zero-based
+`index`. Accepted rows carry the validated output; rejected rows retain the
+original `OperationError`, including its stage and cause. Input, perform, and
+output failures are collected; later rows continue against the last accepted
+context. `advance` is required and runs only after validated success. It returns
+the context for the next row; `result.context` contains the final context.
+Stateless consumers can explicitly return the same context.
+
+Transition failures and unexpected errors outside an operation propagate. The
+runner does not clone context, undo mutations, roll back effects, or persist
+results. A preview requires a side-effect-free operation and transition.
+Fieldwork uses immutable transitions, revalidates the reviewed selection against
+current state and time, and saves accepted RSVPs in one consumer-owned write.
+Batching adds no transaction or cross-tab concurrency guarantee and introduces
+no additional graph node: the supplied operation keeps its existing metadata.
+
 A `reference` names a field-to-key relationship and resolves it against
 supplied, trusted records:
 

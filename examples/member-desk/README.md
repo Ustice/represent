@@ -53,6 +53,23 @@ An event with no attendees exports column headings only. Missing members,
 ambiguous references, and duplicate signups block export rather than silently
 losing or duplicating rows; a missing-member RSVP can still be cancelled.
 
+Import RSVPs accepts one member email per line for the selected saved event.
+Matching ignores case and surrounding whitespace; blank lines are ignored while
+preview results retain original line numbers. Invalid/unknown/ambiguous emails,
+existing signups, repeated members in the list, and closed signups are rejected
+individually. Ready rows can still be imported. Editing the text invalidates its
+preview; import drafts survive navigation within the page, but not reloads.
+
+The [import model](src/rsvps/import.ts) wraps the existing signup operation with
+email lookup and uses Represent's `runBatch`. Accepted rows extend an in-memory
+context so subsequent rows see them; preview writes nothing. Import reruns the
+list against current members, saved RSVPs, the page's saved schedule, and a
+fresh clock. If the accepted row/member selection changed, it shows a refreshed
+preview and writes nothing until reviewed again. It saves ready rows in one
+local-storage write, leaves rejected rows out, and does not automatically create
+members. Storage failures do not report success. A repeat import detects the
+already-saved signups.
+
 RSVPs persist separately in local storage. Resetting member/event samples keeps
 their existing IDs and does not cancel RSVPs; Cancel removes an individual
 signup. The persistence seam rereads and validates saved RSVPs before each
