@@ -32,6 +32,8 @@ export const certificationPacket = record("Certification packet", {
   ),
   note: optional(nullable(text("Certification note", { nonempty: true }))),
 });
+// Empty recipient distinguishes swapped text fields; required null distinguishes
+// null from missing. These witnesses must detect defects regardless of the seed.
 const sentinel = {
   sender: "Aster",
   recipient: "",
@@ -78,6 +80,7 @@ const rootShape = z.object({
 });
 export const schemaDefects = [
   "DROP_FIELD",
+  "ERASE_FIELD_CONSTRAINT",
   "SWAP_FIELDS",
   "COLLAPSE_NULLISH",
   "FALSE_GUARANTEE",
@@ -91,6 +94,17 @@ export function breakSchema(
     return {
       ...schema,
       $defs: { ...schema.$defs, [certificationPacket.name]: true },
+    };
+  if (defect === "ERASE_FIELD_CONSTRAINT")
+    return {
+      ...schema,
+      $defs: {
+        ...schema.$defs,
+        [certificationPacket.name]: {
+          ...root,
+          properties: { ...root.properties, sender: true },
+        },
+      },
     };
   if (defect === "DROP_FIELD")
     return {
@@ -139,6 +153,13 @@ export function breakSchema(
     },
   };
 }
+export const ajvOptions = Object.freeze({
+  strict: true,
+  ownProperties: true,
+  coerceTypes: false,
+  useDefaults: false,
+  removeAdditional: false,
+});
 export type SchemaExporter = (value: Representation<unknown>) => JsonSchema;
 export function jsonSchemaCases(
   exportSchema: SchemaExporter,
@@ -154,18 +175,16 @@ export function jsonSchemaCases(
       { seed, numRuns: 100 },
     );
     fixtures = [
+      ...explicit,
       ...generated.map((value, index) => {
         const json: unknown = JSON.parse(JSON.stringify(value));
         return { label: `Generated ${index}`, value: json };
       }),
-      ...explicit,
     ];
     return fixtures;
   }
   const compare = (schema: JsonSchema) => {
-    const accepts = new Ajv2020({ strict: true, ownProperties: true }).compile(
-      schema,
-    );
+    const accepts = new Ajv2020(ajvOptions).compile(schema);
     return checkContract({
       representation: certificationPacket,
       accepts,
