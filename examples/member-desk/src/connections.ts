@@ -2,14 +2,18 @@ import { graph } from "@represent/core";
 import { memberExchange, toPublic, toRoster } from "./model.js";
 import { eventExchange } from "./events/model.js";
 import { rsvpExchange, registerRsvp, cancelRsvp } from "./rsvps/model.js";
+import { prepareAttendeeRoster } from "./rsvps/export.js";
 import { escapeHtml, json } from "./ui.js";
 
 const exchanges = [memberExchange, eventExchange, rsvpExchange];
-export const workspaceGraph = graph([
-  ...exchanges.flatMap(({ encode, decode }) => [encode, decode]),
-  toPublic,
-  toRoster,
-]);
+export const workspaceGraph = graph(
+  [
+    ...exchanges.flatMap(({ encode, decode }) => [encode, decode]),
+    toPublic,
+    toRoster,
+  ],
+  { operations: [registerRsvp, cancelRsvp, prepareAttendeeRoster] },
+);
 
 export function sharedFieldUses() {
   const uses: Array<{ path: string; conversion: string }> = [];
@@ -46,7 +50,10 @@ export function connectionsPanel() {
             .join("")}</ul></div>`,
       )
       .join("")}
-    <div class="edge-list">${[registerRsvp, cancelRsvp].map((op) => `<div class="edge"><span aria-hidden="true">↳</span><div><strong>${escapeHtml(op.name)}</strong><p>${escapeHtml(op.input.name)} → ${escapeHtml(op.output.name)}</p></div></div>`).join("")}</div>
-    <p class="graph-caption">Operations validate requests and results against an explicit context. Fieldwork resolves member/event references and enforces signup rules. Those domain relationships are not inferred from field names.</p>
-    <details class="data-details"><summary>View conversion graph <span>JSON ↗</span></summary><pre>${json(workspaceGraph)}</pre></details>`;
+    <h3>What feeds each operation?</h3>
+    <div class="edge-list">${workspaceGraph.operations.map((op) => `<div class="edge"><span aria-hidden="true">↳</span><div><strong>${escapeHtml(op.name)}</strong><p>${escapeHtml(op.input)} → ${escapeHtml(op.output)}</p><p>Reads: ${op.reads.map(escapeHtml).join(" · ")}</p></div></div>`).join("")}</div>
+    <h3>How the records connect</h3>
+    <div class="edge-list">${workspaceGraph.references.map((ref) => `<div class="edge"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(ref.name)}</strong><p>${escapeHtml(ref.from)}.${escapeHtml(ref.field)} → ${escapeHtml(ref.to)}.${escapeHtml(ref.key)}</p></div></div>`).join("")}</div>
+    <p class="graph-caption">The roster reads current members, events, and RSVPs. A saved name, email, or event-time change appears in the next export. These are declared dependencies; Represent does not infer reads from function bodies. The references shown here also perform the app's lookups.</p>
+    <details class="data-details"><summary>View workspace graph <span>JSON ↗</span></summary><pre>${json(workspaceGraph)}</pre></details>`;
 }

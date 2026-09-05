@@ -65,6 +65,8 @@ describe("bidirectional codecs", () => {
         { name: "Price: decode", from: "Text", to: "Amount" },
       ],
       dependencies: [],
+      operations: [],
+      references: [],
     });
   });
 });

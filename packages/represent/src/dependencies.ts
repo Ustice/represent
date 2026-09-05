@@ -1,4 +1,4 @@
-import type { ConversionDescriptor } from "./conversions.js";
+import type { ConversionDescriptor } from "./graph.js";
 
 export interface Dependency {
   readonly field: string | null;

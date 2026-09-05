@@ -177,6 +177,8 @@ describe("graph descriptors", () => {
         { name: "Format amount", from: "Amount", to: "Text" },
       ],
       dependencies: [],
+      operations: [],
+      references: [],
     });
   });
 

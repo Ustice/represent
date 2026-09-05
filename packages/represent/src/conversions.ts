@@ -1,4 +1,4 @@
-import { dependenciesOf, setDependencies } from "./dependencies.js";
+import { setDependencies } from "./dependencies.js";
 
 export interface Representation<Value> {
   readonly name: string;
@@ -107,55 +107,4 @@ export function codec<Source, Target>(definition: {
       map: decode,
     }),
   });
-}
-
-export interface ConversionDescriptor {
-  readonly name: string;
-  readonly from: Representation<unknown>;
-  readonly to: Representation<unknown>;
-}
-
-export function graph(conversions: readonly ConversionDescriptor[]) {
-  const representations = new Map<string, Representation<unknown>>();
-  const names = new Map<string, ConversionDescriptor>();
-  const edges: Array<{ name: string; from: string; to: string }> = [];
-  const dependencies: Array<{
-    parent: string;
-    field: string | null;
-    conversion: string;
-  }> = [];
-  const roots = new Set<string>();
-  for (const subject of conversions) {
-    if (roots.has(subject.name))
-      throw new Error(`Duplicate conversion name: ${subject.name}`);
-    roots.add(subject.name);
-  }
-  function visit(subject: ConversionDescriptor) {
-    const { name, from, to } = subject;
-    const existing = names.get(name);
-    if (existing === subject) return;
-    if (existing) {
-      throw new Error(`Duplicate conversion name: ${name}`);
-    }
-    names.set(name, subject);
-    for (const endpoint of [from, to]) {
-      const existing = representations.get(endpoint.name);
-      if (existing && existing !== endpoint) {
-        throw new Error(`Duplicate representation name: ${endpoint.name}`);
-      }
-      representations.set(endpoint.name, endpoint);
-    }
-    edges.push({ name, from: from.name, to: to.name });
-    for (const dependency of dependenciesOf(subject)) {
-      dependencies.push({
-        parent: name,
-        field: dependency.field,
-        conversion: dependency.conversion.name,
-      });
-      visit(dependency.conversion);
-    }
-  }
-  conversions.forEach(visit);
-  const nodes = [...representations.keys()].map((name) => ({ name }));
-  return { nodes, edges, dependencies };
 }

@@ -1,8 +1,8 @@
-import { operation, recordCodec } from "@represent/core";
+import { operation, recordCodec, reference } from "@represent/core";
 import { z } from "zod";
 import { dateTime, field, parser } from "../fields.js";
-import type { Member } from "../model.js";
-import type { CommunityEvent } from "../events/model.js";
+import { member, type Member } from "../model.js";
+import { eventExchange, type CommunityEvent } from "../events/model.js";
 
 const identifiers = { memberId: z.string().min(1), eventId: z.string().min(1) };
 export const rsvpExchange = recordCodec({
@@ -16,6 +16,20 @@ export const rsvpExchange = recordCodec({
   },
 });
 export type Rsvp = ReturnType<typeof rsvpExchange.decode.run>;
+export const rsvpMember = reference({
+  name: "RSVP member",
+  from: rsvpExchange.encode.from,
+  field: "memberId",
+  to: member,
+  key: "id",
+});
+export const rsvpEvent = reference({
+  name: "RSVP event",
+  from: rsvpExchange.encode.from,
+  field: "eventId",
+  to: eventExchange.encode.from,
+  key: "id",
+});
 const request = field("RSVP request", z.object(identifiers).strict());
 export type RsvpRequest = ReturnType<typeof request.parse>;
 export interface RsvpContext {
@@ -35,10 +49,12 @@ export const registerRsvp = operation({
   name: "Register RSVP",
   input: request,
   output: rsvpExchange.encode.from,
+  reads: [member, eventExchange.encode.from, rsvpExchange.encode.from],
+  references: [rsvpMember, rsvpEvent],
   perform(value, context: RsvpContext) {
-    if (!context.members.some(({ id }) => id === value.memberId))
+    if (!rsvpMember.resolve(value, context.members))
       throw new Error("This member is not in the directory.");
-    const event = context.events.find(({ id }) => id === value.eventId);
+    const event = rsvpEvent.resolve(value, context.events);
     if (!event) throw new Error("This event is not in the schedule.");
     if (context.rsvps.some((rsvp) => sameSignup(rsvp, value)))
       throw new Error("This member is already attending.");
@@ -52,6 +68,7 @@ export const cancelRsvp = operation({
   name: "Cancel RSVP",
   input: request,
   output: rsvpExchange.encode.from,
+  reads: [rsvpExchange.encode.from],
   perform(value, context: RsvpContext) {
     const existing = context.rsvps.find((rsvp) => sameSignup(rsvp, value));
     if (!existing) throw new Error("This member is not attending this event.");
