@@ -32,6 +32,8 @@ describe("Zod leaf interoperability", () => {
       "2026-09-05T25:00:00Z",
       "2026-09-05T12:00:00",
       "garbage",
+      "xxx2026-09-05T12:00Z",
+      "2026-09-05T12:00Zxxx",
     ]) {
       const input = { role: "Member", when };
       expect(validate(input), when).toBe(timestamp.safeParse(when).success);
@@ -43,6 +45,8 @@ describe("Zod leaf interoperability", () => {
         email: "maya@example.test",
       }),
     ).toBe(true);
+    expect(validate({ when: "2026-09-05T12:00Z" })).toBe(false);
+    expect(validate({ role: "Member" })).toBe(false);
     expect(validate({ role: "Owner", when: "2026-09-05T12:00Z" })).toBe(false);
     expect(
       validate({ role: "Member", when: "2026-09-05T12:00Z", email: "bad" }),
@@ -63,6 +67,8 @@ describe("Zod leaf interoperability", () => {
       z.coerce.string(),
       z.object({ value: z.string() }),
       z.email({ pattern: /^.$/ }),
+      z.string().optional(),
+      z.string().nullable(),
     ];
     for (const schema of cases)
       expect(() => exportSchema(fromZod("Unsupported", schema))).toThrow();
@@ -95,6 +101,13 @@ describe("Zod leaf interoperability", () => {
     );
     expect(validate({ ...input, rsvpBy: null })).toBe(false);
     expect(validate({ ...input, startsAt: "not a date" })).toBe(false);
+  });
+  it("rejects conflicting representation names before a provider can hide them", () => {
+    const input = record("Collision", {
+      first: fromZod("Choice", z.enum(["A"])),
+      second: fromZod("Choice", z.enum(["B"])),
+    });
+    expect(() => exportSchema(input)).toThrow(/name/i);
   });
   it("reports provider conflicts and failures without overriding native structure", () => {
     const unknown = representation({

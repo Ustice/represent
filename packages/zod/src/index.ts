@@ -23,6 +23,8 @@ export function fromZod<Value>(name: string, schema: z.ZodType<Value>) {
   return value;
 }
 
+// This export profile intentionally inspects Zod 4.4.3 definitions. Revalidate
+// acceptance equivalence before widening the profile or upgrading Zod.
 function portableLeaf(schema: z.ZodType) {
   if (schema._zod.def.checks?.length)
     throw new Error(
@@ -60,7 +62,8 @@ function portableLeaf(schema: z.ZodType) {
     if (
       !actual ||
       actual.source !== expected.source ||
-      actual.flags !== expected.flags
+      actual.flags !== expected.flags ||
+      actual.flags !== ""
     )
       throw new Error(
         "Custom format patterns are not supported by this export profile",
