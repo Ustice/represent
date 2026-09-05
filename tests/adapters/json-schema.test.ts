@@ -45,6 +45,13 @@ describe("JSON Schema adapter", () => {
       }),
       note: optional(optional(text("Note"))),
     });
+    const special = record("__proto__", {
+      ["__proto__"]: text("constructor", { nonempty: true }),
+    });
+    expect(special.parse(JSON.parse('{"__proto__":"x"}'))).toEqual(
+      JSON.parse('{"__proto__":"x"}'),
+    );
+    expect(() => toJsonSchema(special)).toThrow("unsupported-field");
     const schema = toJsonSchema(value);
     const validate = ajv().compile(schema);
     expect(validate({ account: { id: "x" } })).toBe(true);

@@ -29,9 +29,12 @@ stable name order. Schema references escape JSON Pointer and URI-fragment names.
 `SchemaExportError.issues` identifies unsupported structure by field path,
 representation name, and reason. Dates, opaque parsers, custom record
 refinements, root-level optional values, and cycles consisting only of optional
-wrappers cannot be exported. No permissive fallback schema is returned. Shared
-unsupported children report their first encountered path. Export never executes
-a parser.
+wrappers cannot be exported. The property name `__proto__` also produces an
+`unsupported-field` issue: Ajv ignores it in `properties`, so this experimental
+adapter refuses a contract its demonstrated consumer cannot validate faithfully.
+JSON Schema itself permits that name. No permissive fallback schema is returned.
+Shared unsupported children report their first encountered path. Export never
+executes a parser.
 
 The contract covers **JSON values**. It does not reproduce JavaScript undefined,
 prototypes, getters, parser normalization, defaults, or effects. Structural

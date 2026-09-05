@@ -22,7 +22,12 @@ export interface ExportIssue {
   readonly path: readonly string[];
   readonly representation: string;
   readonly reason:
-    "opaque" | "date" | "refinement" | "optional-root" | "optional-cycle";
+    | "opaque"
+    | "date"
+    | "refinement"
+    | "optional-root"
+    | "optional-cycle"
+    | "unsupported-field";
 }
 export class SchemaExportError extends Error {
   constructor(readonly issues: readonly ExportIssue[]) {
@@ -49,14 +54,17 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
   const ref = (name: string): Ref => ({
     $ref: `#/$defs/${encodeURIComponent(name.replace(/~/g, "~0").replace(/\//g, "~1"))}`,
   });
+  function nodeFor(name: string) {
+    const node = nodes.get(name);
+    if (!node) throw new Error(`Unknown representation: ${name}`);
+    return node;
+  }
   function visit(
     name: string,
     path: readonly string[],
     wrappers = new Set<string>(),
   ): Ref {
-    const node = nodes.get(name);
-    if (!node) throw new Error(`Unknown representation: ${name}`);
-    const structure = node.structure;
+    const structure = nodeFor(name).structure;
     if (structure?.kind === "optional") {
       if (wrappers.has(name)) {
         issues.push({ path, representation: name, reason: "optional-cycle" });
@@ -85,6 +93,16 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
       const fields = [...structure.fields].sort((a, b) =>
         a.key < b.key ? -1 : a.key > b.key ? 1 : 0,
       );
+      for (const field of fields) {
+        // Ajv deliberately ignores this key in properties; do not promise a
+        // contract that the demonstrated validator cannot enforce faithfully.
+        if (field.key === "__proto__")
+          issues.push({
+            path: [...path, field.key],
+            representation: name,
+            reason: "unsupported-field",
+          });
+      }
       const properties = Object.fromEntries(
         fields.map((field) => [
           field.key,
@@ -93,8 +111,7 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
       );
       const required = fields
         .filter((field) => {
-          const child = nodes.get(field.representation);
-          return child && presenceOf(child) !== "optional";
+          return presenceOf(nodeFor(field.representation)) !== "optional";
         })
         .map((field) => field.key);
       definitions.set(name, {
