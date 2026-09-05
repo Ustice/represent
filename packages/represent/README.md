@@ -281,8 +281,10 @@ coverage.
 This is a value-conversion experiment. Record codecs derive runtime parsers,
 TypeScript record shapes, and neutral structural descriptions. The experimental
 [JSON Schema adapter](../json-schema/) derives supported JSON contracts and
-rejects opaque or unexpressible constraints. General adapter certification is
-not implemented. Definition dependency queries are available; field-level impact
+rejects opaque or unexpressible constraints. A scoped JSON acceptance
+certification profile is available in
+[Sensor Bench](../../examples/sensor-bench/); it does not certify other adapters
+or profiles. Definition dependency queries are available; field-level impact
 analysis and guarantee composition remain unproven.
 
 `compareSchemas(beforeGraph, afterGraph)` compares declared representation

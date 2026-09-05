@@ -12,6 +12,16 @@ import {
 
 async function main() {
   const [command = "summary", ...args] = process.argv.slice(2);
+  if (command === "certify") {
+    const { values } = parseArgs({
+      args,
+      options: { seed: { type: "string", default: "162" } },
+    });
+    const { certifyContracts } = await import("./certification.js");
+    const report = await certifyContracts(Number(values.seed));
+    if (report.status !== "passed") process.exitCode = 1;
+    return report;
+  }
   if (command === "generate" || command === "mock") {
     const { values } = parseArgs({
       args,
@@ -51,7 +61,7 @@ async function main() {
   if (command === "graph") return sensorGraph;
   if (command !== "summary" && command !== "round-trip")
     throw new Error(
-      "Choose summary, round-trip, schema, graph, route, generate, or mock",
+      "Choose summary, round-trip, schema, graph, route, generate, mock, or certify",
     );
   const source = await readFile(
     file ?? new URL("../sample.json", import.meta.url),

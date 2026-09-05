@@ -10,7 +10,9 @@
     "@represent/core": "workspace:*",
     "@represent/fast-check": "workspace:*",
     "@represent/json-schema": "workspace:*",
+    "@represent/testing": "workspace:*",
     "@represent/zod": "workspace:*",
+    "ajv": "8.20.0",
     "fast-check": "4.9.0",
     "zod": "4.4.3"
   },

@@ -72,3 +72,31 @@ payload, checks the device identity, and summarizes the domain batch. Injecting
 a mock does not bypass the operation or its conversions. The graph includes that
 operation and its declared calls. Generated batches are synthetic test data, not
 recorded sensor observations.
+
+Run the initial JSON Schema certification profile:
+
+```sh
+pnpm --silent sensor certify --seed 162 > certification.json
+```
+
+The report identifies source-content hashes for the adapter, core, generator,
+suite, and profile; actual Ajv, fast-check, Zod, and Node versions; validator
+configuration; seed; and input domains. This profile covers native JSON packet
+acceptance, using 100 bounded generated packets serialized to JSON plus explicit
+positive/negative sentinels. It exercises every required field, text and numeric
+constraints, integer/list kinds, optional/null presence, and extra fields. It
+also checks actionable refusal of known unexportable constructs.
+
+Five deliberate artifact defects must be detected: dropped fields, erased field
+constraints, swapped compatible field constraints, collapsed null/presence, and
+an always-accepting contract. Explicit witnesses precede generated samples so
+detection does not depend on a lucky seed. The same profile fails when supplied
+an exporter containing those defects, a permissive fallback, or a crashing
+exporter. Algebraic identity, conversion composition, and impact checks are
+explicitly skipped because this profile claims none of those capabilities. It
+does not certify the Zod bridge, Fastify adapter, or all JSON Schema features.
+
+Required failures, missing evidence, and harness errors produce a nonzero exit
+status with a failed report when checks can run. Setup failures produce a stderr
+diagnostic. The neutral `@represent/testing` functions orchestrate cases; this
+consumer owns target-specific fixtures, mutations, and interpretation.
