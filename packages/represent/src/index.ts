@@ -57,6 +57,7 @@ export {
   findRoutes,
   selectRoute,
   fewestSteps,
+  uniqueRoute,
   type ConversionRoute,
   type RouteLimits,
   type RouteSearch,

@@ -3,13 +3,14 @@ import {
   fewestSteps,
   selectRoute,
   tracePath,
+  uniqueRoute,
   type ConversionRoute,
   type RoutePolicy,
 } from "@represent/core";
 import { temperature, unroundedTemperature } from "./model.js";
 
 const policies = {
-  unique: { name: "Unique route", score: () => 0 },
+  unique: uniqueRoute,
   fewest: fewestSteps,
   reported: {
     name: "Use reported precision",
@@ -43,6 +44,12 @@ export function temperatureRoute(input: unknown, policyName = "unique") {
     { from: temperature.decode.from, to: temperature.decode.to },
   );
   const selection = selectRoute(search, policy);
+  const preferred =
+    selection.status === "selected"
+      ? [selection.route]
+      : selection.status === "ambiguous"
+        ? selection.routes
+        : [];
   const routes = selection.candidates.map(({ route, score }) => ({
     steps: route.map((step) => ({
       name: step.name,
@@ -50,6 +57,7 @@ export function temperatureRoute(input: unknown, policyName = "unique") {
       to: step.to.name,
     })),
     score,
+    preferred: preferred.includes(route),
   }));
   const report = {
     from: search.from.name,

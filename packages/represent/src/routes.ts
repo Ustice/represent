@@ -116,7 +116,10 @@ export const fewestSteps: RoutePolicy = Object.freeze({
   name: "Fewest conversion steps",
   score: (route: ConversionRoute) => route.length,
 });
-const uniqueRoute: RoutePolicy = { name: "Unique route", score: () => 0 };
+export const uniqueRoute: RoutePolicy = Object.freeze({
+  name: "Unique route",
+  score: () => 0,
+});
 
 export function selectRoute(
   search: RouteSearch,

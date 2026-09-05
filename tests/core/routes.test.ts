@@ -142,6 +142,30 @@ describe("bounded conversion route discovery", () => {
     ).toEqual([]);
   });
 
+  it("keeps both branches through a shared suffix and distinguishes truncation with no discovered route from absence", () => {
+    const from = numberValue("From");
+    const left = numberValue("Left");
+    const right = numberValue("Right");
+    const join = numberValue("Join");
+    const to = numberValue("To");
+    const edge = (name: string, from: typeof left, to: typeof left) =>
+      conversion({ name, from, to, map: (value) => value });
+    const a = edge("A", from, left);
+    const b = edge("B", from, right);
+    const c = edge("C", left, join);
+    const d = edge("D", right, join);
+    const e = edge("E", join, to);
+    const registry = [e, d, c, b, a];
+    expect(findRoutes(registry, { from, to }).routes).toEqual([
+      [a, c, e],
+      [b, d, e],
+    ]);
+    const limited = findRoutes(registry, { from, to, limits: { maxSteps: 2 } });
+    expect(limited.routes).toEqual([]);
+    expect(limited.stoppedBy).toEqual(["steps"]);
+    expect(selectRoute(limited).status).toBe("incomplete");
+  });
+
   it("rejects conflicting identities, invalid budgets, and policies with meaningless scores", () => {
     const f = fixture();
     expect(() =>

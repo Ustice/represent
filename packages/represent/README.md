@@ -421,12 +421,13 @@ if (selection.status === "selected") {
 ```
 
 `selectRoute` reports `selected`, `ambiguous`, `none`, or `incomplete`. Its
-`candidates` retain every discovered route and the policy's score. A named
-`RoutePolicy` supplies `score(route)`: lower finite numbers are preferred and
-null excludes a route. Equal best scores remain ambiguous. The built-in
-`fewestSteps` policy counts registered conversion steps; a composed conversion
-is one step. Neither policy scores nor path lengths imply equivalent results,
-purity, or losslessness. Discovery does not validate any input value.
+`candidates` retain every discovered route and the policy's score. The default
+`uniqueRoute` policy is also exported. A named `RoutePolicy` supplies
+`score(route)`: lower finite numbers are preferred and null excludes a route.
+Equal best scores remain ambiguous. The built-in `fewestSteps` policy counts
+registered conversion steps; a composed conversion is one step. Neither policy
+scores nor path lengths imply equivalent results, purity, or losslessness.
+Discovery does not validate any input value.
 
 Default limits are 8 steps per path, 32 returned routes, and 2048 search states.
 Each limit must be a positive safe integer. Routes are ordered breadth-first,
