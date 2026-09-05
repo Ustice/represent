@@ -15,12 +15,13 @@ const title = codec({
   encode: (value) => value,
   decode: (value) => value,
 });
+export const eventId = text("Event ID", { nonempty: true });
 export const eventExchange = recordCodec({
   name: "Event exchange",
   from: "Event",
   to: "Event API",
   fields: {
-    id: text("Event ID", { nonempty: true }),
+    id: eventId,
     title,
     startsAt: dateTime,
     endsAt: dateTime,

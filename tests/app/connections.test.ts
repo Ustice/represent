@@ -76,7 +76,7 @@ describe("Fieldwork connections", () => {
       result.dependents
         .filter(({ item }) => item.kind === "operation")
         .map(({ item }) => item.name),
-    ).toEqual(["Prepare attendee roster"]);
+    ).toEqual(["Prepare attendee roster", "Look up event"]);
     expect(
       result.dependents.some(
         ({ item }) =>
@@ -87,6 +87,14 @@ describe("Fieldwork connections", () => {
   });
   it("exposes the roster's state and executable references alongside signup and cancellation", () => {
     expect(workspaceGraph.operations).toEqual([
+      {
+        name: "Look up event",
+        input: "Event lookup",
+        output: "Event API",
+        reads: ["Event"],
+        references: [],
+        calls: [{ kind: "conversion", name: "Event exchange: encode" }],
+      },
       {
         name: "Register RSVP",
         input: "RSVP request",

@@ -31,6 +31,6 @@ export function renderPage(
     <div class="sidebar-bottom"><span class="tiny-mark">r</span><div>Built with Represent<small>A working example</small></div></div></aside>
     <main><header class="topbar"><span>Workspace <span class="breadcrumb-slash">/</span> <strong>${section}</strong></span><span class="demo-badge"><span class="little-dot"></span>Local demo</span></header>
     ${content()}
-    <footer class="page-footer"><span>Fieldwork is a fictional community. All sample data is synthetic.</span><span>Local storage only · No server</span></footer></main></div>`;
+    <footer class="page-footer"><span>Fieldwork is a fictional community. All sample data is synthetic.</span><span>Browser data stays local · Optional event API</span></footer></main></div>`;
   if (selector) document.querySelector<HTMLElement>(selector)?.focus();
 }

@@ -345,3 +345,31 @@ order, then separately checks named domain equality. It shows timestamp/title
 normalization, intermediate Date versus string types, and fields omitted by a
 public projection. Those observations apply to the supplied example and stated
 comparison only.
+
+`asyncOperation` has the same input/output, context, reads, references, and
+calls model as `operation`, with asynchronous work in `perform`. Its `run` and
+`execute` always return promises. Input validation happens first; output
+validation happens after the work resolves. Rejections retain the same
+input/perform/output stages and original causes as synchronous operation
+failures. Parsers remain synchronous. Graph construction can describe either
+operation without executing it.
+
+```ts
+const lookupEvent = asyncOperation({
+  name: "Look up event",
+  input: eventLookup,
+  output: eventExchange.encode.to,
+  reads: [eventExchange.encode.from],
+  calls: [eventExchange.encode],
+  async perform({ id }, store: EventStore) {
+    const event = (await store.load()).find((event) => event.id === id);
+    if (!event) throw new Error("Event not found");
+    return eventExchange.encode.convert(event);
+  },
+});
+const payload = await lookupEvent.run({ id: "evt_01" }, eventStore);
+```
+
+The context supplies resources and any cancellation policy. Represent does not
+add transactions, retries, or cancellation implicitly. `runBatch` remains a
+synchronous operation helper.

@@ -1,3 +1,4 @@
+import { lookupEvent } from "./events/lookup.js";
 import { graph } from "@represent/core";
 import { memberExchange, toPublic, toRoster, profileFor } from "./model.js";
 import { eventExchange } from "./events/model.js";
@@ -15,6 +16,7 @@ export const workspaceGraph = graph(
   ],
   {
     operations: [
+      lookupEvent,
       registerRsvp,
       cancelRsvp,
       prepareAttendeeRoster,
