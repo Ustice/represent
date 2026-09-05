@@ -6,6 +6,7 @@ import {
   recordCodec,
   optionalCodec,
   operation,
+  reference,
 } from "../../packages/represent/src/index.js";
 
 // This consumer program is checked by tsc, not executed by Vitest.
@@ -123,4 +124,35 @@ codec({
   // @ts-expect-error Encoder output must match the target representation.
   encode: (value) => value,
   decode: Number,
+});
+
+const measurementRef = reference({
+  name: "Related measurement",
+  from: record.encode.from,
+  field: "label",
+  to: record.encode.from,
+  key: "label",
+});
+measurementRef
+  .resolve({ label: "Length" }, [{ label: "Length", amount: 12 }])
+  ?.amount.toFixed(2);
+// @ts-expect-error The source reference field must have the declared type.
+measurementRef.resolve({ label: 12 }, []);
+// @ts-expect-error Targets must have the full target representation type.
+measurementRef.resolve({ label: "Length" }, [{ label: "Length" }]);
+reference({
+  name: "Wrong key",
+  from: record.encode.from,
+  field: "label",
+  to: record.encode.from,
+  // @ts-expect-error A numeric key cannot resolve a string reference.
+  key: "amount",
+});
+reference({
+  name: "Missing field",
+  from: record.encode.from,
+  // @ts-expect-error References must identify a real field on the source.
+  field: "absent",
+  to: record.encode.from,
+  key: "label",
 });

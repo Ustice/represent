@@ -84,8 +84,37 @@ const signup = registerRsvp.execute(
 input. Both parse input, invoke `perform`, and parse the result. The context is
 trusted and is not parsed by the core. `OperationError` identifies the operation
 and input/perform/output stage, retaining the underlying cause. The consumer
-owns clock selection, reference resolution, domain rules, and persistence.
+owns clock selection, domain rules, missing-reference policy, and persistence.
 Operations provide no transaction, rollback, concurrency, or purity guarantee.
+
+A `reference` names a field-to-key relationship and resolves it against
+supplied, trusted records:
+
+```ts
+const rsvpMember = reference({
+  name: "RSVP member",
+  from: rsvpExchange.encode.from,
+  field: "memberId",
+  to: member,
+  key: "id",
+});
+const attendee = rsvpMember.resolve(rsvp, savedMembers);
+```
+
+The target key must have a type assignable to the source field type. Resolution
+uses `Object.is`, returns `undefined` for no match, and throws for multiple
+matches. It accepts a source containing the reference field; other source fields
+are unnecessary for lookup. It does not parse, fetch, coerce, or persist
+records. The caller decides what a missing reference means.
+
+Operations can declare `reads: [member, event, rsvp]` and
+`references: [rsvpMember, rsvpEvent]`. These arrays are copied at construction.
+`graph(conversions, { operations, references })` includes their representations,
+operation input/output/read names, and reference field/key endpoints. References
+used by operations are included automatically and shared instances appear once.
+Reads are explicit declarations, not verified or exhaustive dependency analysis;
+operation results do not imply persistence or writes. The graph does not inspect
+function bodies to discover which conversions or references they invoke.
 
 `compose(first, second)` explicitly connects edges sharing the same intermediate
 representation object. Each edge runs its own parsers, including the
@@ -105,6 +134,6 @@ choose routes, infer relationships from IDs, or infer guarantees.
 
 This is a value-conversion experiment. Record codecs derive runtime parsers and
 TypeScript record shapes, not target-library schemas or artifacts. Automatic
-adapters, operation graphs, certification, and impact analysis are not
-implemented. Conversion dependencies are visible; operation state dependencies
-and domain reference relationships are not yet part of the graph.
+adapters, certification, and impact analysis are not implemented. Conversion
+dependencies, declared operation reads, and explicit references are visible;
+field-level operation dependencies and guarantee composition remain unproven.

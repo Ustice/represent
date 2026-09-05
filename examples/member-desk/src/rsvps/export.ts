@@ -41,8 +41,8 @@ export const prepareAttendeeRoster = operation({
     const seen = new Set<string>();
     return context.rsvps
       .filter(({ eventId }) => eventId === event.id)
-      .map((rsvp) => {
-        rsvpExchange.encode.from.parse(rsvp);
+      .map((value) => {
+        const rsvp = rsvpExchange.encode.from.parse(value);
         if (seen.has(rsvp.memberId))
           throw new Error("This event has duplicate signups.");
         seen.add(rsvp.memberId);
