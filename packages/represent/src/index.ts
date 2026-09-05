@@ -78,6 +78,25 @@ export function compose<Source, Middle, Target>(
   });
 }
 
+export function codec<Source, Target>(definition: {
+  name: string;
+  from: Representation<Source>;
+  to: Representation<Target>;
+  encode: (value: NoInfer<Source>) => NoInfer<Target>;
+  decode: (value: NoInfer<Target>) => NoInfer<Source>;
+}) {
+  const { name, from, to, encode, decode } = definition;
+  return Object.freeze({
+    encode: conversion({ name: `${name}: encode`, from, to, map: encode }),
+    decode: conversion({
+      name: `${name}: decode`,
+      from: to,
+      to: from,
+      map: decode,
+    }),
+  });
+}
+
 interface GraphConversion {
   readonly name: string;
   readonly from: Representation<unknown>;

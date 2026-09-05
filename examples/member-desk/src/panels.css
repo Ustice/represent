@@ -1,4 +1,5 @@
 .tabs {
+  flex-wrap: wrap;
   display: flex;
   border-bottom: 1px solid #e3e8dc;
   padding: 0 21px;
@@ -265,4 +266,33 @@ pre {
   padding: 24px 0;
   color: #647651;
   font-size: 9px;
+}
+
+.roster-scroll {
+  overflow-x: auto;
+  border: 1px solid #dfe6d6;
+  border-radius: 6px;
+}
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 11px;
+  color: #46583b;
+}
+.roster-table caption {
+  text-align: left;
+  padding: 12px;
+  font-weight: 600;
+  background: #f6f9ef;
+}
+.roster-table th,
+.roster-table td {
+  padding: 12px;
+  border-top: 1px solid #e3e8dc;
+  white-space: nowrap;
+}
+.roster-table th {
+  font-size: 10px;
+  color: #63774e;
 }

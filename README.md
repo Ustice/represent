@@ -6,8 +6,9 @@ application data to other systems without replacing their runtimes.
 
 The first working slice is [Member desk](examples/member-desk/), a browser
 application built alongside [the core](packages/represent/). It edits members,
-serializes API records, previews public profiles, and displays the conversions
-behind those views. There is no stable API or compatibility commitment.
+exchanges API records through a codec, previews public profiles, exports a CSV
+roster, and displays the conversions behind those views. There is no stable API
+or compatibility commitment.
 
 ## Run it
 
