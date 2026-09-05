@@ -1,6 +1,5 @@
 # Packages
 
-No production packages exist yet. Add packages when a concrete implementation
-needs them. Keep boundaries understandable and avoid speculative scaffolding.
-The project remains experimental; package creation does not establish stability
-or authorize a release.
+[represent](represent/) is the experimental core used by
+[Member desk](../examples/member-desk/). It is private and exports TypeScript
+source for the workspace consumer; there is no published package or stable API.
