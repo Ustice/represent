@@ -6,17 +6,20 @@ import {
 } from "@represent/core";
 
 type Ref = { readonly $ref: string };
-type Definition =
-  | { readonly type: "string"; readonly minLength?: 1 }
-  | {
-      readonly type: "object";
-      readonly properties: Readonly<Record<string, Ref>>;
-      readonly required: readonly string[];
-      readonly additionalProperties: false;
-    };
+export type JsonSchemaDefinition = boolean | Readonly<Record<string, unknown>>;
+export interface ProvidedContract {
+  readonly schema: JsonSchemaDefinition;
+  readonly presence: "required" | "optional";
+}
+export interface JsonSchemaProvider {
+  readonly name: string;
+  readonly contract: (
+    representation: Representation<unknown>,
+  ) => ProvidedContract | undefined;
+}
 export interface JsonSchema extends Ref {
   readonly $schema: "https://json-schema.org/draft/2020-12/schema";
-  readonly $defs: Readonly<Record<string, Definition>>;
+  readonly $defs: Readonly<Record<string, JsonSchemaDefinition>>;
 }
 export interface ExportIssue {
   readonly path: readonly string[];
@@ -27,7 +30,9 @@ export interface ExportIssue {
     | "refinement"
     | "optional-root"
     | "optional-cycle"
-    | "unsupported-field";
+    | "unsupported-field"
+    | "provider";
+  readonly detail?: string;
 }
 export class SchemaExportError extends Error {
   constructor(readonly issues: readonly ExportIssue[]) {
@@ -35,7 +40,7 @@ export class SchemaExportError extends Error {
       issues
         .map(
           (issue) =>
-            `${JSON.stringify(issue.path)} (${issue.representation}): ${issue.reason}`,
+            `${JSON.stringify(issue.path)} (${issue.representation}): ${issue.reason}${issue.detail ? `: ${issue.detail}` : ""}`,
         )
         .join("; "),
     );
@@ -44,27 +49,85 @@ export class SchemaExportError extends Error {
 }
 
 // This adapter describes JSON values, not arbitrary JavaScript objects or parser effects.
-export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
+export function toJsonSchema(
+  subject: Representation<unknown>,
+  options: { providers?: readonly JsonSchemaProvider[] } = {},
+): JsonSchema {
   const model = graph([], { representations: [subject] });
   inspectGraph(model);
-  const nodes = new Map(model.nodes.map((node) => [node.name, node]));
-  const definitions = new Map<string, Definition>();
+  const definitions = new Map<string, JsonSchemaDefinition>();
   const visited = new Set<string>();
   const issues: ExportIssue[] = [];
   const ref = (name: string): Ref => ({
     $ref: `#/$defs/${encodeURIComponent(name.replace(/~/g, "~0").replace(/\//g, "~1"))}`,
   });
-  function nodeFor(name: string) {
-    const node = nodes.get(name);
-    if (!node) throw new Error(`Unknown representation: ${name}`);
-    return node;
+  const contracts = new Map<
+    Representation<unknown>,
+    ProvidedContract | undefined
+  >();
+  function external(value: Representation<unknown>, path: readonly string[]) {
+    if (contracts.has(value)) return contracts.get(value);
+    const found: ProvidedContract[] = [];
+    for (const provider of options.providers ?? []) {
+      try {
+        const result = provider.contract(value);
+        if (result) {
+          const allowed = new Set([
+            "type",
+            "enum",
+            "const",
+            "pattern",
+            "minLength",
+            "maxLength",
+            "format",
+            "minimum",
+            "maximum",
+            "exclusiveMinimum",
+            "exclusiveMaximum",
+            "multipleOf",
+            "title",
+            "description",
+          ]);
+          if (
+            typeof result.schema === "object" &&
+            Object.keys(result.schema).some((key) => !allowed.has(key))
+          )
+            throw new Error(
+              "Providers currently supply leaf schemas without references, identifiers, or nested schemas",
+            );
+          found.push(result);
+        }
+      } catch (error) {
+        issues.push({
+          path,
+          representation: value.name,
+          reason: "provider",
+          detail: `${provider.name}: ${error instanceof Error ? error.message : "Export failed"}`,
+        });
+      }
+    }
+    if (found.length > 1)
+      issues.push({
+        path,
+        representation: value.name,
+        reason: "provider",
+        detail: "Multiple providers claim this representation",
+      });
+    const result = found[0];
+    contracts.set(value, result);
+    return result;
+  }
+  function presence(value: Representation<unknown>, path: readonly string[]) {
+    return value.structure
+      ? presenceOf(value)
+      : (external(value, path)?.presence ?? "unknown");
   }
   function visit(
-    name: string,
+    value: Representation<unknown>,
     path: readonly string[],
     wrappers = new Set<string>(),
   ): Ref {
-    const structure = nodeFor(name).structure;
+    const { name, structure } = value;
     if (structure?.kind === "optional") {
       if (wrappers.has(name)) {
         issues.push({ path, representation: name, reason: "optional-cycle" });
@@ -74,12 +137,13 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
     }
     if (visited.has(name)) return ref(name);
     visited.add(name);
-    if (!structure || structure.kind === "date") {
-      issues.push({
-        path,
-        representation: name,
-        reason: structure ? "date" : "opaque",
-      });
+    if (!structure) {
+      const provided = external(value, path);
+      if (provided) definitions.set(name, provided.schema);
+      else if (!issues.some((issue) => issue.representation === name))
+        issues.push({ path, representation: name, reason: "opaque" });
+    } else if (structure.kind === "date") {
+      issues.push({ path, representation: name, reason: "date" });
     } else if (structure.kind === "text") {
       definitions.set(
         name,
@@ -111,7 +175,9 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
       );
       const required = fields
         .filter((field) => {
-          return presenceOf(nodeFor(field.representation)) !== "optional";
+          return (
+            presence(field.representation, [...path, field.key]) !== "optional"
+          );
         })
         .map((field) => field.key);
       definitions.set(name, {
@@ -123,13 +189,13 @@ export function toJsonSchema(subject: Representation<unknown>): JsonSchema {
     }
     return ref(name);
   }
-  if (subject.structure?.kind === "optional")
+  if (presence(subject, []) === "optional")
     issues.push({
       path: [],
       representation: subject.name,
       reason: "optional-root",
     });
-  const root = visit(subject.name, []);
+  const root = visit(subject, []);
   if (issues.length) throw new SchemaExportError(issues);
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",

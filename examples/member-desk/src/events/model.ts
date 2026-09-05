@@ -1,17 +1,27 @@
-import { graph, optionalCodec, recordCodec } from "@represent/core";
+import {
+  codec,
+  graph,
+  optionalCodec,
+  recordCodec,
+  text,
+} from "@represent/core";
 import { z } from "zod";
 import { dateTime, field } from "../fields.js";
 
+const title = codec({
+  name: "Event title normalization",
+  from: field("Event title", z.string().trim().min(1, "Enter an event title")),
+  to: text("Event title API", { nonempty: true }),
+  encode: (value) => value,
+  decode: (value) => value,
+});
 export const eventExchange = recordCodec({
   name: "Event exchange",
   from: "Event",
   to: "Event API",
   fields: {
-    id: field("Event ID", z.string().min(1)),
-    title: field(
-      "Event title",
-      z.string().trim().min(1, "Enter an event title"),
-    ),
+    id: text("Event ID", { nonempty: true }),
+    title,
     startsAt: dateTime,
     endsAt: dateTime,
     rsvpBy: optionalCodec(dateTime),

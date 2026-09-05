@@ -1,4 +1,5 @@
-import { codec, representation, dateValue } from "@represent/core";
+import { fromZod } from "@represent/zod";
+import { codec, dateValue } from "@represent/core";
 import { z } from "zod";
 
 export function parser<Value>(schema: z.ZodType<Value>) {
@@ -18,7 +19,7 @@ export function parser<Value>(schema: z.ZodType<Value>) {
 }
 
 export function field<Value>(name: string, schema: z.ZodType<Value>) {
-  return representation({ name, parse: parser(schema) });
+  return fromZod(name, schema);
 }
 
 export const dateTime = codec({

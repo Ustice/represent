@@ -11,6 +11,7 @@
     "@represent/core": "workspace:*",
     "@represent/explorer": "workspace:*",
     "@represent/json-schema": "workspace:*",
+    "@represent/zod": "workspace:*",
     "ajv": "^8.20.0",
     "zod": "4.4.3"
   },
