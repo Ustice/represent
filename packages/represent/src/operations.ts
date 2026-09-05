@@ -4,6 +4,7 @@ import type { ConversionDescriptor } from "./graph.js";
 import type { ReferenceDescriptor } from "./references.js";
 
 export interface OperationDescriptor {
+  readonly kind: "operation";
   readonly name: string;
   readonly input: Representation<unknown>;
   readonly output: Representation<unknown>;
@@ -53,6 +54,7 @@ export function operation<Input, Output, Context>(definition: {
   };
   const execute = (value: Input, context: Context) => run(value, context);
   return Object.freeze({
+    kind: "operation" as const,
     name,
     input,
     output,

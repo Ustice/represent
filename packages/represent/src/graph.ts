@@ -5,6 +5,7 @@ import type { OperationDescriptor } from "./operations.js";
 import type { ReferenceDescriptor } from "./references.js";
 
 export interface ConversionDescriptor {
+  readonly kind: "conversion";
   readonly name: string;
   readonly from: Representation<unknown>;
   readonly to: Representation<unknown>;
@@ -103,13 +104,17 @@ export function graph(
       output: subject.output.name,
       reads: subject.reads.map(({ name }) => name),
       references: subject.references.map(({ name }) => name),
-      calls: subject.calls.map((call) => ({
-        kind: "input" in call ? "operation" : "conversion",
-        name: call.name,
-      })),
+      calls: [
+        ...new Map(
+          subject.calls.map(({ kind, name }) => [
+            JSON.stringify([kind, name]),
+            { kind, name },
+          ]),
+        ).values(),
+      ],
     });
     for (const call of subject.calls) {
-      if ("input" in call) visitOperation(call);
+      if (call.kind === "operation") visitOperation(call);
       else visit(call);
     }
   }

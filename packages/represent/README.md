@@ -146,9 +146,21 @@ Operations can declare `reads: [member, event, rsvp]` and
 `graph(conversions, { operations, references })` includes their representations,
 operation input/output/read names, and reference field/key endpoints. References
 used by operations are included automatically and shared instances appear once.
-Reads are explicit declarations, not verified or exhaustive dependency analysis;
-operation results do not imply persistence or writes. The graph does not inspect
-function bodies to discover which conversions or references they invoke.
+Operations may declare `calls: [someConversion, someOperation]`; the graph
+recursively includes those definitions and their dependencies without executing
+them. Conversions and operations expose an explicit `kind` tag. Reusing the same
+called instance is allowed; distinct instances with the same kind/name are
+rejected. Repeated declarations of the same call emit one call link. Cycles in
+declared calls terminate during graph construction and queries.
+
+Calls are declared dependencies, not instrumentation: the body still calls
+`convert` or `execute` normally. The declaration does not prove that a call
+happens on every execution, enumerate every call, or enforce context/effects.
+Declare direct reads and references; queries can reach a callee's requirements
+through the call edge instead of copying its metadata. Reads are explicit
+declarations, not verified or exhaustive dependency analysis; operation results
+do not imply persistence or writes. The graph does not inspect function bodies
+to discover which conversions or references they invoke.
 
 `compose(first, second)` explicitly connects edges sharing the same intermediate
 representation object. Each edge runs its own parsers, including the
@@ -189,15 +201,26 @@ records the `dependency`, `dependent`, and a structured `reason` (including the
 field name where applicable). The source itself is excluded, including in
 cycles.
 
+`requirements(model, selection)` traces upstream with the same shortest-path,
+identity, cycle, and ordering rules. Its result contains `source` and
+`requirements`. Path links retain their dependency/dependent identities; the
+sequence starts at the selection and follows its requirements. Both queries
+exclude the source itself, including direct self calls. Self links remain
+visible in `inspectGraph(model)`, which returns sorted `items` and deduplicated
+`links` for consumers that need direct graph inspection. Each link is oriented
+from dependency to dependent. A viewer may present natural input/output flow
+separately; it must not confuse that flow with dependency traversal.
+
 These are **definition dependencies**, traversed in the following directions:
 
-| Dependency       | Dependent         | Reason                                                   |
-| ---------------- | ----------------- | -------------------------------------------------------- |
-| Representation   | Conversion        | Input or output contract                                 |
-| Child conversion | Parent conversion | Field binding, optional wrapper, or explicit composition |
-| Representation   | Operation         | Input/output contract or declared read                   |
-| Representation   | Reference         | Source field or target key                               |
-| Reference        | Operation         | Declared reference use                                   |
+| Dependency                     | Dependent         | Reason                                                   |
+| ------------------------------ | ----------------- | -------------------------------------------------------- |
+| Representation                 | Conversion        | Input or output contract                                 |
+| Child conversion               | Parent conversion | Field binding, optional wrapper, or explicit composition |
+| Representation                 | Operation         | Input/output contract or declared read                   |
+| Representation                 | Reference         | Source field or target key                               |
+| Reference                      | Operation         | Declared reference use                                   |
+| Called conversion or operation | Calling operation | Declared call                                            |
 
 A conversion or operation does not make its output representation a dependent:
 producing a value does not change the definition of its schema. For example,
@@ -219,10 +242,10 @@ graph.
 The graph includes only registered definitions and declared dependencies.
 Register actual composed conversions to make those relationships visible. Opaque
 mapping/parser bodies, non-codec record-field representation dependencies, and
-calls inside operations are not inferred. For example, the date encoder's use
-inside Fieldwork's attendee export is not yet declared as an operation call
-edge. Results do not prove field-level impact, runtime value changes,
-persistence, or complete dependency coverage.
+calls inside operations are not inferred. Fieldwork explicitly declares both
+encoders called by attendee export, and email signup declares its call to the
+existing signup operation. Results do not prove field-level impact, runtime
+value changes, persistence, or complete dependency coverage.
 
 This is a value-conversion experiment. Record codecs derive runtime parsers and
 TypeScript record shapes, not target-library schemas or artifacts. Automatic

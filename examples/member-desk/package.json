@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@represent/core": "workspace:*",
+    "@represent/explorer": "workspace:*",
     "zod": "4.4.3"
   },
   "devDependencies": {

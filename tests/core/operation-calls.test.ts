@@ -36,11 +36,12 @@ describe("declared operation calls", () => {
         return String(value);
       },
     });
+    const annotatedEncoder = { ...encode, input: amount };
     const child = operation({
       name: "Prepare",
       input: amount,
       output: text,
-      calls: [encode],
+      calls: [annotatedEncoder],
       perform(value) {
         return encode.convert(value);
       },
@@ -80,6 +81,7 @@ describe("declared operation calls", () => {
   it("traverses declaration cycles once, keeps alternate reasons, and rejects conflicting identities", () => {
     const calls: OperationDescriptor[] = [];
     const first: OperationDescriptor = {
+      kind: "operation",
       name: "First",
       input: amount,
       output: amount,
@@ -95,6 +97,9 @@ describe("declared operation calls", () => {
     calls.push(second, second);
     const model = graph([], { operations: [first] });
     expect(model.operations).toHaveLength(2);
+    expect(model.operations[0]?.calls).toEqual([
+      { kind: "operation", name: "Second" },
+    ]);
     const result = requirements(model, { kind: "operation", name: "First" });
     expect(result.requirements.map(({ item }) => item)).toEqual([
       { kind: "operation", name: "Second" },

@@ -9,9 +9,9 @@ built alongside [the core](packages/represent/). It edits members, exchanges API
 records through a codec, previews public profiles, edits community events, and
 manages RSVPs with signup deadlines and bulk email-list preview/import.
 Directory and event attendee CSV exports use the saved records. Connections
-explores declared definition dependencies with explanatory paths through shared
-field codecs, operations, and references. There is no stable API or
-compatibility commitment.
+hosts a reusable explorer with relationship and dependency views through shared
+field codecs, declared operation calls, reads, and references. There is no
+stable API or compatibility commitment.
 
 ## Run it
 

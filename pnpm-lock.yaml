@@ -35,6 +35,9 @@ importers:
       '@represent/core':
         specifier: workspace:*
         version: link:../../packages/represent
+      '@represent/explorer':
+        specifier: workspace:*
+        version: link:../../packages/explorer
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -42,6 +45,12 @@ importers:
       vite:
         specifier: 7.3.6
         version: 7.3.6(@types/node@22.20.1)
+
+  packages/explorer:
+    dependencies:
+      '@represent/core':
+        specifier: workspace:*
+        version: link:../represent
 
   packages/represent: {}
 
