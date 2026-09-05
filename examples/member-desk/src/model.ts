@@ -1,11 +1,12 @@
 import {
-  codec,
+  recordCodec,
   compose,
   conversion,
   graph,
   representation,
 } from "@represent/core";
 import { z } from "zod";
+import { dateTime, field, parser } from "./fields.js";
 
 const fields = {
   id: z.string().min(1),
@@ -15,10 +16,23 @@ const fields = {
   status: z.enum(["Active", "Invited"]),
 };
 
-const domainSchema = z.object({ ...fields, joinedAt: z.date() }).strict();
-const apiSchema = z
-  .object({ ...fields, joinedAt: z.iso.datetime({ offset: true }) })
-  .strict();
+export const memberExchange = recordCodec({
+  name: "Member exchange",
+  from: "Member",
+  to: "Member API",
+  fields: {
+    id: field("Member ID", fields.id),
+    name: field("Member name", fields.name),
+    email: field("Email", fields.email),
+    role: field("Role", fields.role),
+    status: field("Membership", fields.status),
+    joinedAt: dateTime,
+  },
+});
+export const member = memberExchange.encode.from;
+export const memberApi = memberExchange.encode.to;
+export type Member = ReturnType<typeof member.parse>;
+
 const publicSchema = z
   .object({
     id: fields.id,
@@ -28,44 +42,10 @@ const publicSchema = z
   })
   .strict();
 
-function parser<Value>(schema: z.ZodType<Value>) {
-  return (input: unknown) => {
-    const result = schema.safeParse(input);
-    if (!result.success) {
-      throw new Error(
-        result.error.issues
-          .map(
-            (issue) => `${issue.path.join(".") || "Member"}: ${issue.message}`,
-          )
-          .join("; "),
-      );
-    }
-    return result.data;
-  };
-}
-
-export const member = representation({
-  name: "Member",
-  parse: parser(domainSchema),
-});
-export const memberApi = representation({
-  name: "Member API",
-  parse: parser(apiSchema),
-});
 export const publicProfile = representation({
   name: "Public profile",
   parse: parser(publicSchema),
 });
-export type Member = z.infer<typeof domainSchema>;
-
-export const memberExchange = codec({
-  name: "Member exchange",
-  from: member,
-  to: memberApi,
-  encode: (value) => ({ ...value, joinedAt: value.joinedAt.toISOString() }),
-  decode: (value) => ({ ...value, joinedAt: new Date(value.joinedAt) }),
-});
-
 export const toPublic = conversion({
   name: "Publish profile",
   from: memberApi,

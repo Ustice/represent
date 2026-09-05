@@ -167,3 +167,21 @@
     height: 120px;
   }
 }
+@media (max-width: 800px) {
+  .workspace-nav {
+    display: flex;
+    gap: 4px;
+  }
+  .workspace-nav .nav-item {
+    display: flex;
+    padding: 9px;
+    margin: 0;
+    font-size: 11px;
+  }
+  .workspace-nav .nav-item > span {
+    display: none;
+  }
+  .event-list {
+    grid-template-columns: 1fr;
+  }
+}

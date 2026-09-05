@@ -4,11 +4,12 @@ An experimental TypeScript toolkit for describing data representations and the
 conversions between them. The goal is a shared semantic graph that connects
 application data to other systems without replacing their runtimes.
 
-The first working slice is [Member desk](examples/member-desk/), a browser
-application built alongside [the core](packages/represent/). It edits members,
-exchanges API records through a codec, previews public profiles, exports a CSV
-roster, and displays the conversions behind those views. There is no stable API
-or compatibility commitment.
+The working example is [Fieldwork](examples/member-desk/), a browser application
+built alongside [the core](packages/represent/). It edits members, exchanges API
+records through a codec, previews public profiles, exports a CSV roster, and
+edits community events with optional RSVP deadlines. Both models share field
+codecs and display the conversions behind their views. There is no stable API or
+compatibility commitment.
 
 ## Run it
 
@@ -29,6 +30,7 @@ build. CI runs the same check.
 ## Explore
 
 - [Consuming application model](examples/member-desk/src/model.ts)
+- [Event model and shared field codecs](examples/member-desk/src/events/model.ts)
 - [Core API](packages/represent/src/index.ts)
 - [Product vision](docs/vision.md) and [architecture](docs/architecture.md)
 - [Conversion and certification contracts](docs/specifications/README.md)
