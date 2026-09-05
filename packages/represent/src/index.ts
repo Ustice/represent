@@ -3,7 +3,6 @@ export {
   compose,
   conversion,
   ConversionError,
-  graph,
   representation,
   type Codec,
   type Conversion,
@@ -11,3 +10,6 @@ export {
 } from "./conversions.js";
 export { optionalCodec, recordCodec } from "./records.js";
 export { operation, OperationError } from "./operations.js";
+
+export { graph } from "./graph.js";
+export { reference } from "./references.js";

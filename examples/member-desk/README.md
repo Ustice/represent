@@ -31,9 +31,10 @@ using `recordCodec`. Both use the [shared date codec](src/fields.ts); event
 timing rules stay in the event model. Represent assembles the domain and API
 parsers, infers their types, and converts the fields. Zod remains a consumer
 dependency. Connections traces the shared date codec across members, events, and
-RSVPs, following the optional deadline wrapper. It also displays the input and
-output representations of signup and cancel operations. Domain reference
-relationships remain in the application model.
+RSVPs, following the optional deadline wrapper. It also displays operation
+inputs, outputs, declared reads, and the member/event reference fields. Those
+reference declarations perform the same lookups used by signup and export;
+missing-member policy and signup deadlines stay in Fieldwork.
 
 The [RSVP model](src/rsvps/model.ts) connects a member to an event, with one
 signup per pair. All directory members can RSVP. Signups close at the explicit
@@ -42,20 +43,31 @@ closed. Cancellation remains available after closing. Attendee names resolve
 from saved member records, so editing a name updates the list. Operations use
 the saved event, not an unsaved form draft.
 
+Attendees includes a contact preview and a downloadable event roster. The
+[export operation](src/rsvps/export.ts) joins saved event details, RSVPs, and
+current member records. Renaming a member, changing an email, or rescheduling an
+event updates the next export without rewriting RSVPs. Unsaved drafts do not
+appear. Each CSV row contains event/member IDs, event title, start/end times,
+name, private email, role, and signup time. Times use full UTC ISO timestamps.
+An event with no attendees exports column headings only. Missing members,
+ambiguous references, and duplicate signups block export rather than silently
+losing or duplicating rows; a missing-member RSVP can still be cancelled.
+
 RSVPs persist separately in local storage. Resetting member/event samples keeps
 their existing IDs and does not cancel RSVPs; Cancel removes an individual
 signup. The persistence seam rereads and validates saved RSVPs before each
 change and writes only after the operation succeeds. It does not provide
 cross-tab transactions or a server-side concurrency guarantee.
 
-The [CSV export](src/roster.ts) belongs to this consumer. It quotes every field,
-escapes embedded quotes, and uses CRLF record separators. Formula-like text
-(including leading whitespace and full-width markers) gets an apostrophe prefix
-following
+The [CSV writer](src/csv.ts), shared by both rosters, belongs to this consumer.
+It quotes every field, escapes embedded quotes, and uses CRLF record separators.
+Formula-like text (including leading whitespace and full-width markers) gets an
+apostrophe prefix following
 [OWASP's CSV guidance](https://owasp.org/www-community/attacks/CSV_Injection).
 That changes exported text and is not a guarantee across spreadsheet programs or
 subsequent saves. The preview table shows the original row values; View exported
-text shows the file contents. Join times are deliberately omitted, so CSV has no
+text shows the file contents. The directory roster deliberately omits join
+times; the attendee roster is a projection of three records. Neither CSV has a
 reverse conversion. JSON remains the full record exchange format.
 
 There is no backend, authentication, or server-side privacy boundary. The public

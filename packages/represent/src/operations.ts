@@ -1,5 +1,15 @@
 import type { Representation } from "./conversions.js";
 
+import type { ReferenceDescriptor } from "./references.js";
+
+export interface OperationDescriptor {
+  readonly name: string;
+  readonly input: Representation<unknown>;
+  readonly output: Representation<unknown>;
+  readonly reads: readonly Representation<unknown>[];
+  readonly references: readonly ReferenceDescriptor[];
+}
+
 export class OperationError extends Error {
   override readonly name = "OperationError";
   constructor(
@@ -18,6 +28,8 @@ export function operation<Input, Output, Context>(definition: {
   name: string;
   input: Representation<Input>;
   output: Representation<Output>;
+  reads?: readonly Representation<unknown>[];
+  references?: readonly ReferenceDescriptor[];
   perform: (value: NoInfer<Input>, context: Context) => NoInfer<Output>;
 }) {
   const { name, input, output, perform } = definition;
@@ -37,5 +49,13 @@ export function operation<Input, Output, Context>(definition: {
     return step("output", () => output.parse(result));
   };
   const execute = (value: Input, context: Context) => run(value, context);
-  return Object.freeze({ name, input, output, run, execute });
+  return Object.freeze({
+    name,
+    input,
+    output,
+    run,
+    execute,
+    reads: Object.freeze([...(definition.reads ?? [])]),
+    references: Object.freeze([...(definition.references ?? [])]),
+  });
 }
