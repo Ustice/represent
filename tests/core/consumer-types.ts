@@ -7,6 +7,7 @@ import {
   optionalCodec,
   operation,
   reference,
+  runBatch,
 } from "../../packages/represent/src/index.js";
 
 // This consumer program is checked by tsc, not executed by Vitest.
@@ -155,4 +156,24 @@ reference({
   field: "absent",
   to: record.encode.from,
   key: "label",
+});
+
+const batch = runBatch(add, [1, "external invalid input", 2], {
+  context: { increment: 2 },
+  advance: (context, value) => ({ increment: context.increment + value }),
+});
+batch.context.increment.toFixed(2);
+for (const row of batch.rows) {
+  if (row.status === "accepted") row.value.toFixed(2);
+  else row.error.stage.toUpperCase();
+}
+runBatch(add, [], {
+  // @ts-expect-error Context types come from the operation.
+  context: { increment: "two" },
+  advance: (context) => context,
+});
+runBatch(add, [], {
+  context: { increment: 2 },
+  // @ts-expect-error Transitions must preserve the operation's context type.
+  advance: () => ({ increment: "two" }),
 });

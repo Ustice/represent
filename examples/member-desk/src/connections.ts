@@ -2,6 +2,7 @@ import { graph } from "@represent/core";
 import { memberExchange, toPublic, toRoster } from "./model.js";
 import { eventExchange } from "./events/model.js";
 import { rsvpExchange, registerRsvp, cancelRsvp } from "./rsvps/model.js";
+import { registerRsvpByEmail } from "./rsvps/import.js";
 import { prepareAttendeeRoster } from "./rsvps/export.js";
 import { escapeHtml, json } from "./ui.js";
 
@@ -12,7 +13,14 @@ export const workspaceGraph = graph(
     toPublic,
     toRoster,
   ],
-  { operations: [registerRsvp, cancelRsvp, prepareAttendeeRoster] },
+  {
+    operations: [
+      registerRsvp,
+      cancelRsvp,
+      prepareAttendeeRoster,
+      registerRsvpByEmail,
+    ],
+  },
 );
 
 export function sharedFieldUses() {

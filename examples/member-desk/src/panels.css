@@ -433,3 +433,32 @@ select:disabled {
   color: #63774e;
   font-size: 11px;
 }
+
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  table-layout: fixed;
+  font-size: 11px;
+}
+.import-table th,
+.import-table td,
+.import-table caption {
+  padding: 12px;
+  border-bottom: 1px solid #e3e8dc;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.import-table th:first-child {
+  width: 50px;
+}
+.import-table caption {
+  text-align: left;
+  background: #f6f9ef;
+  font-weight: 600;
+}
+.import-table small {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.5;
+}

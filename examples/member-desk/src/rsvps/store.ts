@@ -4,6 +4,7 @@ import {
   registerRsvp,
   rsvpExchange,
   type RsvpContext,
+  type Rsvp,
   type RsvpRequest,
 } from "./model.js";
 
@@ -30,9 +31,13 @@ export function changeRsvp(
             value.memberId !== result.memberId ||
             value.eventId !== result.eventId,
         );
+  saveRsvps(next);
+  return result;
+}
+
+export function saveRsvps(rsvps: readonly Rsvp[]) {
   localStorage.setItem(
     storageKey,
-    JSON.stringify(next.map(rsvpExchange.encode.convert)),
+    JSON.stringify(rsvps.map(rsvpExchange.encode.convert)),
   );
-  return result;
 }
