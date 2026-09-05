@@ -7,7 +7,7 @@ Start from the repository root with `pnpm dev`.
 Edit a member and save to update the public profile and API export. The API
 panel accepts JSON changes and downloads the serialized member. Roster CSV
 previews and downloads all saved members, including private email and status.
-Connections displays the graph derived from the application's conversions.
+Connections explores dependencies derived from the application's definitions.
 Changes persist in this browser; Reset sample restores the synthetic directory.
 
 The [model](src/model.ts) owns Zod validation and four representations: a member
@@ -35,6 +35,23 @@ RSVPs, following the optional deadline wrapper. It also displays operation
 inputs, outputs, declared reads, and the member/event reference fields. Those
 reference declarations perform the same lookups used by signup and export;
 missing-member policy and signup deadlines stay in Fieldwork.
+
+Connections now asks “What depends on this?” Select a representation,
+conversion, reference, or operation, or use the Member, Event, and shared-date
+shortcuts. Each result identifies a dependent definition, whether its shortest
+path is direct or indirect, and an expandable explanation. Alternate immediate
+reasons remain visible, including the optional deadline's longer route through
+its wrapper. JSON views expose the query result and source graph. Selection is
+shared across Members and Events.
+
+The [workspace graph](src/workspace-graph.ts) registers the actual composed
+public-profile conversion. Selecting the date encoder reaches the member encoder
+and then that profile conversion; selecting Member reaches its declared
+operation reads and references. Cancellation is not marked as a Member
+dependent, because it only declares RSVP reads. Output names provide context
+rather than claiming that operation results change schemas or saved records.
+Calls hidden inside operation bodies (such as the export's date encoding) are
+not inferred.
 
 The [RSVP model](src/rsvps/model.ts) connects a member to an event, with one
 signup per pair. All directory members can RSVP. Signups close at the explicit

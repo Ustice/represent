@@ -1,9 +1,88 @@
 import { describe, expect, it } from "vitest";
+import { dependents } from "../../packages/represent/src/index.js";
 import {
-  sharedFieldUses,
-  workspaceGraph,
-} from "../../examples/member-desk/src/workspace-graph.js";
+  memberExchange,
+  profileFor,
+} from "../../examples/member-desk/src/model.js";
+import { workspaceGraph } from "../../examples/member-desk/src/workspace-graph.js";
 describe("Fieldwork connections", () => {
+  it("finds member consumers without inferring RSVP writes or cancellation dependencies", () => {
+    const result = dependents(workspaceGraph, {
+      kind: "representation",
+      name: "Member",
+    });
+    const items = result.dependents.map(({ item }) => item);
+    expect(items).toContainEqual({
+      kind: "operation",
+      name: "Prepare attendee roster",
+    });
+    expect(items).toContainEqual({ kind: "operation", name: "Register RSVP" });
+    expect(items).toContainEqual({ kind: "conversion", name: profileFor.name });
+    expect(items).not.toContainEqual({
+      kind: "operation",
+      name: "Cancel RSVP",
+    });
+    expect(items).not.toContainEqual({ kind: "representation", name: "RSVP" });
+    expect(items).not.toContainEqual({
+      kind: "representation",
+      name: "Attendee roster",
+    });
+    const attendee = result.dependents.find(
+      ({ item }) =>
+        item.kind === "operation" && item.name === "Prepare attendee roster",
+    );
+    expect(attendee?.path).toEqual([
+      {
+        dependency: { kind: "representation", name: "Member" },
+        dependent: { kind: "operation", name: "Prepare attendee roster" },
+        reason: { kind: "read" },
+      },
+    ]);
+  });
+  it("traces the shared encoder to the actual public-profile route and every event field use", () => {
+    const result = dependents(workspaceGraph, {
+      kind: "conversion",
+      name: "Date and ISO timestamp: encode",
+    });
+    const profile = result.dependents.find(
+      ({ item }) => item.kind === "conversion" && item.name === profileFor.name,
+    );
+    expect(profile?.path.map(({ dependent }) => dependent.name)).toEqual([
+      memberExchange.encode.name,
+      profileFor.name,
+    ]);
+    const event = result.dependents.find(
+      ({ item }) =>
+        item.kind === "conversion" && item.name === "Event exchange: encode",
+    );
+    expect(profile?.path[0]?.reason).toEqual({
+      kind: "field",
+      field: "joinedAt",
+    });
+    expect(
+      result.dependents
+        .find(
+          ({ item }) =>
+            item.kind === "conversion" && item.name === "RSVP exchange: encode",
+        )
+        ?.via.map(({ reason }) => reason),
+    ).toEqual([{ kind: "field", field: "signedUpAt" }]);
+    expect(event?.via.map(({ reason }) => reason)).toEqual([
+      { kind: "field", field: "endsAt" },
+      { kind: "field", field: "startsAt" },
+      { kind: "field", field: "rsvpBy" },
+    ]);
+    expect(
+      result.dependents.some(({ item }) => item.kind === "operation"),
+    ).toBe(false);
+    expect(
+      result.dependents.some(
+        ({ item }) =>
+          item.kind === "conversion" &&
+          item.name === "Date and ISO timestamp: decode",
+      ),
+    ).toBe(false);
+  });
   it("exposes the roster's state and executable references alongside signup and cancellation", () => {
     expect(workspaceGraph.operations).toEqual([
       {
@@ -51,19 +130,5 @@ describe("Fieldwork connections", () => {
         key: "id",
       },
     ]);
-  });
-  it("exposes Fieldwork's actual shared date uses, including the wrapped deadline", () => {
-    expect(sharedFieldUses()).toEqual([
-      { path: "Member.joinedAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.startsAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.endsAt", conversion: "Date and ISO timestamp: encode" },
-      { path: "Event.rsvpBy", conversion: "Date and ISO timestamp: encode" },
-      { path: "RSVP.signedUpAt", conversion: "Date and ISO timestamp: encode" },
-    ]);
-    expect(
-      workspaceGraph.edges.filter(
-        ({ name }) => name === "Date and ISO timestamp: encode",
-      ),
-    ).toHaveLength(1);
   });
 });

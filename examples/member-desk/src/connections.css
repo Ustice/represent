@@ -1,3 +1,12 @@
+.work-area:has(.dependency-explorer) > .editor {
+  display: none;
+}
+.work-area:has(.dependency-explorer) > .preview {
+  grid-column: 1 / -1;
+}
+.dependency-explorer > .panel-intro {
+  max-width: 660px;
+}
 .dependency-shortcuts {
   display: flex;
   flex-wrap: wrap;
@@ -14,6 +23,8 @@
   margin: 20px 0 0;
   padding: 0;
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
   gap: 12px;
 }
 .dependency-card {
