@@ -1,5 +1,8 @@
 # JSON Schema adapter
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 `toJsonSchema(representation)` derives a JSON Schema 2020-12 document from the
 core's declared structure. The adapter owns all JSON Schema semantics; the core
 has no JSON Schema or Ajv dependency.

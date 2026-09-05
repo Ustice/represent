@@ -1,5 +1,8 @@
 # Zod bridge
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 Use an existing Zod parser as a Represent representation. Zod retains ownership
 of validation and normalization; the core does not depend on Zod.
 

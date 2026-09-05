@@ -1,5 +1,8 @@
 # Represent explorer
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 A disposable browser viewer of Represent's public `Graph` data. It has no
 Fieldwork imports and does not inspect source code or execute the model.
 

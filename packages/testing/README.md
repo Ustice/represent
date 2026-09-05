@@ -1,8 +1,11 @@
 # Contract checks and scoped certification
 
+Part of the experimental `0.1.0-rc.0` candidate. See
+[installation and tested scope](https://github.com/Ustice/represent/blob/main/docs/release-candidate.md).
+
 These runner-neutral functions work inside an existing test or development tool.
 They do not own its CLI, workers, scheduling, or assertion library. The
-[Sensor Bench profile](../../examples/sensor-bench/src/certification-profile.ts)
+[Sensor Bench profile](https://github.com/Ustice/represent/blob/main/examples/sensor-bench/src/certification-profile.ts)
 exercises the JSON Schema adapter against Ajv and deliberate artifact defects.
 
 `checkContract({ representation, accepts, samples, copy })` compares parser
@@ -63,6 +66,6 @@ A passing result applies only to the declaration and exercised domain. It is not
 a certification of every adapter feature or runtime version. Preserve the
 report's scope and any seeds/counterexamples when publishing evidence. These
 functions support the existing
-[certification contract](../../docs/specifications/testing-and-certification.md),
+[certification contract](https://github.com/Ustice/represent/blob/main/docs/specifications/testing-and-certification.md),
 including required discrimination checks and explicit unsupported/gap/error
 outcomes; ordinary project tests do not need this metadata.
