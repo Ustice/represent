@@ -23,6 +23,13 @@ export const temperature = codec({
   encode: (value) => round((value * 9) / 5 + 32),
   decode: (value) => round(((value - 32) * 5) / 9),
 });
+export const unroundedTemperature = codec({
+  name: "Unrounded temperature",
+  from: temperature.encode.from,
+  to: temperature.encode.to,
+  encode: (value) => (value * 9) / 5 + 32,
+  decode: (value) => ((value - 32) * 5) / 9,
+});
 const timestamp = codec({
   name: "Sensor time",
   from: dateValue("Reading time"),
@@ -83,4 +90,6 @@ export const sensorGraph = graph([
   sensorExchange.encode,
   sensorExchange.decode,
   summarize,
+  unroundedTemperature.encode,
+  unroundedTemperature.decode,
 ]);

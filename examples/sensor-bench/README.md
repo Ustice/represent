@@ -31,3 +31,21 @@ readings. The timestamp leaf uses the existing Zod bridge. The neutral graph
 includes list-element and wrapper relationships, and can be rendered by the same
 explorer used in Fieldwork. CLI output is JSON on stdout; failures produce a
 diagnostic on stderr and a nonzero exit status.
+
+The `route` command compares two explicitly registered Fahrenheit-to-Celsius
+conversions. With 68.1°F, reported precision produces 20.1°C; the unrounded
+calculation produces approximately 20.05556°C. Neither is declared lossless.
+
+```sh
+pnpm --silent sensor route
+pnpm --silent sensor route --policy fewest
+pnpm --silent sensor route --policy reported --value 68.1
+pnpm --silent sensor route --policy unrounded --value 68.1
+```
+
+The default and fewest-step policies report ambiguity because both direct paths
+are valid candidates. The two precision policies explicitly exclude the other
+conversion and trace the selected path. Results include endpoints, candidates,
+scores, policy, search completeness, and intermediate values. An ambiguous
+result does not execute or validate the supplied value. Ordinary batch
+processing still uses the reported-precision codec explicitly.

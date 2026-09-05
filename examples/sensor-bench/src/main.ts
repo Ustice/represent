@@ -1,3 +1,5 @@
+import { parseArgs } from "node:util";
+import { temperatureRoute } from "./routing.js";
 import { readFile } from "node:fs/promises";
 import {
   sensorContract,
@@ -7,7 +9,19 @@ import {
 } from "./commands.js";
 
 async function main() {
-  const [command = "summary", file, ...extra] = process.argv.slice(2);
+  const [command = "summary", ...args] = process.argv.slice(2);
+  if (command === "route") {
+    const { values } = parseArgs({
+      args,
+      options: {
+        policy: { type: "string", default: "unique" },
+        value: { type: "string", default: "68.1" },
+      },
+    });
+    const input: unknown = JSON.parse(values.value);
+    return temperatureRoute(input, values.policy);
+  }
+  const [file, ...extra] = args;
   if (extra.length)
     throw new Error(
       "Usage: sensor [summary|round-trip|schema|graph] [file.json]",
@@ -15,7 +29,7 @@ async function main() {
   if (command === "schema") return sensorContract();
   if (command === "graph") return sensorGraph;
   if (command !== "summary" && command !== "round-trip")
-    throw new Error("Choose summary, round-trip, schema, or graph");
+    throw new Error("Choose summary, round-trip, schema, graph, or route");
   const source = await readFile(
     file ?? new URL("../sample.json", import.meta.url),
     "utf8",

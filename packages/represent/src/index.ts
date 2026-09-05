@@ -53,3 +53,12 @@ export {
   type ConversionRunner,
   type ConversionTraceStep,
 } from "./trace.js";
+export {
+  findRoutes,
+  selectRoute,
+  fewestSteps,
+  type ConversionRoute,
+  type RouteLimits,
+  type RouteSearch,
+  type RoutePolicy,
+} from "./routes.js";
