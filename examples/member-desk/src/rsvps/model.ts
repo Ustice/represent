@@ -1,17 +1,26 @@
-import { operation, recordCodec, reference } from "@represent/core";
+import {
+  operation,
+  recordCodec,
+  reference,
+  record,
+  text,
+} from "@represent/core";
 import { z } from "zod";
-import { dateTime, field, parser } from "../fields.js";
+import { dateTime, parser } from "../fields.js";
 import { member, type Member } from "../model.js";
 import { eventExchange, type CommunityEvent } from "../events/model.js";
 
-const identifiers = { memberId: z.string().min(1), eventId: z.string().min(1) };
+const identifiers = {
+  memberId: text("Member reference", { nonempty: true }),
+  eventId: text("Event reference", { nonempty: true }),
+};
 export const rsvpExchange = recordCodec({
   name: "RSVP exchange",
   from: "RSVP",
   to: "RSVP API",
   fields: {
-    memberId: field("Member reference", identifiers.memberId),
-    eventId: field("Event reference", identifiers.eventId),
+    memberId: identifiers.memberId,
+    eventId: identifiers.eventId,
     signedUpAt: dateTime,
   },
 });
@@ -30,7 +39,7 @@ export const rsvpEvent = reference({
   to: eventExchange.encode.from,
   key: "id",
 });
-const request = field("RSVP request", z.object(identifiers).strict());
+const request = record("RSVP request", identifiers);
 export type RsvpRequest = ReturnType<typeof request.parse>;
 export interface RsvpContext {
   members: readonly Member[];

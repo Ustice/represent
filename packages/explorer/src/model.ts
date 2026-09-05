@@ -13,6 +13,10 @@ export function relationship(link: DependencyLink) {
   const forward = reason.kind === "input" || reason.kind === "reference-source";
   const label = (() => {
     switch (reason.kind) {
+      case "record-field":
+        return `field ${reason.field}`;
+      case "wrapped-value":
+        return "wraps value";
       case "input":
         return "input";
       case "output":
@@ -34,13 +38,15 @@ export function relationship(link: DependencyLink) {
     }
   })();
   const family =
-    reason.kind === "call" || reason.kind === "read"
-      ? "operation"
-      : reason.kind.startsWith("reference")
-        ? "reference"
-        : reason.kind === "field" || reason.kind === "conversion-use"
-          ? "conversion"
-          : "contract";
+    reason.kind === "record-field" || reason.kind === "wrapped-value"
+      ? "structure"
+      : reason.kind === "call" || reason.kind === "read"
+        ? "operation"
+        : reason.kind.startsWith("reference")
+          ? "reference"
+          : reason.kind === "field" || reason.kind === "conversion-use"
+            ? "conversion"
+            : "contract";
   return {
     from: forward ? dependency : dependent,
     to: forward ? dependent : dependency,

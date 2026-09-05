@@ -9,6 +9,10 @@ import {
   reference,
   runBatch,
   graph,
+  text as textValue,
+  record as recordValue,
+  optional,
+  dateValue,
   dependents,
 } from "../../packages/represent/src/index.js";
 
@@ -194,3 +198,24 @@ for (const dependent of dependencies.dependents) {
 dependents(graph([]), { name: "Number" });
 // @ts-expect-error Runtime values are not graph definition kinds.
 dependents(graph([]), { kind: "value", name: "Number" });
+
+const form = recordValue("Form", {
+  id: textValue("ID", { nonempty: true }),
+  note: optional(textValue("Note")),
+  when: dateValue("When"),
+});
+const parsedForm = form.parse({ id: "x", when: new Date() });
+parsedForm.id.toUpperCase();
+parsedForm.note?.toUpperCase();
+parsedForm.when.getTime();
+const formCommand = operation({
+  name: "Use form",
+  input: form,
+  output: form,
+  perform: (value) => value,
+});
+formCommand.execute({ id: "x", when: new Date() }, undefined);
+// @ts-expect-error Structural record inputs infer required date values.
+formCommand.execute({ id: "x", when: "2026-09-05" }, undefined);
+// @ts-expect-error Structural record inputs retain required fields.
+formCommand.execute({ when: new Date() }, undefined);

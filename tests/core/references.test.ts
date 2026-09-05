@@ -72,10 +72,11 @@ describe("explicit references and operation graphs", () => {
     reads.length = 0;
     refs.length = 0;
     const result = graph([], { operations: [greet], references: [memberRef] });
-    expect(result.nodes).toEqual([
-      { name: "Signup" },
-      { name: "Person" },
-      { name: "Greeting" },
+    expect(result.nodes.map(({ name }) => name)).toEqual([
+      "Signup",
+      "Text",
+      "Person",
+      "Greeting",
     ]);
     expect(result.references).toEqual([
       {

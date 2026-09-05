@@ -1,4 +1,4 @@
-import { codec, representation } from "@represent/core";
+import { codec, representation, dateValue } from "@represent/core";
 import { z } from "zod";
 
 export function parser<Value>(schema: z.ZodType<Value>) {
@@ -23,7 +23,7 @@ export function field<Value>(name: string, schema: z.ZodType<Value>) {
 
 export const dateTime = codec({
   name: "Date and ISO timestamp",
-  from: field("Date", z.date()),
+  from: dateValue("Date"),
   to: field("ISO timestamp", z.iso.datetime({ offset: true })),
   encode: (value) => value.toISOString(),
   decode: (value) => new Date(value),

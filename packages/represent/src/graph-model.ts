@@ -1,5 +1,9 @@
+import type { Structure } from "./structure.js";
 export interface Graph {
-  readonly nodes: readonly { readonly name: string }[];
+  readonly nodes: readonly {
+    readonly name: string;
+    readonly structure?: Structure;
+  }[];
   readonly edges: readonly {
     readonly name: string;
     readonly from: string;
@@ -43,10 +47,12 @@ export type DependencyReason =
         | "read"
         | "reference-use"
         | "conversion-use"
-        | "call";
+        | "call"
+        | "wrapped-value";
     }
   | {
-      readonly kind: "field" | "reference-source" | "reference-target";
+      readonly kind:
+        "field" | "reference-source" | "reference-target" | "record-field";
       readonly field: string;
     };
 

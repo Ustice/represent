@@ -82,13 +82,18 @@ describe("member directory consuming Represent", () => {
   });
 
   it("includes the member field codec alongside the record routes", () => {
-    expect(memberGraph.nodes).toEqual([
-      { name: "Member" },
-      { name: "Member API" },
-      { name: "Date" },
-      { name: "ISO timestamp" },
-      { name: "Public profile" },
-      { name: "Roster row" },
+    expect(memberGraph.nodes.map(({ name }) => name)).toEqual([
+      "Member",
+      "Member ID",
+      "Member name",
+      "Email",
+      "Role",
+      "Membership",
+      "Date",
+      "Member API",
+      "ISO timestamp",
+      "Public profile",
+      "Roster row",
     ]);
     expect(memberGraph.edges).toEqual([
       { name: "Member exchange: encode", from: "Member", to: "Member API" },

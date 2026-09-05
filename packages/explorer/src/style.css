@@ -396,3 +396,40 @@
   outline: 3px solid #277cbb;
   outline-offset: 3px;
 }
+
+.rx-structure {
+  --edge: #9a782e;
+  color: #80601c;
+}
+.rx-schema {
+  padding: 14px 16px;
+  margin: 14px 0 20px;
+  border: 1px solid var(--rx-line);
+  border-radius: 7px;
+  background: #fafbf5;
+}
+.rx-schema h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.rx-schema .rx-caption {
+  margin: 8px 0;
+}
+.rx-table-scroll {
+  overflow: auto;
+}
+.rx-schema table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+}
+.rx-schema th,
+.rx-schema td {
+  text-align: left;
+  border-bottom: 1px solid var(--rx-line);
+  padding: 10px 12px 10px 0;
+}
+.rx-schema thead th {
+  font-weight: 400;
+  color: var(--rx-muted);
+}
