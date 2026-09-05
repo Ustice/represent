@@ -373,3 +373,29 @@ const payload = await lookupEvent.run({ id: "evt_01" }, eventStore);
 The context supplies resources and any cancellation policy. Represent does not
 add transactions, retries, or cancellation implicitly. `runBatch` remains a
 synchronous operation helper.
+
+`numberValue(name, { min, max, integer })` accepts finite JavaScript numbers,
+with optional inclusive bounds and an integer constraint. Bounds must be finite
+and ordered. It does not coerce strings or promise safe-integer precision.
+`booleanValue(name)` accepts only true and false.
+
+`nullable(value)` accepts null or delegates to the wrapped parser. It retains
+that parser's missing-field behavior: `nullable(optional(value))` accepts both
+null and undefined, while `nullable(numberValue("Reading"))` requires a field.
+`presenceOf` follows live nullable wrappers; for a serialized graph, pass a name
+resolver as its second argument. Opaque leaves and unresolved/cyclic nullable
+chains remain unknown.
+
+`list(value)` parses an ordered array, including empty arrays, and reports
+element indexes on failure. Every index is visited; a sparse hole is passed as
+undefined to the element parser. Extra non-index array properties are not
+retained. `listCodec(codec)` and `nullableCodec(codec)` lift both conversion
+directions, retain their graph dependencies, and require opposite shared
+endpoints, as does `optionalCodec`. Null bypasses the inner nullable codec; list
+conversions preserve order. Ordinary validation still runs at each enclosing
+boundary.
+
+See [Sensor Bench](../../examples/sensor-bench/README.md) for an independent CLI
+that composes these declarations into telemetry parsing, temperature conversion,
+summary output, a wire contract, and a graph. Schema comparison uses explicit
+structural comparisons, including numeric constraints and collection references.

@@ -30,6 +30,7 @@ export interface ExportIssue {
     | "refinement"
     | "optional-root"
     | "optional-cycle"
+    | "wrapper-cycle"
     | "unsupported-field"
     | "provider";
   readonly detail?: string;
@@ -117,7 +118,14 @@ export function toJsonSchema(
     contracts.set(value, result);
     return result;
   }
-  function presence(value: Representation<unknown>, path: readonly string[]) {
+  function presence(
+    value: Representation<unknown>,
+    path: readonly string[],
+    seen = new Set<Representation<unknown>>(),
+  ): "required" | "optional" | "unknown" {
+    if (seen.has(value)) return "unknown";
+    if (value.structure?.kind === "nullable")
+      return presence(value.structure.inner, path, new Set([...seen, value]));
     return value.structure
       ? presenceOf(value)
       : (external(value, path)?.presence ?? "unknown");
@@ -135,6 +143,21 @@ export function toJsonSchema(
       }
       return visit(structure.inner, path, new Set([...wrappers, name]));
     }
+    if (structure?.kind === "nullable") {
+      if (wrappers.has(name)) {
+        issues.push({ path, representation: name, reason: "wrapper-cycle" });
+        return ref(name);
+      }
+      if (visited.has(name)) return ref(name);
+      visited.add(name);
+      definitions.set(name, {
+        anyOf: [
+          { type: "null" },
+          visit(structure.inner, path, new Set([...wrappers, name])),
+        ],
+      });
+      return ref(name);
+    }
     if (visited.has(name)) return ref(name);
     visited.add(name);
     if (!structure) {
@@ -142,6 +165,19 @@ export function toJsonSchema(
       if (provided) definitions.set(name, provided.schema);
       else if (!issues.some((issue) => issue.representation === name))
         issues.push({ path, representation: name, reason: "opaque" });
+    } else if (structure.kind === "boolean") {
+      definitions.set(name, { type: "boolean" });
+    } else if (structure.kind === "number") {
+      definitions.set(name, {
+        type: structure.integer ? "integer" : "number",
+        ...(structure.min === null ? {} : { minimum: structure.min }),
+        ...(structure.max === null ? {} : { maximum: structure.max }),
+      });
+    } else if (structure.kind === "list") {
+      definitions.set(name, {
+        type: "array",
+        items: visit(structure.element, [...path, "[]"]),
+      });
     } else if (structure.kind === "date") {
       issues.push({ path, representation: name, reason: "date" });
     } else if (structure.kind === "text") {

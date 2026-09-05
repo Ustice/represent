@@ -73,6 +73,25 @@ importers:
         specifier: 7.3.6
         version: 7.3.6(@types/node@22.20.1)(tsx@4.23.13)
 
+  examples/sensor-bench:
+    dependencies:
+      '@represent/core':
+        specifier: workspace:*
+        version: link:../../packages/represent
+      '@represent/json-schema':
+        specifier: workspace:*
+        version: link:../../packages/json-schema
+      '@represent/zod':
+        specifier: workspace:*
+        version: link:../../packages/zod
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      tsx:
+        specifier: 4.23.13
+        version: 4.23.13
+
   packages/explorer:
     dependencies:
       '@represent/core':

@@ -1,0 +1,10 @@
+{
+  "device": "greenhouse-north",
+  "online": true,
+  "batteryPercent": 84,
+  "samples": [
+    { "time": "2026-09-05T10:00+02:00", "temperature": 68.1 },
+    { "time": "2026-09-05T10:05+02:00", "temperature": null },
+    { "time": "2026-09-05T10:10+02:00", "temperature": 72.1 }
+  ]
+}

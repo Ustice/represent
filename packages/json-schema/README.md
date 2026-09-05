@@ -21,17 +21,20 @@ validate({ id: "example" }); // true
 validate({ id: "" }); // false
 ```
 
-Supported: text, nonempty text, strict records, optional record fields, shared
-children, and recursive record declarations. Optional means a JSON property may
-be absent; it does not make null valid. Fields and definitions are emitted in
-stable name order. Schema references escape JSON Pointer and URI-fragment names.
+Supported: text, nonempty text, finite numbers with inclusive bounds and integer
+constraints, booleans, lists, nullable values, strict records, optional record
+fields, shared children, and recursive record/list declarations. Optional means
+a JSON property may be absent; it does not make null valid. Fields and
+definitions are emitted in stable name order. Schema references escape JSON
+Pointer and URI-fragment names.
 
 `SchemaExportError.issues` identifies unsupported structure by field path,
 representation name, and reason. Dates, opaque parsers without a provider,
 custom record refinements, root-level optional values, and cycles consisting
-only of optional wrappers cannot be exported. The property name `__proto__` also
-produces an `unsupported-field` issue: Ajv ignores it in `properties`, so this
-experimental adapter refuses a contract its demonstrated consumer cannot
+only of optional wrappers cannot be exported. Nullable-only and mixed
+nullable/optional wrapper cycles are also refused. The property name `__proto__`
+also produces an `unsupported-field` issue: Ajv ignores it in `properties`, so
+this experimental adapter refuses a contract its demonstrated consumer cannot
 validate faithfully. JSON Schema itself permits that name. No permissive
 fallback schema is returned. Shared unsupported children report their first
 encountered path. Export never executes a parser.

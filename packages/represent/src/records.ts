@@ -1,12 +1,6 @@
-import { optional } from "./values.js";
 import { recordStructure } from "./structure.js";
 import type { ConversionDescriptor } from "./graph.js";
-import {
-  codec,
-  representation,
-  type Codec,
-  type Representation,
-} from "./conversions.js";
+import { codec, representation, type Representation } from "./conversions.js";
 import { setDependencies } from "./dependencies.js";
 
 interface FieldConversion extends ConversionDescriptor {
@@ -139,21 +133,6 @@ export function recordCodec<
       ),
     );
   }
-  return result;
-}
-
-export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
-  const result = codec({
-    name: `Optional ${subject.encode.from.name} ↔ ${subject.encode.to.name}`,
-    from: optional(subject.encode.from),
-    to: optional(subject.encode.to),
-    encode: (value) =>
-      value === undefined ? undefined : subject.encode.convert(value),
-    decode: (value) =>
-      value === undefined ? undefined : subject.decode.convert(value),
-  });
-  setDependencies(result.encode, [{ field: null, conversion: subject.encode }]);
-  setDependencies(result.decode, [{ field: null, conversion: subject.decode }]);
   return result;
 }
 
