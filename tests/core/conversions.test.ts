@@ -176,6 +176,7 @@ describe("graph descriptors", () => {
         { name: "Dollars to cents", from: "Amount", to: "Amount" },
         { name: "Format amount", from: "Amount", to: "Text" },
       ],
+      dependencies: [],
     });
   });
 

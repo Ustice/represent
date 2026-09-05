@@ -6,13 +6,17 @@ import {
   sampleEvents,
   type CommunityEvent,
 } from "./model.js";
-import { eventPreview, connectionsPanel } from "./views.js";
+import { eventPreview } from "./views.js";
+import { connectionsPanel } from "../connections.js";
+import { attendeesPanel } from "../rsvps/panel.js";
+import { changeRsvp } from "../rsvps/store.js";
+import { savedMembers } from "../member-store.js";
 
 const storageKey = "represent.fieldwork.events.v1";
 let notice = "";
 let events = loadEvents();
 let selectedId = events[0]?.id ?? "evt_01";
-let view: "preview" | "api" | "graph" = "preview";
+let view: "preview" | "attendees" | "api" | "graph" = "preview";
 const drafts = new Map<string, ReturnType<typeof formValue>>();
 const apiDrafts = new Map<string, string>();
 
@@ -60,7 +64,7 @@ export function renderEvents() {
     <label for="rsvp-by">RSVP deadline <span class="field-note">Optional</span></label><input id="rsvp-by" value="${escapeHtml(fields.rsvpBy ?? "")}" aria-describedby="rsvp-hint" /><small class="input-hint" id="rsvp-hint">Leave blank for no cutoff. Otherwise, on or before the start.</small>
     <div class="inline-error" id="event-error" role="alert" hidden></div><div class="form-footer"><button class="button primary" id="save-event" type="submit">Save event <span aria-hidden="true">↗</span></button><span id="event-edit-status">${drafts.has(selectedId) ? "Unsaved changes" : "Saved in this browser"}</span></div></form>
     <div class="editor-note">↳ The end must follow the start. Save to update the schedule and export.</div></section>
-    <section class="preview panel" aria-label="Event representations"><div class="tabs" role="group" aria-label="Event representation"><button data-view="preview" aria-pressed="${view === "preview"}">Event preview</button><button data-view="api" aria-pressed="${view === "api"}">API payload</button><button data-view="graph" aria-pressed="${view === "graph"}">Connections</button></div><div class="preview-content">${view === "preview" ? eventPreview(current) : view === "api" ? apiPanel(current) : connectionsPanel()}</div></section></div>`,
+    <section class="preview panel" aria-label="Event representations"><div class="tabs" role="group" aria-label="Event representation"><button data-view="preview" aria-pressed="${view === "preview"}">Event preview</button><button data-view="attendees" aria-pressed="${view === "attendees"}">Attendees</button><button data-view="api" aria-pressed="${view === "api"}">API payload</button><button data-view="graph" aria-pressed="${view === "graph"}">Connections</button></div><div class="preview-content">${view === "preview" ? eventPreview(current) : view === "attendees" ? attendeesPanel(current) : view === "api" ? apiPanel(current) : connectionsPanel()}</div></section></div>`,
   );
   bindEvents();
 }
@@ -91,7 +95,35 @@ function save(value: CommunityEvent) {
   renderEvents();
 }
 
+function performRsvp(action: "register" | "cancel", memberId: string) {
+  try {
+    changeRsvp(
+      action,
+      { memberId, eventId: selectedId },
+      { members: savedMembers(), events, now: new Date() },
+    );
+    notice =
+      action === "register" ? "RSVP saved. See you there." : "RSVP cancelled.";
+    renderEvents();
+    document.querySelector<HTMLElement>("#rsvp-member")?.focus();
+  } catch (error) {
+    showError("#rsvp-error", error);
+  }
+}
+
 function bindEvents() {
+  document.querySelector("#rsvp-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    performRsvp("register", element<HTMLSelectElement>("#rsvp-member").value);
+  });
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-cancel-rsvp]")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        const memberId = button.dataset.cancelRsvp;
+        if (memberId) performRsvp("cancel", memberId);
+      }),
+    );
   document
     .querySelectorAll<HTMLButtonElement>("[data-event]")
     .forEach((button) =>
@@ -106,7 +138,12 @@ function bindEvents() {
     .forEach((button) =>
       button.addEventListener("click", () => {
         const next = button.dataset.view;
-        if (next === "preview" || next === "api" || next === "graph")
+        if (
+          next === "preview" ||
+          next === "attendees" ||
+          next === "api" ||
+          next === "graph"
+        )
           view = next;
         renderEvents();
       }),

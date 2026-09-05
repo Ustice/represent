@@ -4,14 +4,17 @@ import {
   type Codec,
   type Representation,
 } from "./conversions.js";
+import { setDependencies } from "./dependencies.js";
 
 interface FieldCodec {
   readonly encode: {
+    readonly name: string;
     readonly from: Representation<unknown>;
     readonly to: Representation<unknown>;
     readonly run: (input: unknown) => unknown;
   };
   readonly decode: {
+    readonly name: string;
     readonly from: Representation<unknown>;
     readonly to: Representation<unknown>;
     readonly run: (input: unknown) => unknown;
@@ -107,13 +110,22 @@ export function recordCodec<
     name: to,
     parse: (input: unknown) => mapFields(fields, input, "encode", false),
   });
-  return codec({
+  const result = codec({
     name,
     from: source,
     to: target,
     encode: (value) => mapFields(fields, value, "encode", true),
     decode: (value) => mapFields(fields, value, "decode", true),
   });
+  for (const direction of ["encode", "decode"] as const) {
+    setDependencies(
+      result[direction],
+      Object.entries(fields).flatMap(([key, field]) =>
+        "parse" in field ? [] : [{ field: key, conversion: field[direction] }],
+      ),
+    );
+  }
+  return result;
 }
 
 export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
@@ -124,7 +136,7 @@ export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
         input === undefined ? undefined : value.parse(input),
     });
   }
-  return codec({
+  const result = codec({
     name: `Optional ${subject.encode.from.name} ↔ ${subject.encode.to.name}`,
     from: optional(subject.encode.from),
     to: optional(subject.encode.to),
@@ -133,4 +145,7 @@ export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
     decode: (value) =>
       value === undefined ? undefined : subject.decode.convert(value),
   });
+  setDependencies(result.encode, [{ field: null, conversion: subject.encode }]);
+  setDependencies(result.decode, [{ field: null, conversion: subject.decode }]);
+  return result;
 }

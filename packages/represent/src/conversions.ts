@@ -1,3 +1,5 @@
+import { dependenciesOf, setDependencies } from "./dependencies.js";
+
 export interface Representation<Value> {
   readonly name: string;
   readonly parse: (input: unknown) => Value;
@@ -74,13 +76,18 @@ export function compose<Source, Middle, Target>(
     );
   }
   const run = (input: unknown) => second.convert(first.run(input));
-  return Object.freeze({
+  const result = Object.freeze({
     name: `${first.name} → ${second.name}`,
     from: first.from,
     to: second.to,
     run,
     convert: run,
   });
+  setDependencies(result, [
+    { field: null, conversion: first },
+    { field: null, conversion: second },
+  ]);
+  return result;
 }
 
 export function codec<Source, Target>(definition: {
@@ -102,20 +109,35 @@ export function codec<Source, Target>(definition: {
   });
 }
 
-interface GraphConversion {
+export interface ConversionDescriptor {
   readonly name: string;
   readonly from: Representation<unknown>;
   readonly to: Representation<unknown>;
 }
 
-export function graph(conversions: readonly GraphConversion[]) {
+export function graph(conversions: readonly ConversionDescriptor[]) {
   const representations = new Map<string, Representation<unknown>>();
-  const names = new Set<string>();
-  const edges = conversions.map(({ name, from, to }) => {
-    if (names.has(name)) {
+  const names = new Map<string, ConversionDescriptor>();
+  const edges: Array<{ name: string; from: string; to: string }> = [];
+  const dependencies: Array<{
+    parent: string;
+    field: string | null;
+    conversion: string;
+  }> = [];
+  const roots = new Set<string>();
+  for (const subject of conversions) {
+    if (roots.has(subject.name))
+      throw new Error(`Duplicate conversion name: ${subject.name}`);
+    roots.add(subject.name);
+  }
+  function visit(subject: ConversionDescriptor) {
+    const { name, from, to } = subject;
+    const existing = names.get(name);
+    if (existing === subject) return;
+    if (existing) {
       throw new Error(`Duplicate conversion name: ${name}`);
     }
-    names.add(name);
+    names.set(name, subject);
     for (const endpoint of [from, to]) {
       const existing = representations.get(endpoint.name);
       if (existing && existing !== endpoint) {
@@ -123,8 +145,17 @@ export function graph(conversions: readonly GraphConversion[]) {
       }
       representations.set(endpoint.name, endpoint);
     }
-    return { name, from: from.name, to: to.name };
-  });
+    edges.push({ name, from: from.name, to: to.name });
+    for (const dependency of dependenciesOf(subject)) {
+      dependencies.push({
+        parent: name,
+        field: dependency.field,
+        conversion: dependency.conversion.name,
+      });
+      visit(dependency.conversion);
+    }
+  }
+  conversions.forEach(visit);
   const nodes = [...representations.keys()].map((name) => ({ name }));
-  return { nodes, edges };
+  return { nodes, edges, dependencies };
 }

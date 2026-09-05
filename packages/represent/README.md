@@ -65,15 +65,46 @@ The record assembler has one internal type assertion after all fields have been
 parsed or converted: TypeScript cannot express the key/value relationship
 returned by `Object.fromEntries`. Consumers need no casts.
 
+`operation({ name, input, output, perform })` validates a synchronous command
+against an explicit context:
+
+```ts
+const signup = registerRsvp.execute(
+  { memberId, eventId },
+  {
+    members,
+    events,
+    rsvps,
+    now: new Date(),
+  },
+);
+```
+
+`execute` checks the input and context types; `run` accepts external `unknown`
+input. Both parse input, invoke `perform`, and parse the result. The context is
+trusted and is not parsed by the core. `OperationError` identifies the operation
+and input/perform/output stage, retaining the underlying cause. The consumer
+owns clock selection, reference resolution, domain rules, and persistence.
+Operations provide no transaction, rollback, concurrency, or purity guarantee.
+
 `compose(first, second)` explicitly connects edges sharing the same intermediate
 representation object. Each edge runs its own parsers, including the
 intermediate boundary on both sides; parser transformations must account for
-that. `graph` returns names and directed edges from the registered conversions.
-It rejects ambiguous duplicate names and does not choose routes or infer
-guarantees.
+that. `graph` returns names and directed edges from the registered conversions
+and their transitive conversion dependencies. Its `dependencies` array records
+`parent`, `field`, and `conversion`: record bindings have a field name; optional
+wrappers and explicit composition use `null`. Composition dependencies retain
+execution order. Shared conversion instances appear once, with all their
+bindings preserved. Describing the graph does not execute parsers or mappings.
+
+Graph roots must have unique names. Dependencies can reuse an existing instance;
+distinct objects with conflicting names are rejected, including representation
+names. Create and reuse a field codec (including an optional wrapper) when it
+appears in several places. The graph does not inspect mapping function bodies,
+choose routes, infer relationships from IDs, or infer guarantees.
 
 This is a value-conversion experiment. Record codecs derive runtime parsers and
 TypeScript record shapes, not target-library schemas or artifacts. Automatic
 adapters, operation graphs, certification, and impact analysis are not
-implemented. The graph describes record conversions; it does not yet expose
-their field dependencies.
+implemented. Conversion dependencies are visible; operation state dependencies
+and domain reference relationships are not yet part of the graph.
