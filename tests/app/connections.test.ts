@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   sharedFieldUses,
   workspaceGraph,
-} from "../../examples/member-desk/src/connections.js";
+} from "../../examples/member-desk/src/workspace-graph.js";
 describe("Fieldwork connections", () => {
   it("exposes the roster's state and executable references alongside signup and cancellation", () => {
     expect(workspaceGraph.operations).toEqual([
