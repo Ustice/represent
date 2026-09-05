@@ -11,6 +11,12 @@
   padding: 1rem;
   border-bottom: 1px solid var(--line);
 }
+.workbench-tabs button {
+  border: 1px solid #dce3d7;
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  background: white;
+}
 .workbench-tabs button[aria-pressed="true"] {
   background: #283e35;
   color: white;
@@ -29,6 +35,10 @@
   width: 100%;
   margin: 0.5rem 0 1rem;
   font: 0.9rem/1.6 monospace;
+  padding: 0.75rem;
+  border: 1px solid #dce3d7;
+  border-radius: 6px;
+  resize: vertical;
 }
 .contract-grid pre {
   max-height: 32rem;
