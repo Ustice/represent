@@ -117,7 +117,10 @@ function bindEvents() {
     bindRsvpImport(
       selectedId,
       () => ({ members: savedMembers(), events, now: new Date() }),
-      renderEvents,
+      () => {
+        notice = "";
+        renderEvents();
+      },
     );
   document.querySelector("#rsvp-form")?.addEventListener("submit", (event) => {
     event.preventDefault();

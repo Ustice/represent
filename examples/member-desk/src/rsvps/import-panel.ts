@@ -45,7 +45,7 @@ function previewTable(preview: RsvpImportPreview, imported: boolean) {
       })
       .join("")}</tbody></table></div>
     ${preview.rows.length ? "" : '<p class="muted panel-intro">Paste at least one email address. Blank lines are ignored.</p>'}
-    <div class="api-actions"><button class="button primary" id="apply-rsvp-import" ${!accepted || imported ? "disabled" : ""}>Import ${accepted} ready ${accepted === 1 ? "attendee" : "attendees"}</button></div>`;
+    <div class="api-actions"><button class="button primary" id="apply-rsvp-import" ${!accepted || imported ? "disabled" : ""}>${imported ? "Import complete" : `Import ${accepted} ready ${accepted === 1 ? "attendee" : "attendees"}`}</button></div>`;
 }
 
 export function rsvpImportPanel(eventId: string) {
@@ -102,7 +102,7 @@ export function bindRsvpImport(
         draft.message =
           result.status === "changed"
             ? "Saved data or signup eligibility changed. Nothing was imported. Review the refreshed preview."
-            : `${result.count} RSVPs imported. The attendee list and CSV are up to date.`;
+            : `${result.count} ${result.count === 1 ? "RSVP" : "RSVPs"} imported. The attendee list and CSV are up to date.`;
         render();
       } catch (error) {
         showError("#rsvp-import-error", error);
