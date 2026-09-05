@@ -30,10 +30,12 @@ not claim to generate every value accepted by the parser.
 
 Number bounds are inclusive. Integer bounds are rounded inward and must be safe
 integers; an empty integer interval fails at construction. Unbounded integer
-representations generate within JavaScript's safe-integer range. Optional record
-fields exercise absent keys and explicit undefined; nullable values also produce
-null. Unknown presence is kept required rather than guessed. Lists are dense.
-Prototype-named string fields remain ordinary own properties.
+representations generate within JavaScript's safe-integer range. Unbounded
+non-integer numbers use the full finite double range, from -Number.MAX_VALUE to
+Number.MAX_VALUE. Optional record fields exercise absent keys and explicit
+undefined; nullable values also produce null. Unknown presence is kept required
+rather than guessed. Lists are dense. Prototype-named string fields remain
+ordinary own properties.
 
 An `ArbitraryProvider` supplies `{ name, arbitrary(representation) }`, returning
 an arbitrary for a claimed representation or undefined otherwise. Providers can

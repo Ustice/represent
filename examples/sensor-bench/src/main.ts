@@ -17,13 +17,17 @@ async function main() {
       args,
       options: {
         seed: { type: "string", default: "162" },
-        device: { type: "string", default: "greenhouse-mock" },
+        device: { type: "string" },
       },
     });
     const seed = Number(values.seed);
-    if (command === "generate") return generateBatch(seed);
+    if (command === "generate") {
+      if (values.device !== undefined)
+        throw new Error("--device is only used with the mock command");
+      return generateBatch(seed);
+    }
     return inspectSensor.execute(
-      { device: values.device },
+      { device: values.device ?? "greenhouse-mock" },
       mockSensorSource(seed),
     );
   }

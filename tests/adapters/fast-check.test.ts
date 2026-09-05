@@ -15,6 +15,7 @@ import {
   recordCodec,
   representation,
   text,
+  type Representation,
 } from "../../packages/represent/src/index.js";
 
 describe("derived fast-check generators", () => {
@@ -65,6 +66,26 @@ describe("derived fast-check generators", () => {
     expect(result.seed).toBe(9);
   });
   it("rejects unsupported domains with a field path instead of discarding inconvenient values", () => {
+    const recursive: Representation<unknown> = {
+      name: "Recursive",
+      parse: (input: unknown) => input,
+      get structure() {
+        return { kind: "optional", inner: recursive } as const;
+      },
+    };
+    expect(() => toArbitrary(recursive)).toThrow(
+      "Recursive structures need an explicit provider",
+    );
+    expect(
+      fc.sample(
+        toArbitrary(recursive, {
+          providers: [
+            { name: "Finite seed", arbitrary: () => fc.constant(undefined) },
+          ],
+        }),
+        { seed: 1, numRuns: 1 },
+      ),
+    ).toEqual([undefined]);
     const opaque = representation({
       name: "Opaque",
       parse: (value: unknown) => value,
@@ -129,7 +150,7 @@ describe("derived fast-check generators", () => {
     ).toEqual(["HELLO"]);
     expect(() =>
       toArbitrary(normalized, { providers: [provider, provider] }),
-    ).toThrow("Multiple providers");
+    ).toThrow("Multiple providers claim this representation: Words, Words");
     expect(() =>
       fc.sample(
         toArbitrary(normalized, {

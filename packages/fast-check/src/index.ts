@@ -54,7 +54,7 @@ export function toArbitrary<Value>(
     const provided = (options.providers ?? []).flatMap((provider) => {
       try {
         const arbitrary = provider.arbitrary(value);
-        return arbitrary ? [arbitrary] : [];
+        return arbitrary ? [{ name: provider.name, arbitrary }] : [];
       } catch (error) {
         return fail(
           `${provider.name}: ${error instanceof Error ? error.message : "Provider failed"}`,
@@ -62,8 +62,10 @@ export function toArbitrary<Value>(
       }
     });
     if (provided.length > 1)
-      fail("Multiple providers claim this representation");
-    const custom = provided[0];
+      fail(
+        `Multiple providers claim this representation: ${provided.map((provider) => provider.name).join(", ")}`,
+      );
+    const custom = provided[0]?.arbitrary;
     if (custom) {
       cache.set(value, custom);
       return custom;
@@ -103,7 +105,6 @@ export function toArbitrary<Value>(
             min: structure.min ?? -Number.MAX_VALUE,
             max: structure.max ?? Number.MAX_VALUE,
             noNaN: true,
-            noDefaultInfinity: true,
           });
         break;
       }
