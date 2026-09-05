@@ -1,7 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "allowJs": false,
+    "allowJs": true,
+    "checkJs": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
@@ -22,6 +23,7 @@
     "packages/**/*.ts",
     "examples/**/*.ts",
     "vitest.config.ts",
+    "eslint.config.js",
     "tests/**/*.ts"
   ]
 }
