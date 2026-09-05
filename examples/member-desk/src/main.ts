@@ -1,21 +1,22 @@
 import { ConversionError } from "@represent/core";
 import {
-  fromApi,
+  memberExchange,
   member,
   memberGraph,
   profileFor,
   readDirectory,
   sampleMembers,
-  toApi,
+  representationDescriptions,
   type Member,
 } from "./model.js";
+import { exportRoster } from "./roster.js";
 import "./style.css";
 
 const storageKey = "represent.fieldwork.members.v1";
 let notice = "";
 let members = loadMembers();
 let selectedId = members[0]?.id ?? "mem_01";
-let view: "profile" | "api" | "graph" = "profile";
+let view: "profile" | "api" | "csv" | "graph" = "profile";
 const drafts = new Map<string, ReturnType<typeof formValue>>();
 const apiDrafts = new Map<string, string>();
 let exportUrl: string | undefined;
@@ -87,25 +88,38 @@ function profilePanel(value: Member) {
 }
 
 function apiPanel(value: Member) {
-  const payload = toApi.convert(value);
+  const payload = memberExchange.encode.convert(value);
   exportUrl = URL.createObjectURL(
     new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
   );
   return `<div class="panel-heading"><div><span class="eyebrow">DATA EXCHANGE</span><h2>A record that travels.</h2></div><span class="pill">JSON</span></div>
     <p class="muted panel-intro">Dates become ISO strings for storage and export. Edit a payload below to try importing a change.</p>
     <label for="api-payload" class="payload-label">Member API payload</label>
-    <textarea id="api-payload" class="code-input" spellcheck="false">${escapeHtml(apiDrafts.get(value.id) ?? JSON.stringify(toApi.convert(value), null, 2))}</textarea>
+    <textarea id="api-payload" class="code-input" spellcheck="false">${escapeHtml(apiDrafts.get(value.id) ?? JSON.stringify(memberExchange.encode.convert(value), null, 2))}</textarea>
     <div class="api-actions"><button class="button primary" id="apply-api">Validate &amp; apply</button><a class="button secondary" id="download" href="${exportUrl}" download="${escapeHtml(value.id)}.json">Download JSON <span aria-hidden="true">↓</span></a></div>
     <div class="inline-error" id="api-error" role="alert" hidden></div>
     <div class="route-note"><span class="route-symbol">↔</span><div><strong>Dates come back as Dates</strong><p>Imported data is validated before it updates the member.</p></div></div>`;
 }
 
+function csvPanel() {
+  const roster = exportRoster(members);
+  exportUrl = URL.createObjectURL(
+    new Blob([roster.csv], { type: "text/csv;charset=utf-8" }),
+  );
+  return `<div class="panel-heading"><div><span class="eyebrow">DIRECTORY EXPORT</span><h2>Your people, in a spreadsheet.</h2></div><span class="pill">CSV</span></div>
+    <p class="muted panel-intro">All ${roster.rows.length} saved members, including email and membership status. Join dates use the UTC day. Save any edits before exporting.</p>
+    <div class="roster-scroll" role="region" aria-label="Saved roster preview" tabindex="0"><table class="roster-table"><caption>All saved members</caption><thead><tr>${roster.columns.map((column) => `<th scope="col">${escapeHtml(column)}</th>`).join("")}</tr></thead><tbody>${roster.rows.map((row) => `<tr>${roster.columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <div class="api-actions"><a class="button primary" id="download-csv" href="${exportUrl}" download="fieldwork-roster.csv">Download roster CSV <span aria-hidden="true">↓</span></a><span class="private-label">Includes private fields</span></div>
+    <details class="data-details"><summary>View exported text <span>CSV ↗</span></summary><pre>${escapeHtml(roster.csv)}</pre></details>
+    <div class="route-note"><span class="route-symbol">↳</span><div><strong>A roster for sharing with your team</strong><p>Time of day is omitted. Formula-like text gets an apostrophe prefix in the file.</p></div></div>`;
+}
+
 function graphPanel() {
   return `<div class="panel-heading"><div><span class="eyebrow">REPRESENT IN THIS APP</span><h2>Follow the record.</h2></div><span class="pill">${memberGraph.nodes.length} views</span></div>
     <p class="muted panel-intro">These connections come from the conversions the application actually runs.</p>
-    <div class="graph-nodes">${memberGraph.nodes.map((node, index) => `<div class="graph-node"><span class="node-index">0${index + 1}</span><strong>${escapeHtml(node.name)}</strong><span>${index === 0 ? "Working record · Date" : index === 1 ? "Exchange record · ISO string" : "Shared profile · selected fields"}</span></div>`).join("")}</div>
+    <div class="graph-nodes">${memberGraph.nodes.map((node, index) => `<div class="graph-node"><span class="node-index">0${index + 1}</span><strong>${escapeHtml(node.name)}</strong><span>${escapeHtml(representationDescriptions.get(node.name) ?? "")}</span></div>`).join("")}</div>
     <div class="edge-list">${memberGraph.edges.map((edge) => `<div class="edge"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(edge.name)}</strong><p>${escapeHtml(edge.from)} → ${escapeHtml(edge.to)}</p></div></div>`).join("")}</div>
-    <div class="graph-caption">The public route is explicit. No reverse profile conversion is defined: the public record does not contain the private email.</div>`;
+    <div class="graph-caption">The API codec supplies both directions. Public profiles omit email; roster rows keep only the UTC day. Neither has a reverse conversion.</div>`;
 }
 
 function render() {
@@ -123,7 +137,8 @@ function render() {
   if (exportUrl) URL.revokeObjectURL(exportUrl);
   exportUrl = undefined;
   const current = selectedMember();
-  const fields = drafts.get(selectedId) ?? toApi.convert(current);
+  const fields =
+    drafts.get(selectedId) ?? memberExchange.encode.convert(current);
   const activeCount = members.filter(
     ({ status }) => status === "Active",
   ).length;
@@ -140,7 +155,7 @@ function render() {
     <label for="joined-at">Joined at <span class="field-note">UTC</span></label><input id="joined-at" name="joinedAt" type="text" value="${escapeHtml(fields.joinedAt)}" aria-describedby="date-hint" /><small id="date-hint" class="input-hint">ISO date and time, including a timezone.</small>
     <div class="inline-error" id="form-error" role="alert" hidden></div><div class="form-footer"><button type="submit" id="save" class="button primary">Save changes <span aria-hidden="true">↗</span></button><span id="edit-status">${drafts.has(selectedId) ? "Unsaved changes" : "Saved in this browser"}</span></div></form>
     <div class="editor-note"><span aria-hidden="true">↳</span> Save once. The public profile and export update together.</div></section>
-    <section class="preview panel" aria-label="Member representations"><div class="tabs" role="group" aria-label="Representation"><button aria-pressed="${view === "profile"}" data-view="profile">Public profile</button><button aria-pressed="${view === "api"}" data-view="api">API payload</button><button aria-pressed="${view === "graph"}" data-view="graph">Connections</button></div><div class="preview-content">${view === "profile" ? profilePanel(current) : view === "api" ? apiPanel(current) : graphPanel()}</div></section></div>
+    <section class="preview panel" aria-label="Member representations"><div class="tabs" role="group" aria-label="Representation"><button aria-pressed="${view === "profile"}" data-view="profile">Public profile</button><button aria-pressed="${view === "api"}" data-view="api">API payload</button><button aria-pressed="${view === "csv"}" data-view="csv">Roster CSV</button><button aria-pressed="${view === "graph"}" data-view="graph">Connections</button></div><div class="preview-content">${view === "profile" ? profilePanel(current) : view === "api" ? apiPanel(current) : view === "csv" ? csvPanel() : graphPanel()}</div></section></div>
     <footer class="page-footer"><span>Fieldwork is a fictional community. All sample data is synthetic.</span><span>Local storage only · No server</span></footer></main></div>`;
   bindEvents();
   if (focusSelector)
@@ -162,12 +177,12 @@ function save(value: Member) {
   const next = members.map((item) => (item.id === selectedId ? value : item));
   localStorage.setItem(
     storageKey,
-    JSON.stringify(next.map((item) => toApi.convert(item))),
+    JSON.stringify(next.map((item) => memberExchange.encode.convert(item))),
   );
   members = next;
   drafts.delete(selectedId);
   apiDrafts.delete(selectedId);
-  notice = `${value.name} saved. Profile and API data are up to date.`;
+  notice = `${value.name} saved. Profile and exports are up to date.`;
   render();
 }
 
@@ -197,7 +212,12 @@ function bindEvents() {
     .forEach((button) =>
       button.addEventListener("click", () => {
         const next = button.dataset.view;
-        if (next === "profile" || next === "api" || next === "graph")
+        if (
+          next === "profile" ||
+          next === "api" ||
+          next === "csv" ||
+          next === "graph"
+        )
           view = next;
         render();
       }),
@@ -210,7 +230,7 @@ function bindEvents() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     try {
-      save(fromApi.run(formValue()));
+      save(memberExchange.decode.run(formValue()));
     } catch (error) {
       showError("#form-error", error);
     }
@@ -226,7 +246,7 @@ function bindEvents() {
       const input: unknown = JSON.parse(
         element<HTMLTextAreaElement>("#api-payload").value,
       );
-      save(fromApi.run(input));
+      save(memberExchange.decode.run(input));
     } catch (error) {
       showError("#api-error", error);
     }

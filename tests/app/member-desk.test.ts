@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  fromApi,
+  memberExchange,
   memberGraph,
   profileFor,
   readDirectory,
   sampleMembers,
-  toApi,
 } from "../../examples/member-desk/src/model.js";
 
 const original = {
@@ -18,12 +17,23 @@ const original = {
 } as const;
 
 describe("member directory consuming Represent", () => {
+  it("normalizes incoming timestamp spelling through the codec", () => {
+    const input = {
+      ...memberExchange.encode.convert(original),
+      joinedAt: "2026-08-12T10:30:12.123-04:00",
+    };
+    const decoded = memberExchange.decode.run(input);
+    expect(decoded).toEqual(original);
+    expect(memberExchange.encode.convert(decoded).joinedAt).toBe(
+      "2026-08-12T14:30:12.123Z",
+    );
+  });
   it("round-trips the member through JSON, preserving every field and the instant", () => {
     // REP-CONV-001/006: this source example does not establish reverse textual equality.
     const payload: unknown = JSON.parse(
-      JSON.stringify(toApi.convert(original)),
+      JSON.stringify(memberExchange.encode.convert(original)),
     );
-    expect(fromApi.run(payload)).toEqual(original);
+    expect(memberExchange.decode.run(payload)).toEqual(original);
   });
 
   it("publishes an explicit field allowlist and exposes a private-email collision", () => {
@@ -43,23 +53,31 @@ describe("member directory consuming Represent", () => {
 
   it("rejects bad dates and email at the incoming representation boundary", () => {
     expect(() =>
-      fromApi.run({
-        ...toApi.convert(original),
+      memberExchange.decode.run({
+        ...memberExchange.encode.convert(original),
         joinedAt: "2026-02-30T12:00:00Z",
       }),
     ).toThrow(/joinedAt/);
     expect(() =>
-      fromApi.run({ ...toApi.convert(original), email: "missing-at-sign" }),
+      memberExchange.decode.run({
+        ...memberExchange.encode.convert(original),
+        email: "missing-at-sign",
+      }),
     ).toThrow(/email/);
   });
 
   it("recovers real Dates from persisted JSON and rejects duplicate member identities", () => {
     const payload: unknown = JSON.parse(
-      JSON.stringify(sampleMembers.map((value) => toApi.convert(value))),
+      JSON.stringify(
+        sampleMembers.map((value) => memberExchange.encode.convert(value)),
+      ),
     );
     expect(readDirectory(payload)).toEqual(sampleMembers);
     expect(() =>
-      readDirectory([toApi.convert(original), toApi.convert(original)]),
+      readDirectory([
+        memberExchange.encode.convert(original),
+        memberExchange.encode.convert(original),
+      ]),
     ).toThrow(/unique/);
   });
 
@@ -69,11 +87,13 @@ describe("member directory consuming Represent", () => {
         { name: "Member" },
         { name: "Member API" },
         { name: "Public profile" },
+        { name: "Roster row" },
       ],
       edges: [
-        { name: "Serialize member", from: "Member", to: "Member API" },
-        { name: "Read member", from: "Member API", to: "Member" },
+        { name: "Member exchange: encode", from: "Member", to: "Member API" },
+        { name: "Member exchange: decode", from: "Member API", to: "Member" },
         { name: "Publish profile", from: "Member API", to: "Public profile" },
+        { name: "Prepare roster row", from: "Member", to: "Roster row" },
       ],
     });
   });
