@@ -1,3 +1,5 @@
+> Historical Phase -2 exercise. This prompt is not part of the current workflow.
+
 # Repository continuity drill
 
 ## Role and inputs

@@ -37,29 +37,29 @@ their owning design exists.
   capability whose required behavior can be traced to executable evidence or an
   explicit gap.
 
-Every executable test MUST be classified as semantic evidence, compile-time
-contract evidence, engineering-workflow validation, or exploratory evidence.
-Only the first three classifications may gate implementation, and each MUST cite
-its owning normative clause, contract, or Phase -2 engineering rule. This
-classification prevents small tests from bypassing the quality standard by being
-described as trivial.
+Distinguish semantic, compile-time, workflow, and exploratory evidence by what
+the test establishes. Exploratory results do not establish a product guarantee.
+Clear test code can supply this context without a separate classification
+record.
 
 ## Test quality rubric
 
 ### REP-TEST-001: Authority and traceability
 
 Every test used as semantic or contract evidence MUST cite at least one owning
-normative clause by stable identifier. Engineering-workflow validation MUST cite
-its Phase -2 rule and acceptance criterion. Contextual clauses MUST be
-distinguished from owning clauses. Exploratory evidence without accepted
-authority MUST NOT become an implementation gate.
+normative clause by stable identifier. Engineering-workflow validation MUST
+identify the current engineering behavior it protects; a descriptive test name
+can do this. Contextual clauses MUST be distinguished from owning clauses.
+Exploratory evidence without accepted authority MUST NOT become an
+implementation gate.
 
 ### REP-TEST-002: Observable semantic purpose
 
-Every gate test or cohesive table-driven group MUST state the observable result
-or declared invariant it evaluates, the relevant oracle or equality notion, and
-a plausible regression it would detect. Executing code, increasing line
-coverage, or proving that a declaration exists is not a semantic purpose.
+Every gate test or cohesive table-driven group MUST make its observable result
+or declared invariant, oracle or equality notion, and plausible regression clear
+through its name, fixtures, assertions, or a short explanation. Executing code,
+increasing line coverage, or proving that a declaration exists is not a semantic
+purpose.
 
 ### REP-TEST-003: Discriminating and refactoring-safe assertions
 
@@ -75,12 +75,11 @@ public contract, or recorded as a semantic coverage gap.
 
 ### REP-TEST-004: Static and runtime boundary
 
-A runtime test MUST state why TypeScript's static checks do not already
-guarantee the behavior. Compile-time contract tests MAY be used when
-assignability, inference, or rejection is itself the public observable, but they
-MUST identify the invalid or valid consumer program being distinguished. Runtime
-tests MUST NOT duplicate a type-level guarantee without an additional runtime
-obligation.
+A runtime test MUST exercise behavior that TypeScript's static checks do not
+already guarantee. Compile-time contract tests MAY be used when assignability,
+inference, or rejection is itself the public observable, but they MUST identify
+the invalid or valid consumer program being distinguished. Runtime tests MUST
+NOT duplicate a type-level guarantee without an additional runtime obligation.
 
 ### REP-TEST-005: Execution boundary and diagnostics
 
@@ -109,11 +108,11 @@ the following:
   obligation.
 
 An exception applies only when inspected text or an artifact is itself a
-reviewed public output. It requires a written justification naming the owning
-contract, and the test MUST assert only the contractual portion of that output.
-Public interaction protocols are ordinary observable behavior asserted at their
-public boundary; private calls, internal structure, and coverage metrics do not
-qualify for this exception.
+reviewed public output. The owning contract must be clear from the test or
+adjacent explanation, and the test MUST assert only the contractual portion of
+that output. Public interaction protocols are ordinary observable behavior
+asserted at their public boundary; private calls, internal structure, and
+coverage metrics do not qualify for this exception.
 
 ### REP-TEST-007: Semantic assertions and snapshots
 
@@ -128,28 +127,14 @@ Snapshots MUST NOT establish correctness merely by recording a large internal
 object. Snapshot updates MUST be reviewed as changes to expected behavior, not
 accepted solely because an implementation intentionally changed.
 
-### REP-TEST-008: Test-case record
+### REP-TEST-008: Reviewable test evidence
 
-Every gate test or cohesive table-driven group MUST have a record containing:
-
-| Field                      | Required content                                           |
-| -------------------------- | ---------------------------------------------------------- |
-| Classification             | Semantic, compile-time contract, or workflow evidence      |
-| Owning authority           | Stable clauses, contracts, or Phase -2 rules               |
-| Observable/invariant       | Behavior evaluated at the selected boundary                |
-| Oracle/equality            | How expected and observed behavior are compared            |
-| Regression caught          | A plausible incorrect implementation                       |
-| Execution boundary         | The smallest sufficient consumer-visible boundary          |
-| Static/runtime distinction | Runtime insufficiency or compile-time program and outcome  |
-| Cases                      | Applicable examples, counterexamples, or generated domains |
-| Discrimination             | Mutations or broken subjects, or why impractical           |
-| Expected diagnostics       | Contractual content, or `None — reason`                    |
-| Semantic coverage          | Nodes, edges, paths, laws, and capabilities covered        |
-
-The record MAY be adjacent prose, structured test metadata, or a linked issue.
-It MUST remain reviewable without consulting chat history. `None — reason` is
-valid only when the field cannot apply to the cited authority, not because the
-information is inconvenient to provide.
+Test names, fixtures, assertions, and nearby comments MAY serve as the complete
+test record. A separate form, metadata block, issue, or repeated field list is
+not required. Add explanation only for context the code cannot convey, such as
+an unusual equality notion, a non-obvious regression, or a known evidence gap.
+Semantic and contract evidence still cites its owning clauses under
+`REP-TEST-001`; substantive evidence requirements remain applicable.
 
 ### REP-TEST-009: Gate outcome
 
@@ -170,8 +155,9 @@ boundary as the semantic tests and MUST NOT require assertions about how the
 defect was implemented.
 
 Mutation selection is risk-based rather than a requirement to run every possible
-mutation against every test. The test-case record MUST name selected mutations
-and why they are relevant, or explain why mutation is impractical.
+mutation against every test. The tests or linked evidence MUST identify the
+selected defects and their relevance. Record an explicit gap when required
+discrimination is impractical; no per-test mutation form is required.
 
 ### REP-TEST-011: Baseline mutation obligations
 
@@ -196,8 +182,9 @@ violated clause and expected observable failure.
 ### REP-TEST-012: Mutation obligation matrix
 
 A suite's discrimination evidence MUST map each required mutation to its
-violated clause, discriminating fixture, killing test, and observed failure. A
-named mutation without a killing test, or a test without a meaningful violated
+violated clause, discriminating fixture, killing test, and observed failure.
+Test code and results MAY supply this mapping without a separate table. A named
+mutation without a killing test, or a test without a meaningful violated
 obligation, is an explicit gap rather than completed evidence.
 
 ### REP-TEST-013: Surviving mutations
@@ -293,11 +280,12 @@ passing certification result.
 
 ### REP-TEST-020: Coverage inventory
 
-Each specification area MUST maintain a reviewable obligation matrix once
-executable specifications exist. Every semantic coverage unit MUST link its
-owning clause to passing evidence, an explicitly tracked gap, or
-`Not applicable — reason`. Aggregate line coverage MUST NOT stand in for this
-inventory.
+Each specification area MUST make its obligations and evidence reviewable once
+executable specifications exist. Clause references in tests and explicit gap
+notes MAY supply this inventory; a separate matrix is optional. Every semantic
+coverage unit MUST link its owning clause to passing evidence, an explicitly
+tracked gap, or `Not applicable — reason`. Aggregate line coverage MUST NOT
+stand in for this inventory.
 
 ### REP-TEST-021: Node and edge coverage
 
@@ -343,30 +331,18 @@ results, and certification declarations. They MUST NOT combine unlike units into
 a percentage that implies interchangeable risk or exhaustive graph-path
 coverage.
 
-## Test-case template
-
-Use this template in a test description, adjacent metadata, or a linked semantic
-test issue:
-
-```text
-Test case: <behavioral name>
-Classification: <semantic | compile-time contract | workflow validation>
-Owning authority: <REP-AREA-NNN, contract, or Phase -2 rule>
-Observable/invariant: <consumer-visible behavior>
-Oracle/equality: <comparison and equality notion>
-Regression caught: <plausible broken behavior>
-Execution boundary: <smallest sufficient boundary>
-Static/runtime distinction: <runtime insufficiency or compile-time consumer program and compiler outcome>
-Cases: <applicable examples, counterexamples, or generated domains>
-Discrimination: <mutation IDs or broken subjects, or impractical reason>
-Expected diagnostics: <semantic content or None — reason>
-Semantic coverage: <nodes, edges, paths, laws, capabilities>
-```
-
 ## Review outcome
 
-An independent semantic test-quality reviewer accepted `REP-TEST-001` through
-`REP-TEST-025` after the requested normative corrections were applied. The
+The original independent semantic test-quality reviewer accepted `REP-TEST-001`
+through `REP-TEST-025` after the requested normative corrections were applied.
+The
 [durable acceptance record](https://github.com/Ustice/represent/issues/5#issuecomment-4987818206)
 identifies the reviewer role, decision, clause range, evidence status, and lack
 of unresolved disagreement.
+
+The process revision in
+[ADR 0005](../decisions/0005-simplify-project-workflow.md) removes mandatory
+record formats and updates workflow-test authority to current engineering
+behavior. Clauses retain their identifiers. Observable assertions, regression
+discrimination, property-test evidence, certification obligations, and honest
+coverage reporting remain required.

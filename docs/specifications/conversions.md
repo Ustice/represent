@@ -261,7 +261,7 @@ losslessness witness.
 
 These records are acceptance inputs for a later semantic-test issue. They are
 not executable evidence and MUST NOT gate implementation until they satisfy the
-test-case record and discrimination requirements in `REP-TEST-008` through
+reviewable evidence and discrimination requirements in `REP-TEST-008` through
 `REP-TEST-014`.
 
 ## Executable evidence

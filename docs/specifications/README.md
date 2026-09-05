@@ -18,8 +18,10 @@ equality notions, include examples and counterexamples, state expected
 diagnostics, identify executable tests, and list unresolved questions. A
 substantial specification requires a reviewer other than its sole author.
 
-Use [`template.md`](template.md) for new specification areas and preserve the
-review record in the repository or link the durable GitHub acceptance record.
+The [template](template.md) is an optional starting point. Keep review decisions
+with the specification or link the relevant PR or issue discussion; no separate
+acceptance form is required.
 
 Implementation and tests should reference clause identifiers. If a needed
-behavior has no clause, refine the specification before coding it.
+behavior has no clause, use examples to clarify it before treating it as
+accepted behavior. Experiments remain subject to the current phase.

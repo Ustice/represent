@@ -1,3 +1,7 @@
+> The bootstrap is complete. [ADR 0005](0005-simplify-project-workflow.md)
+> supersedes its working procedures; specification ownership and the
+> design-before-production boundary remain in force.
+
 # ADR 0001: Engineer the system first
 
 - Status: accepted

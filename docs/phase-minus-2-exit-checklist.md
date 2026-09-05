@@ -1,3 +1,6 @@
+> Historical exit evidence for the completed Phase -2. This checklist is not a
+> current contributor gate; see [workflow](workflow.md).
+
 # Phase -2 exit checklist
 
 This checklist is the required evidence gate for leaving Phase -2. The

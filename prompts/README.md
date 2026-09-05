@@ -1,3 +1,6 @@
+> Historical prompts retained to explain earlier design evidence. No prompt or
+> continuity drill is required for current work.
+
 # Prompts
 
 This directory may hold reusable, versioned prompts for specification drafting,

@@ -1,3 +1,7 @@
+> Process ceremony is simplified by
+> [ADR 0005](0005-simplify-project-workflow.md). The phase model, implementation
+> phase check, and explicit transition requirements remain in force.
+
 # ADR 0002: Development phases
 
 - Status: accepted

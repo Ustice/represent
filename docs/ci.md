@@ -1,32 +1,17 @@
-# Continuous integration and local validation
+# Validation
 
-CI exists to reproduce the repository's declared gate, not to substitute line
-coverage for semantic evidence. Pull requests and pushes to `main` run
-`.github/workflows/ci.yml` on Node 26 with pnpm 11 and execute `pnpm check`.
+Use Node.js 26 (`.nvmrc`) and the pnpm version pinned in `package.json`. Setup
+commands are in the [README](../README.md#development).
 
-Local contributors run the same commands after selecting the version in
-`.nvmrc`:
+Run `pnpm check` before handoff. It runs formatting, ESLint, TypeScript, and
+Vitest; there is no need to run all four separately and then repeat the gate.
+Use focused commands during development. Report failed or skipped checks and
+what remains unverified.
 
-```sh
-nvm use
-npm install --global corepack@0.35.0
-corepack enable
-pnpm install --frozen-lockfile
-pnpm check
-```
+[CI](../.github/workflows/ci.yml) runs the same gate for pull requests and
+pushes to `main`. It provisions Node, installs pinned Corepack, enables pnpm,
+and installs with the frozen lockfile before checking. Package-manager cache
+discovery stays disabled until pnpm is provisioned.
 
-Node 26 no longer bundles Corepack, so CI and fresh local environments install
-the pinned Corepack release after selecting Node and before enabling the pnpm
-version declared by `packageManager`. Automatic package-manager caching remains
-disabled in `actions/setup-node` because it would otherwise look up pnpm before
-Corepack provisions it.
-
-`pnpm check` runs formatting, lint, TypeScript, and Vitest. The initial Phase -2
-scaffold allowed Vitest to pass with no test files because no product or
-executable semantic implementation existed. That allowance ended when the first
-workflow test was added; the suite must now contain and execute tests.
-
-CI failure blocks integration. A green gate proves only the checks it actually
-runs. Pull-request evidence must separately report independent review,
-traceability, semantic or workflow-test records, skipped obligations, and
-unresolved gaps.
+A green gate establishes only the behavior those checks exercise. It does not
+replace design review or establish a universal adapter-certification claim.

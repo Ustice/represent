@@ -1,3 +1,8 @@
+> Superseded as an operating policy by
+> [ADR 0005](0005-simplify-project-workflow.md). Retained as historical
+> rationale for the default-off automation tooling; it does not govern
+> interactive work or authorize activation.
+
 # ADR 0004: Use GitHub as the automation control plane
 
 - Status: accepted
