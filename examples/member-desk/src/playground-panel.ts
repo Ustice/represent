@@ -18,7 +18,10 @@ function valueType(value: unknown) {
 }
 function typeNotes(value: unknown) {
   const description =
-    valueType(value) === "object" && value !== null
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    !(value instanceof Date)
       ? Object.entries(value)
           .map(([key, field]) => `${key}: ${valueType(field)}`)
           .join(" · ")
