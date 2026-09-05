@@ -32,6 +32,7 @@ const model: Graph = {
       output: "Result",
       reads: ["A"],
       references: ["Link"],
+      calls: [],
     },
     {
       name: "Consume result",
@@ -39,6 +40,7 @@ const model: Graph = {
       output: "Result",
       reads: [],
       references: [],
+      calls: [],
     },
   ],
 };
@@ -101,6 +103,7 @@ describe("declared definition dependency queries", () => {
           output: "A",
           reads: ["A", "A"],
           references: ["Link", "Link"],
+          calls: [],
         },
       ],
     };
@@ -197,6 +200,7 @@ describe("declared definition dependency queries", () => {
           output: "Same",
           reads: [],
           references: ["Same"],
+          calls: [],
         },
       ],
     };

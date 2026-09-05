@@ -16,6 +16,10 @@ export interface Graph {
     readonly output: string;
     readonly reads: readonly string[];
     readonly references: readonly string[];
+    readonly calls: readonly {
+      readonly kind: "conversion" | "operation";
+      readonly name: string;
+    }[];
   }[];
   readonly references: readonly {
     readonly name: string;
@@ -34,7 +38,12 @@ export interface GraphItem {
 export type DependencyReason =
   | {
       readonly kind:
-        "input" | "output" | "read" | "reference-use" | "conversion-use";
+        | "input"
+        | "output"
+        | "read"
+        | "reference-use"
+        | "conversion-use"
+        | "call";
     }
   | {
       readonly kind: "field" | "reference-source" | "reference-target";

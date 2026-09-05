@@ -1,3 +1,4 @@
+import type { ConversionDescriptor } from "./graph.js";
 import {
   codec,
   representation,
@@ -6,19 +7,12 @@ import {
 } from "./conversions.js";
 import { setDependencies } from "./dependencies.js";
 
+interface FieldConversion extends ConversionDescriptor {
+  readonly run: (input: unknown) => unknown;
+}
 interface FieldCodec {
-  readonly encode: {
-    readonly name: string;
-    readonly from: Representation<unknown>;
-    readonly to: Representation<unknown>;
-    readonly run: (input: unknown) => unknown;
-  };
-  readonly decode: {
-    readonly name: string;
-    readonly from: Representation<unknown>;
-    readonly to: Representation<unknown>;
-    readonly run: (input: unknown) => unknown;
-  };
+  readonly encode: FieldConversion;
+  readonly decode: FieldConversion;
 }
 type Field = Representation<unknown> | FieldCodec;
 type Direction = "encode" | "decode";

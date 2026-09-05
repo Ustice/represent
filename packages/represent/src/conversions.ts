@@ -10,6 +10,7 @@ export function representation<Value>(definition: Representation<Value>) {
 }
 
 export interface Conversion<Source, Target> {
+  readonly kind: "conversion";
   readonly name: string;
   readonly from: Representation<Source>;
   readonly to: Representation<Target>;
@@ -63,7 +64,14 @@ export function conversion<Source, Target>(definition: {
     const mapped = attempt(name, from.name, "map", () => map(source));
     return attempt(name, to.name, "output", () => to.parse(mapped));
   };
-  return Object.freeze({ name, from, to, run, convert: run });
+  return Object.freeze({
+    kind: "conversion",
+    name,
+    from,
+    to,
+    run,
+    convert: run,
+  });
 }
 
 export function compose<Source, Middle, Target>(
@@ -77,6 +85,7 @@ export function compose<Source, Middle, Target>(
   }
   const run = (input: unknown) => second.convert(first.run(input));
   const result = Object.freeze({
+    kind: "conversion" as const,
     name: `${first.name} → ${second.name}`,
     from: first.from,
     to: second.to,

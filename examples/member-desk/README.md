@@ -36,22 +36,21 @@ inputs, outputs, declared reads, and the member/event reference fields. Those
 reference declarations perform the same lookups used by signup and export;
 missing-member policy and signup deadlines stay in Fieldwork.
 
-Connections now asks “What depends on this?” Select a representation,
-conversion, reference, or operation, or use the Member, Event, and shared-date
-shortcuts. Each result identifies a dependent definition, whether its shortest
-path is direct or indirect, and an expandable explanation. Alternate immediate
-reasons remain visible, including the optional deadline's longer route through
-its wrapper. JSON views expose the query result and source graph. Selection is
-shared across Members and Events.
+Connections hosts the reusable [Represent explorer](../../packages/explorer/).
+Its Relationships view shows an immediate neighborhood with labeled arrows;
+Dependencies follows either dependents or requirements with expandable paths.
+Select a node or path step to navigate, use Back to retrace selections, and
+switch views without losing the selection. Member, shared-date, attendee-export,
+and email-signup shortcuts provide starting points. The same instance follows
+navigation between Members and Events. JSON inspection remains available.
 
 The [workspace graph](src/workspace-graph.ts) registers the actual composed
-public-profile conversion. Selecting the date encoder reaches the member encoder
-and then that profile conversion; selecting Member reaches its declared
-operation reads and references. Cancellation is not marked as a Member
-dependent, because it only declares RSVP reads. Output names provide context
-rather than claiming that operation results change schemas or saved records.
-Calls hidden inside operation bodies (such as the export's date encoding) are
-not inferred.
+public-profile conversion. Date encoding reaches that conversion through the
+member encoder. Attendee export declares calls to the event and date encoders;
+email signup declares its call to Register RSVP and its own Member read. Thus
+email signup reaches Event through the called operation, without copying its
+read/reference lists. The graph does not inspect arbitrary function bodies or
+infer persistence and runtime effects from these declarations.
 
 The [RSVP model](src/rsvps/model.ts) connects a member to an event, with one
 signup per pair. All directory members can RSVP. Signups close at the explicit

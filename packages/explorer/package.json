@@ -1,0 +1,13 @@
+{
+  "name": "@represent/explorer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./style.css": "./src/style.css"
+  },
+  "dependencies": {
+    "@represent/core": "workspace:*"
+  }
+}

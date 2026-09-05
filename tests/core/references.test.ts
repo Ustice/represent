@@ -93,6 +93,7 @@ describe("explicit references and operation graphs", () => {
         output: "Greeting",
         reads: ["Person"],
         references: ["Signup member"],
+        calls: [],
       },
     ]);
     expect(result.edges).toEqual([]);

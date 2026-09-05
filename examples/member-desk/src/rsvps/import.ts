@@ -1,5 +1,6 @@
 import { operation, runBatch } from "@represent/core";
 import { z } from "zod";
+import { member } from "../model.js";
 import { field } from "../fields.js";
 import { registerRsvp, type RsvpContext } from "./model.js";
 
@@ -15,8 +16,8 @@ export const registerRsvpByEmail = operation({
       .strict(),
   ),
   output: registerRsvp.output,
-  reads: registerRsvp.reads,
-  references: registerRsvp.references,
+  reads: [member],
+  calls: [registerRsvp],
   perform(request, context: RsvpContext) {
     const matches = context.members.filter(
       ({ email }) => email.toLowerCase() === request.email.toLowerCase(),
