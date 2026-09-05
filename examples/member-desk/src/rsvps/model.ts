@@ -10,7 +10,7 @@ import { dateTime, parser } from "../fields.js";
 import { member, type Member } from "../model.js";
 import { eventExchange, type CommunityEvent } from "../events/model.js";
 
-const identifiers = {
+export const rsvpIdentifiers = {
   memberId: text("Member reference", { nonempty: true }),
   eventId: text("Event reference", { nonempty: true }),
 };
@@ -19,8 +19,8 @@ export const rsvpExchange = recordCodec({
   from: "RSVP",
   to: "RSVP API",
   fields: {
-    memberId: identifiers.memberId,
-    eventId: identifiers.eventId,
+    memberId: rsvpIdentifiers.memberId,
+    eventId: rsvpIdentifiers.eventId,
     signedUpAt: dateTime,
   },
 });
@@ -39,7 +39,7 @@ export const rsvpEvent = reference({
   to: eventExchange.encode.from,
   key: "id",
 });
-const request = record("RSVP request", identifiers);
+const request = record("RSVP request", rsvpIdentifiers);
 export type RsvpRequest = ReturnType<typeof request.parse>;
 export interface RsvpContext {
   members: readonly Member[];

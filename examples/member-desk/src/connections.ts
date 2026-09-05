@@ -1,3 +1,4 @@
+import { changePanel, bindChanges } from "./change-panel.js";
 import { contractPanel, bindContract } from "./contract-panel.js";
 import { createExplorer } from "@represent/explorer";
 import "@represent/explorer/style.css";
@@ -21,20 +22,22 @@ const explorer = createExplorer(workspaceGraph, {
     },
   ],
 });
-let view: "model" | "contract" = "model";
+let view: "model" | "contract" | "changes" = "model";
 export function connectionsPanel() {
-  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button></div>${view === "model" ? explorer.render() : contractPanel()}`;
+  return `<div class="workbench-tabs" role="group" aria-label="Development views"><button type="button" data-workbench="model" aria-pressed="${view === "model"}">Model explorer</button><button type="button" data-workbench="contract" aria-pressed="${view === "contract"}">Contract lab</button><button type="button" data-workbench="changes" aria-pressed="${view === "changes"}">Change preview</button></div>${view === "model" ? explorer.render() : view === "contract" ? contractPanel() : changePanel()}`;
 }
 export function bindConnections(render: () => void) {
   explorer.bind(document, render);
   bindContract(render);
+  bindChanges(render);
   document
     .querySelectorAll<HTMLButtonElement>("[data-workbench]")
     .forEach((button) =>
       button.addEventListener("click", () => {
         if (
           button.dataset.workbench === "model" ||
-          button.dataset.workbench === "contract"
+          button.dataset.workbench === "contract" ||
+          button.dataset.workbench === "changes"
         )
           view = button.dataset.workbench;
         render();
