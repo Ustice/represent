@@ -399,3 +399,47 @@ See [Sensor Bench](../../examples/sensor-bench/README.md) for an independent CLI
 that composes these declarations into telemetry parsing, temperature conversion,
 summary output, a wire contract, and a graph. Schema comparison uses explicit
 structural comparisons, including numeric constraints and collection references.
+
+`findRoutes(conversions, { from, to, limits? })` discovers simple paths between
+**distinct representation objects** without executing conversions. Supply the
+runtime conversions explicitly; graph dependencies do not implicitly register
+executable edges. Cycles and repeated representations are excluded. For round
+trips, use an explicit `tracePath` instead.
+
+```ts
+const search = findRoutes(registeredConversions, {
+  from: fahrenheit,
+  to: celsius,
+});
+const selection = selectRoute(search); // requires a unique route
+// Or: selectRoute(search, fewestSteps), or a named consumer policy.
+if (selection.status === "selected") {
+  const result = tracePath(selection.route, input, {
+    snapshot: (value: unknown) => structuredClone(value),
+  });
+}
+```
+
+`selectRoute` reports `selected`, `ambiguous`, `none`, or `incomplete`. Its
+`candidates` retain every discovered route and the policy's score. The default
+`uniqueRoute` policy is also exported. A named `RoutePolicy` supplies
+`score(route)`: lower finite numbers are preferred and null excludes a route.
+Equal best scores remain ambiguous. The built-in `fewestSteps` policy counts
+registered conversion steps; a composed conversion is one step. Neither policy
+scores nor path lengths imply equivalent results, purity, or losslessness.
+Discovery does not validate any input value.
+
+Default limits are 8 steps per path, 32 returned routes, and 2048 search states.
+Each limit must be a positive safe integer. Routes are ordered breadth-first,
+then by conversion name. `complete: true` means all simple paths in the supplied
+registry were considered. `stoppedBy` identifies limits that prevented
+finishing; this is conservative when a pruned branch would eventually revisit a
+node. Selection refuses to choose from an incomplete search, even if only one
+route was found. Increase the relevant limits or narrow the explicit registry.
+Duplicate names for distinct representations or conversions are rejected as in
+`graph`; passing the same conversion twice is also a duplicate registration.
+
+Sensor Bench's `route` command demonstrates two direct Fahrenheit-to-Celsius
+paths: reported precision and an unrounded calculation. Both the default policy
+and `fewestSteps` leave them ambiguous. A named precision policy selects a path,
+then the existing tracer shows the actual result for the supplied value.

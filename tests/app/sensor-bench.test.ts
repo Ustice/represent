@@ -7,6 +7,8 @@ import {
   summarizeInput,
 } from "../../examples/sensor-bench/src/commands.js";
 
+import { temperatureRoute } from "../../examples/sensor-bench/src/routing.js";
+
 const sample = async (): Promise<unknown> =>
   JSON.parse(
     await readFile(
@@ -97,6 +99,50 @@ describe("Sensor Bench consumer", () => {
       device: "greenhouse-north",
       available: 2,
       meanCelsius: 21.2,
+    });
+  });
+  it("requires a policy when two direct temperature paths produce different values", () => {
+    expect(temperatureRoute(68.1)).toMatchObject({
+      status: "ambiguous",
+      complete: true,
+    });
+    expect(temperatureRoute(68.1, "fewest").status).toBe("ambiguous");
+    expect(temperatureRoute(68.1, "reported")).toMatchObject({
+      status: "selected",
+      trace: { output: 20.1 },
+    });
+    const result = temperatureRoute(68.1, "unrounded");
+    if (!("trace" in result) || result.trace.status !== "completed")
+      throw new Error("Expected executed unrounded route");
+    expect(result.trace.output).toBeCloseTo(20.05555556, 7);
+    expect(() => temperatureRoute(300, "unrounded")).toThrow(/Fahrenheit/);
+    expect(() => temperatureRoute(68.1, "toString")).toThrow(
+      "Choose route policy",
+    );
+  });
+  it("selects and traces a policy from actual CLI arguments", () => {
+    const output = execFileSync(
+      "pnpm",
+      [
+        "--silent",
+        "sensor",
+        "route",
+        "--policy",
+        "reported",
+        "--value",
+        "68.1",
+      ],
+      {
+        cwd: fileURLToPath(new URL("../../", import.meta.url)),
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const result: unknown = JSON.parse(output);
+    expect(result).toMatchObject({
+      status: "selected",
+      policy: "Use reported precision",
+      trace: { initial: 68.1, output: 20.1 },
     });
   });
 });
