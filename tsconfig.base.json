@@ -18,5 +18,10 @@
     "target": "ES2022",
     "verbatimModuleSyntax": true
   },
-  "include": ["tooling/**/*.ts", "vitest.config.ts", "tests/**/*.ts"]
+  "include": [
+    "packages/**/*.ts",
+    "examples/**/*.ts",
+    "vitest.config.ts",
+    "tests/**/*.ts"
+  ]
 }

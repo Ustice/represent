@@ -254,6 +254,10 @@ direction, domain, equalities, clause, and recovered value or collision pair
 needed to reproduce failure. These examples do not prove a universal property or
 use generated input domains. The harness is test support, not a production API.
 
+The [Member desk tests](../../tests/app/member-desk.test.ts) also exercise a
+real consumer of the core: a Date/JSON round trip and the collision between
+private members that share the same public profile.
+
 ## Unresolved questions
 
 None within this issue's bounded scope. Broader equality selection, fallible
