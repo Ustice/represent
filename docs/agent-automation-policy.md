@@ -1,8 +1,7 @@
 # Unattended automation
 
 The custom automation design is retired from the active workflow by
-[ADR 0005](decisions/0005-simplify-project-workflow.md). Follow the ordinary
-[workflow](workflow.md) for interactive work.
+[ADR 0005](decisions/0005-simplify-project-workflow.md). It is not part of interactive work.
 
 The [historical policy](archive/agent-automation-policy.md) preserves
 `REP-AUTO-000` through `REP-AUTO-025` for the existing default-off tooling and

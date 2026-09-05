@@ -1,6 +1,6 @@
-> Process ceremony is simplified by
-> [ADR 0005](0005-simplify-project-workflow.md). The phase model, implementation
-> phase check, and explicit transition requirements remain in force.
+> Historical process, superseded by
+> [Work from feedback](0006-work-from-feedback.md). It does not impose current
+> phase, sequencing, or review gates.
 
 # ADR 0002: Development phases
 

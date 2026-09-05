@@ -1,3 +1,7 @@
+> Historical process, superseded by
+> [Work from feedback](0006-work-from-feedback.md). It does not impose current
+> phase, sequencing, or review gates.
+
 # ADR 0005: Simplify project workflow
 
 - Status: accepted
@@ -12,7 +16,7 @@ a disabled automation design more space than the everyday development workflow.
 
 ## Decision
 
-Use the short [working guide](../../AGENTS.md) and [workflow](../workflow.md).
+Use the short [working guide](../../AGENTS.md) and workflow (since retired).
 Direct requests authorize scoped work. Track issues when useful, combine design,
 tests, and implementation when coherent, and record a decision once where it
 belongs. Independent review remains required for substantial design; mandatory

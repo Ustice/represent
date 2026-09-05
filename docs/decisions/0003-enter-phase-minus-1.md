@@ -1,3 +1,7 @@
+> Historical process, superseded by
+> [Work from feedback](0006-work-from-feedback.md). It does not impose current
+> phase, sequencing, or review gates.
+
 # ADR 0003: Enter Phase -1
 
 - Status: accepted

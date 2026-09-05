@@ -1,8 +1,7 @@
 # Architecture
 
-This document describes conceptual layers, not fixed modules or APIs. Design
-specifications must refine the boundaries before implementation commits to a
-shape.
+This document describes conceptual layers, not fixed modules or APIs. Refine
+them through concrete implementations, tests, and documented examples.
 
 ```text
 domain schema language

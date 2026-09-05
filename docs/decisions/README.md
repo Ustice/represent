@@ -1,10 +1,5 @@
-# Architecture decision records
+# Decisions
 
-Use an ADR for a consequential choice whose rationale should outlive the PR.
-Routine implementation decisions do not need one. The [template](template.md) is
-optional; context, decision, and consequences are usually enough.
-
-Use sequential filenames. Mark decisions proposed, accepted, or superseded, and
-link the relevant review for substantial designs. Preserve past rationale and
-link superseding decisions in both directions. Phase transitions also follow
-[development-phases.md](../development-phases.md).
+These records preserve project choices and their rationale. The current process
+decision is [Work from feedback](0006-work-from-feedback.md), which retires the
+former staged workflow. Superseded records describe historical constraints.

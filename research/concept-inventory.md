@@ -1,3 +1,6 @@
+> Historical brainstorming. Process proposals here are superseded by
+> [project guidance](../AGENTS.md); product ideas remain exploratory.
+
 # Concept inventory
 
 > **Status: non-normative research notes**

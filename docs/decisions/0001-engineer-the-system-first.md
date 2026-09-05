@@ -1,6 +1,6 @@
-> The bootstrap is complete. [ADR 0005](0005-simplify-project-workflow.md)
-> supersedes its working procedures; specification ownership and the
-> design-before-production boundary remain in force.
+> Historical process, superseded by
+> [Work from feedback](0006-work-from-feedback.md). It does not impose current
+> phase, sequencing, or review gates.
 
 # ADR 0001: Engineer the system first
 

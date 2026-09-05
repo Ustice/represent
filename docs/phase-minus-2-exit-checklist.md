@@ -1,5 +1,6 @@
 > Historical exit evidence for the completed Phase -2. This checklist is not a
-> current contributor gate; see [workflow](workflow.md).
+> current contributor gate; see
+> [Work from feedback](decisions/0006-work-from-feedback.md).
 
 # Phase -2 exit checklist
 

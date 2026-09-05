@@ -259,15 +259,15 @@ losslessness witness.
 | Two users differing only in omitted email         | Projection-related information loss                              | Source-unequal pair produces structurally equal public views; recovery is congruent with that target equality | Hidden provenance is treated as part of the public view                   |
 | Dropped identifier restored as `unknown`          | Not a valid reverse witness                                      | Recovered source is not source-equivalent to original                                                         | Any source-shaped reverse output is accepted                              |
 
-These records are acceptance inputs for a later semantic-test issue. They are
-not executable evidence and MUST NOT gate implementation until they satisfy the
-reviewable evidence and discrimination requirements in `REP-TEST-008` through
-`REP-TEST-014`.
+These examples describe the expected behavior; executable tests supply evidence
+for it. Keep the examples and tests aligned as the design evolves.
 
 ## Executable evidence
 
-None — this design issue produces reviewed clauses and acceptance examples;
-executable semantic tests require a separately linked issue after acceptance.
+[Conversion tests](../../tests/semantic/conversion-guarantees.test.ts) exercise
+`REP-CONV-001` through `REP-CONV-007` and deliberately broken subjects. The
+[validation report](../validation/conversion-guarantees-campaign.md) records
+scope and limitations. These are bounded examples, not universal proofs.
 
 ## Unresolved questions
 

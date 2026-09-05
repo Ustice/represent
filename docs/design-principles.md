@@ -24,10 +24,11 @@ A failure should identify the relationship, path, and violated contract needed
 to act. Type-level cleverness that produces unusable errors is a design cost,
 not an automatic success.
 
-## Specifications precede production code
+## Learn through concrete behavior
 
-Executable tests refine reviewed clauses; implementation satisfies those tests.
-Ambiguity returns to design rather than being settled accidentally in code.
+Develop examples, code, tests, and specifications together. Make assumptions
+visible and revise them as evidence improves. Keep documented guarantees and
+actual behavior consistent; explain intentional changes to either.
 
 ## Start with a vertical acceptance case
 
