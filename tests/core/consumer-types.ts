@@ -5,6 +5,7 @@ import {
   representation,
   recordCodec,
   optionalCodec,
+  operation,
 } from "../../packages/represent/src/index.js";
 
 // This consumer program is checked by tsc, not executed by Vitest.
@@ -55,6 +56,25 @@ const numberText = codec({
   to: text,
   encode: (value) => value.toFixed(2),
   decode: (value) => Number(value),
+});
+
+const add = operation({
+  name: "Add",
+  input: number,
+  output: number,
+  perform: (value, context: { increment: number }) => value + context.increment,
+});
+add.execute(1, { increment: 2 }).toFixed(2);
+// @ts-expect-error Trusted operation inputs have the declared input type.
+add.execute("1", { increment: 2 });
+// @ts-expect-error Context must satisfy the operation's contextual contract.
+add.run(1, { increment: "2" });
+operation({
+  name: "Wrong output",
+  input: number,
+  output: text,
+  // @ts-expect-error Output inference is owned by the representation.
+  perform: (value) => value,
 });
 
 const record = recordCodec({

@@ -356,3 +356,56 @@ pre {
 .event-body dd {
   margin: 3px 0 0;
 }
+.attendee-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.attendee-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e3e8dc;
+  padding: 14px 0;
+  font-size: 12px;
+}
+.attendee-list strong {
+  overflow-wrap: anywhere;
+}
+.attendee-list small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #687361;
+}
+.empty-attendees {
+  background: #f6f8f0;
+  border: 1px dashed #ced9bf;
+  border-radius: 6px;
+  padding: 28px 18px;
+  line-height: 1.8;
+  color: #687361;
+  font-size: 12px;
+}
+.shared-codec {
+  background: #f6f9ef;
+  border: 1px solid #dde6d0;
+  padding: 17px;
+  border-radius: 6px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.shared-codec ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+.shared-codec li {
+  line-height: 2;
+  color: #526c43;
+}
+button:disabled,
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

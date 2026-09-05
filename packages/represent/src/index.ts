@@ -10,3 +10,4 @@ export {
   type Representation,
 } from "./conversions.js";
 export { optionalCodec, recordCodec } from "./records.js";
+export { operation, OperationError } from "./operations.js";

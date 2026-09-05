@@ -1,16 +1,15 @@
 import {
   memberExchange,
   member,
-  memberGraph,
   profileFor,
-  readDirectory,
   sampleMembers,
-  representationDescriptions,
   type Member,
 } from "./model.js";
 import { exportRoster } from "./roster.js";
 import { element, escapeHtml, json, dateLabel, showError } from "./ui.js";
 import { renderPage, download } from "./shell.js";
+import { connectionsPanel } from "./connections.js";
+import { savedMembers } from "./member-store.js";
 
 const storageKey = "represent.fieldwork.members.v1";
 let notice = "";
@@ -22,9 +21,7 @@ const apiDrafts = new Map<string, string>();
 
 function loadMembers() {
   try {
-    const saved = localStorage.getItem(storageKey);
-    const input: unknown = saved ? JSON.parse(saved) : null;
-    return input ? readDirectory(input) : sampleMembers;
+    return savedMembers();
   } catch {
     notice = "Saved members could not be opened. Showing the sample directory.";
     return sampleMembers;
@@ -83,14 +80,6 @@ function csvPanel() {
     <div class="route-note"><span class="route-symbol">↳</span><div><strong>A roster for sharing with your team</strong><p>Time of day is omitted. Formula-like text gets an apostrophe prefix in the file.</p></div></div>`;
 }
 
-function graphPanel() {
-  return `<div class="panel-heading"><div><span class="eyebrow">REPRESENT IN THIS APP</span><h2>Follow the record.</h2></div><span class="pill">${memberGraph.nodes.length} views</span></div>
-    <p class="muted panel-intro">These connections come from the conversions the application actually runs.</p>
-    <div class="graph-nodes">${memberGraph.nodes.map((node, index) => `<div class="graph-node"><span class="node-index">0${index + 1}</span><strong>${escapeHtml(node.name)}</strong><span>${escapeHtml(representationDescriptions.get(node.name) ?? "")}</span></div>`).join("")}</div>
-    <div class="edge-list">${memberGraph.edges.map((edge) => `<div class="edge"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(edge.name)}</strong><p>${escapeHtml(edge.from)} → ${escapeHtml(edge.to)}</p></div></div>`).join("")}</div>
-    <div class="graph-caption">The API codec supplies both directions. Public profiles omit email; roster rows keep only the UTC day. Neither has a reverse conversion.</div>`;
-}
-
 export function renderMembers() {
   const current = selectedMember();
   const fields =
@@ -110,7 +99,7 @@ export function renderMembers() {
     <label for="joined-at">Joined at <span class="field-note">UTC</span></label><input id="joined-at" name="joinedAt" type="text" value="${escapeHtml(fields.joinedAt)}" aria-describedby="date-hint" /><small id="date-hint" class="input-hint">ISO date and time, including a timezone.</small>
     <div class="inline-error" id="form-error" role="alert" hidden></div><div class="form-footer"><button type="submit" id="save" class="button primary">Save changes <span aria-hidden="true">↗</span></button><span id="edit-status">${drafts.has(selectedId) ? "Unsaved changes" : "Saved in this browser"}</span></div></form>
     <div class="editor-note"><span aria-hidden="true">↳</span> Save once. The public profile and export update together.</div></section>
-    <section class="preview panel" aria-label="Member representations"><div class="tabs" role="group" aria-label="Representation"><button aria-pressed="${view === "profile"}" data-view="profile">Public profile</button><button aria-pressed="${view === "api"}" data-view="api">API payload</button><button aria-pressed="${view === "csv"}" data-view="csv">Roster CSV</button><button aria-pressed="${view === "graph"}" data-view="graph">Connections</button></div><div class="preview-content">${view === "profile" ? profilePanel(current) : view === "api" ? apiPanel(current) : view === "csv" ? csvPanel() : graphPanel()}</div></section></div>
+    <section class="preview panel" aria-label="Member representations"><div class="tabs" role="group" aria-label="Representation"><button aria-pressed="${view === "profile"}" data-view="profile">Public profile</button><button aria-pressed="${view === "api"}" data-view="api">API payload</button><button aria-pressed="${view === "csv"}" data-view="csv">Roster CSV</button><button aria-pressed="${view === "graph"}" data-view="graph">Connections</button></div><div class="preview-content">${view === "profile" ? profilePanel(current) : view === "api" ? apiPanel(current) : view === "csv" ? csvPanel() : connectionsPanel()}</div></section></div>
   `,
   );
   bindEvents();

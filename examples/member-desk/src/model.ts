@@ -93,13 +93,6 @@ export const memberGraph = graph([
   toRoster,
 ]);
 
-export const representationDescriptions = new Map([
-  [member.name, "Working record · Date"],
-  [memberApi.name, "Exchange record · ISO string"],
-  [publicProfile.name, "Shared profile · selected fields"],
-  [rosterRow.name, "Directory export · UTC day"],
-]);
-
 export const sampleMembers = [
   {
     id: "mem_01",

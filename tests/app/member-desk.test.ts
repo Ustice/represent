@@ -81,20 +81,42 @@ describe("member directory consuming Represent", () => {
     ).toThrow(/unique/);
   });
 
-  it("derives the visible graph from the application's actual conversions", () => {
-    expect(memberGraph).toEqual({
-      nodes: [
-        { name: "Member" },
-        { name: "Member API" },
-        { name: "Public profile" },
-        { name: "Roster row" },
-      ],
-      edges: [
-        { name: "Member exchange: encode", from: "Member", to: "Member API" },
-        { name: "Member exchange: decode", from: "Member API", to: "Member" },
-        { name: "Publish profile", from: "Member API", to: "Public profile" },
-        { name: "Prepare roster row", from: "Member", to: "Roster row" },
-      ],
-    });
+  it("includes the member field codec alongside the record routes", () => {
+    expect(memberGraph.nodes).toEqual([
+      { name: "Member" },
+      { name: "Member API" },
+      { name: "Date" },
+      { name: "ISO timestamp" },
+      { name: "Public profile" },
+      { name: "Roster row" },
+    ]);
+    expect(memberGraph.edges).toEqual([
+      { name: "Member exchange: encode", from: "Member", to: "Member API" },
+      {
+        name: "Date and ISO timestamp: encode",
+        from: "Date",
+        to: "ISO timestamp",
+      },
+      { name: "Member exchange: decode", from: "Member API", to: "Member" },
+      {
+        name: "Date and ISO timestamp: decode",
+        from: "ISO timestamp",
+        to: "Date",
+      },
+      { name: "Publish profile", from: "Member API", to: "Public profile" },
+      { name: "Prepare roster row", from: "Member", to: "Roster row" },
+    ]);
+    expect(memberGraph.dependencies).toEqual([
+      {
+        parent: "Member exchange: encode",
+        field: "joinedAt",
+        conversion: "Date and ISO timestamp: encode",
+      },
+      {
+        parent: "Member exchange: decode",
+        field: "joinedAt",
+        conversion: "Date and ISO timestamp: decode",
+      },
+    ]);
   });
 });
