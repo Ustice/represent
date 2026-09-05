@@ -1,3 +1,4 @@
+import { mapStructure, structureReferences } from "./structure.js";
 import type { Graph } from "./graph-model.js";
 import type { Representation } from "./conversions.js";
 import { dependenciesOf } from "./dependencies.js";
@@ -14,6 +15,7 @@ export interface ConversionDescriptor {
 export function graph(
   conversions: readonly ConversionDescriptor[],
   options: {
+    representations?: readonly Representation<unknown>[];
     operations?: readonly OperationDescriptor[];
     references?: readonly ReferenceDescriptor[];
   } = {},
@@ -53,10 +55,14 @@ export function graph(
   }
   function addRepresentation(endpoint: Representation<unknown>) {
     const existing = representations.get(endpoint.name);
-    if (existing && existing !== endpoint)
+    if (existing === endpoint) return;
+    if (existing)
       throw new Error(`Duplicate representation name: ${endpoint.name}`);
     representations.set(endpoint.name, endpoint);
+    if (endpoint.structure)
+      structureReferences(endpoint.structure).forEach(addRepresentation);
   }
+  options.representations?.forEach(addRepresentation);
   conversions.forEach(visit);
   const referenceNames = new Map<string, ReferenceDescriptor>();
   const references: Array<{
@@ -119,6 +125,10 @@ export function graph(
     }
   }
   options.operations?.forEach(visitOperation);
-  const nodes = [...representations.keys()].map((name) => ({ name }));
+  const nodes = [...representations.values()].map(({ name, structure }) =>
+    structure
+      ? { name, structure: mapStructure(structure, (child) => child.name) }
+      : { name },
+  );
   return { nodes, edges, dependencies, operations, references };
 }

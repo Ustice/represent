@@ -10,8 +10,9 @@ records through a codec, previews public profiles, edits community events, and
 manages RSVPs with signup deadlines and bulk email-list preview/import.
 Directory and event attendee CSV exports use the saved records. Connections
 hosts a reusable explorer with relationship and dependency views through shared
-field codecs, declared operation calls, reads, and references. There is no
-stable API or compatibility commitment.
+field codecs, declared operation calls, reads, and references. It also inspects
+record fields and known value structure, leaving opaque parser behavior unknown.
+There is no stable API or compatibility commitment.
 
 ## Run it
 

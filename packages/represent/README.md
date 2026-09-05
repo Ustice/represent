@@ -65,6 +65,35 @@ The record assembler has one internal type assertion after all fields have been
 parsed or converted: TypeScript cannot express the key/value relationship
 returned by `Object.fromEntries`. Consumers need no casts.
 
+`text`, `dateValue`, `optional`, and `record` build parsers with inspectable,
+framework-neutral structure:
+
+```ts
+const request = record("RSVP request", {
+  memberId: text("Member reference", { nonempty: true }),
+  eventId: text("Event reference", { nonempty: true }),
+});
+const model = graph([], { representations: [request] });
+```
+
+Text preserves whitespace; `nonempty` rejects only the empty string. `dateValue`
+requires a finite JavaScript Date. `optional` accepts undefined, including a
+missing record field, and otherwise delegates to its wrapped parser. `record`
+uses the same field parsing and presence rules as `recordCodec`.
+
+A representation may expose `structure`; custom parsers without it remain
+opaque. Structure contains references to actual child representations at runtime
+and their names in a serialized graph. Graph construction includes those
+children without executing parsers. `presenceOf` reports required, optional, or
+unknown; it never probes an opaque parser to guess whether it supplies defaults.
+
+Record codecs expose structure for both endpoints. A source `validate` callback
+marks the source record as refined; the target parser only checks its fields.
+Consequently, a structurally valid API record can still fail decoding because of
+a source constraint. Structure describes a parser contract, not conversion
+success or an equivalence guarantee. Handwritten structural declarations must
+match their parsers; the core does not prove that assertion.
+
 `operation({ name, input, output, perform })` validates a synchronous command
 against an explicit context:
 
@@ -143,15 +172,16 @@ records. The caller decides what a missing reference means.
 
 Operations can declare `reads: [member, event, rsvp]` and
 `references: [rsvpMember, rsvpEvent]`. These arrays are copied at construction.
-`graph(conversions, { operations, references })` includes their representations,
-operation input/output/read names, and reference field/key endpoints. References
-used by operations are included automatically and shared instances appear once.
-Operations may declare `calls: [someConversion, someOperation]`; the graph
-recursively includes those definitions and their dependencies without executing
-them. Conversions and operations expose an explicit `kind` tag. Reusing the same
-called instance is allowed; distinct instances with the same kind/name are
-rejected. Repeated declarations of the same call emit one call link. Cycles in
-declared calls terminate during graph construction and queries.
+`graph(conversions, { operations, references, representations })` includes their
+representations, operation input/output/read names, and reference field/key
+endpoints. References used by operations are included automatically and shared
+instances appear once. Operations may declare
+`calls: [someConversion, someOperation]`; the graph recursively includes those
+definitions and their dependencies without executing them. Conversions and
+operations expose an explicit `kind` tag. Reusing the same called instance is
+allowed; distinct instances with the same kind/name are rejected. Repeated
+declarations of the same call emit one call link. Cycles in declared calls
+terminate during graph construction and queries.
 
 Calls are declared dependencies, not instrumentation: the body still calls
 `convert` or `execute` normally. The declaration does not prove that a call
@@ -216,6 +246,7 @@ These are **definition dependencies**, traversed in the following directions:
 | Dependency                     | Dependent         | Reason                                                   |
 | ------------------------------ | ----------------- | -------------------------------------------------------- |
 | Representation                 | Conversion        | Input or output contract                                 |
+| Child representation           | Record or wrapper | Declared field or wrapped value                          |
 | Child conversion               | Parent conversion | Field binding, optional wrapper, or explicit composition |
 | Representation                 | Operation         | Input/output contract or declared read                   |
 | Representation                 | Reference         | Source field or target key                               |
@@ -241,14 +272,14 @@ graph.
 
 The graph includes only registered definitions and declared dependencies.
 Register actual composed conversions to make those relationships visible. Opaque
-mapping/parser bodies, non-codec record-field representation dependencies, and
-calls inside operations are not inferred. Fieldwork explicitly declares both
-encoders called by attendee export, and email signup declares its call to the
-existing signup operation. Results do not prove field-level impact, runtime
-value changes, persistence, or complete dependency coverage.
+mapping/parser bodies and undeclared calls inside operations are not inferred.
+Fieldwork explicitly declares both encoders called by attendee export, and email
+signup declares its call to the existing signup operation. Results do not prove
+field-level impact, runtime value changes, persistence, or complete dependency
+coverage.
 
-This is a value-conversion experiment. Record codecs derive runtime parsers and
-TypeScript record shapes, not target-library schemas or artifacts. Automatic
-adapters and certification are not implemented. Definition dependency queries
-are available; field-level impact analysis and guarantee composition remain
-unproven.
+This is a value-conversion experiment. Record codecs derive runtime parsers,
+TypeScript record shapes, and neutral structural descriptions. Target-library
+schemas and artifacts are not generated yet. Automatic adapters and
+certification are not implemented. Definition dependency queries are available;
+field-level impact analysis and guarantee composition remain unproven.

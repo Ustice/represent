@@ -1,12 +1,20 @@
+import { mapStructure, type Structure } from "./structure.js";
 import { setDependencies } from "./dependencies.js";
 
 export interface Representation<Value> {
   readonly name: string;
   readonly parse: (input: unknown) => Value;
+  readonly structure?: Structure<Representation<unknown>>;
 }
 
 export function representation<Value>(definition: Representation<Value>) {
-  return Object.freeze({ ...definition });
+  if (!definition.structure) return Object.freeze({ ...definition });
+  const structure = mapStructure(definition.structure, (child) => child);
+  if (structure.kind === "record") {
+    structure.fields.forEach(Object.freeze);
+    Object.freeze(structure.fields);
+  }
+  return Object.freeze({ ...definition, structure: Object.freeze(structure) });
 }
 
 export interface Conversion<Source, Target> {

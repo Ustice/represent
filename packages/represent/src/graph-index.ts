@@ -56,6 +56,26 @@ export function indexGraph(model: Graph) {
     };
     links.set(linkKey(link), link);
   }
+  for (const node of model.nodes) {
+    const parent = item("representation", node.name);
+    if (node.structure?.kind === "record") {
+      const keys = new Set<string>();
+      for (const { key } of node.structure.fields) {
+        if (keys.has(key))
+          throw new Error(`Duplicate record field: ${node.name}.${key}`);
+        keys.add(key);
+      }
+      for (const field of node.structure.fields)
+        connect(item("representation", field.representation), parent, {
+          kind: "record-field",
+          field: field.key,
+        });
+    }
+    if (node.structure?.kind === "optional")
+      connect(item("representation", node.structure.inner), parent, {
+        kind: "wrapped-value",
+      });
+  }
   for (const edge of model.edges) {
     const conversion = item("conversion", edge.name);
     connect(item("representation", edge.from), conversion, { kind: "input" });

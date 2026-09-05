@@ -1,3 +1,5 @@
+import { optional } from "./values.js";
+import { recordStructure } from "./structure.js";
 import type { ConversionDescriptor } from "./graph.js";
 import {
   codec,
@@ -94,6 +96,15 @@ export function recordCodec<
   }
   const source = representation({
     name: from,
+    structure: recordStructure(
+      Object.fromEntries<Representation<unknown>>(
+        Object.entries(fields).map(([key, field]) => [
+          key,
+          "parse" in field ? field : field.encode.from,
+        ]),
+      ),
+      Boolean(validate),
+    ),
     parse(input: unknown) {
       const value = mapFields(fields, input, "decode", false);
       validate?.(value);
@@ -102,6 +113,15 @@ export function recordCodec<
   });
   const target = representation({
     name: to,
+    structure: recordStructure(
+      Object.fromEntries<Representation<unknown>>(
+        Object.entries(fields).map(([key, field]) => [
+          key,
+          "parse" in field ? field : field.encode.to,
+        ]),
+      ),
+      false,
+    ),
     parse: (input: unknown) => mapFields(fields, input, "encode", false),
   });
   const result = codec({
@@ -123,13 +143,6 @@ export function recordCodec<
 }
 
 export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
-  function optional<Value>(value: Representation<Value>) {
-    return representation({
-      name: `${value.name} (optional)`,
-      parse: (input: unknown) =>
-        input === undefined ? undefined : value.parse(input),
-    });
-  }
   const result = codec({
     name: `Optional ${subject.encode.from.name} ↔ ${subject.encode.to.name}`,
     from: optional(subject.encode.from),
@@ -142,4 +155,18 @@ export function optionalCodec<Source, Target>(subject: Codec<Source, Target>) {
   setDependencies(result.encode, [{ field: null, conversion: subject.encode }]);
   setDependencies(result.decode, [{ field: null, conversion: subject.decode }]);
   return result;
+}
+
+export function record<
+  const Fields extends Record<string, Representation<unknown>>,
+>(name: string, fields: Fields) {
+  const snapshot = { ...fields };
+  if (Object.getOwnPropertySymbols(snapshot).length)
+    throw new Error("Record fields must have string keys");
+  Object.freeze(snapshot);
+  return representation({
+    name,
+    structure: recordStructure(snapshot, false),
+    parse: (input: unknown) => mapFields(snapshot, input, "decode", false),
+  });
 }

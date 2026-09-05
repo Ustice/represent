@@ -8,7 +8,7 @@ export {
   type Conversion,
   type Representation,
 } from "./conversions.js";
-export { optionalCodec, recordCodec } from "./records.js";
+export { optionalCodec, recordCodec, record } from "./records.js";
 export { operation, OperationError } from "./operations.js";
 
 export { graph } from "./graph.js";
@@ -24,3 +24,8 @@ export type {
   DependencyLink,
   DependencyReason,
 } from "./graph-model.js";
+
+export { text, dateValue, optional } from "./values.js";
+export type { Structure, Presence } from "./structure.js";
+
+export { presenceOf } from "./structure.js";
