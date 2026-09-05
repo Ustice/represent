@@ -443,3 +443,36 @@ Sensor Bench's `route` command demonstrates two direct Fahrenheit-to-Celsius
 paths: reported precision and an unrounded calculation. Both the default policy
 and `fewestSteps` leave them ambiguous. A named precision policy selects a path,
 then the existing tracer shows the actual result for the supplied value.
+
+`compareAcceptance({ before, after, samples, copy })` runs two synchronous
+representation parsers on labeled values and reports directional evidence:
+
+```ts
+const evidence = compareAcceptance({
+  before: currentRequest,
+  after: proposedRequest,
+  samples: [{ label: "Existing request", value: incomingJson }],
+  copy: (value: unknown) => structuredClone(value),
+});
+```
+
+Each sample retains its index, label, captured input, and accepted value or
+actual rejection error from each parser. `beforeToAfter` checks samples accepted
+by the current parser against the proposed parser; `afterToBefore` reverses that
+direction. Each result contains `tested` (source-accepted sample count),
+`witnesses` (counterexample indexes), and a status: `counterexamples`,
+`no-counterexamples`, or `unexercised`. Invalid samples that neither parser
+accepts provide no directional evidence. Empty evidence never becomes a passing
+compatibility verdict.
+
+The required `copy` function must preserve values and create independent copies.
+It captures input, isolates both parser inputs, and captures accepted outputs.
+Copying errors propagate outside parser-rejection handling. Parsers really run;
+copies do not isolate effects outside their supplied values. Acceptance evidence
+does not compare normalized output values or establish equivalence, purity,
+operation success, or universal compatibility.
+
+Fieldwork's editable Change preview combines this API with `compareSchemas`,
+generated contracts, dependency queries, and an explicit migration traced
+through ordinary conversions. A migration's source and output both retain
+validation; structural comparison alone never invents a migration.
