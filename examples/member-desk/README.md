@@ -103,9 +103,11 @@ text shows the file contents. The directory roster deliberately omits join
 times; the attendee roster is a projection of three records. Neither CSV has a
 reverse conversion. JSON remains the full record exchange format.
 
-There is no backend, authentication, or server-side privacy boundary. The public
+Member and event editors store their data in the browser. There is no
+authentication or server-side privacy boundary for those records. The public
 profile is a local preview; private data remains in the same browser
-application.
+application. The optional read-only event endpoint uses a separate synthetic
+fixture.
 
 ## A real event endpoint
 
@@ -122,3 +124,25 @@ fixture returns a generic server error. This read-only fixture is separate from
 local-storage members, events, and RSVPs. The main example continues to work
 without the API; only Server lab requires it. Production `vite build` emits the
 browser bundle; this API experiment currently uses the development proxy.
+
+## Editable change proposals
+
+Connections → Change preview builds an alternate RSVP request with a text field
+whose name, presence, and empty-string rule you can edit. Supply labeled JSON
+samples and a migration default, then preview. Editing the draft clears stale
+evidence; malformed JSON or an invalid field name shows an error. Use examples
+for this field replaces the sample text explicitly.
+
+The current and proposed parsers run independently on copies through
+`compareAcceptance`. Each direction reports counterexamples, no counterexamples
+in the supplied samples, or unexercised when no sample passes its source parser.
+The generated current/proposed JSON Schemas run in Ajv alongside those parser
+results. Dependencies are inspected in both graph snapshots.
+
+Migration preview executes an explicit conversion from the current request to
+the proposed request, adding the chosen default and validating the result. An
+empty default fails a nonempty field at the output stage. A request already
+containing the new field fails the old source contract; the migration does not
+overwrite it. Samples demonstrate acceptance and migration behavior, not a
+universal compatibility guarantee. The draft never changes live operation
+implementations, adopts a schema, or writes saved records.

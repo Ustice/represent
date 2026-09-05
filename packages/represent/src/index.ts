@@ -63,3 +63,5 @@ export {
   type RouteSearch,
   type RoutePolicy,
 } from "./routes.js";
+
+export { compareAcceptance, type AcceptanceSample } from "./acceptance.js";
