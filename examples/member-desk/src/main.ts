@@ -1,4 +1,3 @@
-import { ConversionError } from "@represent/core";
 import {
   memberExchange,
   member,
@@ -95,7 +94,7 @@ function apiPanel(value: Member) {
   return `<div class="panel-heading"><div><span class="eyebrow">DATA EXCHANGE</span><h2>A record that travels.</h2></div><span class="pill">JSON</span></div>
     <p class="muted panel-intro">Dates become ISO strings for storage and export. Edit a payload below to try importing a change.</p>
     <label for="api-payload" class="payload-label">Member API payload</label>
-    <textarea id="api-payload" class="code-input" spellcheck="false">${escapeHtml(apiDrafts.get(value.id) ?? JSON.stringify(memberExchange.encode.convert(value), null, 2))}</textarea>
+    <textarea id="api-payload" class="code-input" spellcheck="false">${escapeHtml(apiDrafts.get(value.id) ?? JSON.stringify(payload, null, 2))}</textarea>
     <div class="api-actions"><button class="button primary" id="apply-api">Validate &amp; apply</button><a class="button secondary" id="download" href="${exportUrl}" download="${escapeHtml(value.id)}.json">Download JSON <span aria-hidden="true">↓</span></a></div>
     <div class="inline-error" id="api-error" role="alert" hidden></div>
     <div class="route-note"><span class="route-symbol">↔</span><div><strong>Dates come back as Dates</strong><p>Imported data is validated before it updates the member.</p></div></div>`;
@@ -166,9 +165,7 @@ function showError(selector: string, error: unknown) {
   const target = element(selector);
   target.hidden = false;
   target.textContent =
-    error instanceof ConversionError || error instanceof Error
-      ? error.message
-      : "The change could not be saved.";
+    error instanceof Error ? error.message : "The change could not be saved.";
 }
 
 function save(value: Member) {

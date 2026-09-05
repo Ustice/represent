@@ -11,8 +11,8 @@ run the mapping, and validate the target. Failures identify the edge, stage,
 representation, and underlying error.
 
 `codec({ name, from, to, encode, decode })` declares two mappings with shared
-endpoints. It returns `encode` and `decode` conversions named `name: encode`
-and `name: decode`. Both support `convert` and `run`, composition, and graph
+endpoints. It returns `encode` and `decode` conversions named `name: encode` and
+`name: decode`. Both support `convert` and `run`, composition, and graph
 registration just like a standalone conversion:
 
 ```ts

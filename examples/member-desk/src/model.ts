@@ -101,7 +101,7 @@ export const toRoster = conversion({
     Email: email,
     Role: role,
     Membership: status === "Active" ? "Current member" : "Invitation pending",
-    "Joined (UTC)": joinedAt.toISOString().split("T")[0] ?? "",
+    "Joined (UTC)": joinedAt.toISOString().slice(0, 10),
   }),
 });
 
