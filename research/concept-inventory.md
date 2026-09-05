@@ -1,63 +1,9 @@
-# Concept inventory
+# Design possibilities
 
-> **Status: non-normative research notes**
->
-> This document preserves candidate ideas, remembered design directions, and
-> useful examples from early project discussions. It is not a specification,
-> ADR, compatibility promise, or implementation plan. Nothing here is accepted
-> merely because it appears in this file.
->
-> Promote an idea into a design issue before turning it into normative clauses
-> or implementation work. Concrete examples, counterexamples, independent
-> review, and executable evidence remain required.
-
-## Project thesis
-
-Represent is intended to preserve semantic intent while allowing the same
-application concepts to appear in many concrete forms.
-
-The project may eventually let teams define domain data and operations once,
-connect them through explicit relationships, and derive or coordinate:
-
-- runtime validation;
-- value conversion;
-- external schemas and definitions;
-- fixtures and generated examples;
-- mocks and contract tests;
-- property tests and law checks;
-- adapter certification;
-- architecture diagrams;
-- path explanations;
-- schema-change impact reports;
-- CI review evidence.
-
-The algebra should be the internal engine. The graph, diagnostics, testing
-tools, and approachable terminology should be the ordinary developer experience.
-
-## Public terminology candidates
-
-Mathematical concepts may support the design without appearing front-and-center
-in the public API.
-
-| Approachable term   | Mathematical background or related idea  |
-| ------------------- | ---------------------------------------- |
-| representation      | object or interpretation                 |
-| conversion          | morphism or mapping                      |
-| equivalent          | isomorphism-like relationship            |
-| lossless            | invertible in the claimed direction      |
-| validated           | partial or fallible mapping              |
-| projection          | intentionally information-losing mapping |
-| round trip          | inverse or retraction law                |
-| empty               | identity element                         |
-| combine             | associative operation                    |
-| preserves combine   | homomorphism law                         |
-| preserves pipelines | composition or functoriality             |
-| choice              | sum type                                 |
-| record              | product type                             |
-
-The vocabulary must remain honest. In particular, a projection should not be
-called equivalent, and a validated parse should not be presented as a total
-conversion.
+Open product ideas to explore, not settled contracts or an implementation plan.
+The [architecture](../docs/architecture.md), [glossary](../docs/glossary.md),
+and [conversion specification](../docs/specifications/conversions.md) describe
+the current boundaries and vocabulary.
 
 ## Domain schemas and representations
 
@@ -133,16 +79,17 @@ and runtime behavior.
 
 Candidate conversion strengths:
 
-- **projection**: intentionally loses information;
+- **projection**: restricts the view; information loss depends on the source
+  domain and equality, not field count alone;
 - **validated**: may reject source values;
 - **lossless**: preserves enough information to reconstruct the source within
   the stated domain;
 - **equivalent**: both representations round-trip under their stated equality
   and normalization rules.
 
-These labels need precise future definitions. Composition should calculate the
-resulting guarantee conservatively rather than preserve the strongest label
-optimistically.
+The conversion specification defines directional losslessness and projection
+loss. Validated conversions, equivalence, and guarantee composition remain open
+design questions.
 
 A conversion may declare which behavior it preserves, including:
 
@@ -515,38 +462,6 @@ Possible future CI outputs:
 
 A PR report should explain semantic impact rather than only list files changed.
 
-## Automated issue handling
-
-Candidate automation should follow the repository's reviewed issue workflow
-rather than allow an issue event to trigger unrestricted coding.
-
-A conservative progression:
-
-1. **Automated triage**
-   - inspect the issue and repository authority;
-   - check current phase;
-   - classify the work;
-   - identify missing prerequisites;
-   - post a structured response;
-   - recommend the next label or issue type.
-
-2. **Design assistance**
-   - only after an explicit human-applied trigger;
-   - create a branch and draft PR;
-   - update non-production design artifacts;
-   - request independent review;
-   - stop on ambiguity or blocker.
-
-3. **Implementation assistance**
-   - only when phase, accepted clauses, and semantic tests permit it;
-   - create a bounded branch and draft PR;
-   - never merge automatically at first;
-   - return semantic discoveries to design instead of patching around them.
-
-Potential labels include `agent:triage`, `agent:design`, `agent:implement`,
-`agent:review`, and `agent:blocked`. These names are only candidates until
-separately designed.
-
 ## Initial vertical slice
 
 The first prototype should remain deliberately small and awkward enough to
@@ -582,30 +497,7 @@ Important differences to exercise:
 - direct and indirect paths;
 - a schema change with a meaningful impact report.
 
-The Phase 0 prototype should stop after proving one complete vertical slice. It
-should then undergo a replace, salvage, or promote review instead of expanding
-indefinitely.
-
-## Process principles remembered from discussion
-
-- Assume replacement until proven otherwise.
-- Specifications, semantic tests, ADRs, and recorded lessons are more durable
-  than prototype code.
-- Never duplicate semantics when one artifact can be derived from another.
-- Concrete examples outrank elegant theory.
-- Every abstraction should earn its existence through at least two independent
-  examples.
-- Prefer removing abstractions to adding speculative ones.
-- A design blocker is evidence, not an inconvenience to patch around.
-- TypeScript type sophistication must not destroy compiler performance or
-  diagnostic readability.
-- The graph and production behavior should come from the same definitions.
-- Existing ecosystem tools should remain responsible for what they already do
-  well.
-
-## Questions to promote into future design issues
-
-The following topics need bounded design work before they become specifications:
+## Open design questions
 
 - What is the smallest neutral schema vocabulary?
 - Are entities and relations universal concepts or adapter strategies?
@@ -626,7 +518,3 @@ The following topics need bounded design work before they become specifications:
 - What testing APIs can remain runner-neutral?
 - How should fixtures preserve provenance and reject impossible reverse
   derivations?
-- What should the first automated issue-triage contract permit?
-
-These questions are research inventory, not active blockers. Open a design issue
-when one becomes the next bounded Phase -1 task.

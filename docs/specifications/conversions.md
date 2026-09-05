@@ -2,25 +2,7 @@
 
 ## Status and scope
 
-Status: accepted. Owning design issue:
-[#17](https://github.com/Ustice/represent/issues/17). `REP-CONV-001` through
-`REP-CONV-007` were accepted at exact commit
-[`02fb190`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7)
-and merged in [pull request #18](https://github.com/Ustice/represent/pull/18).
-
-## Review record
-
-- Reviewers: independent algebraic-consistency reviewer; independent skeptical
-  application-developer and terminology reviewer.
-- Outcome: Accepted.
-- Clauses reviewed: `REP-CONV-001` through `REP-CONV-007`.
-- Exact reviewed commit:
-  [`02fb190c7e3cc2d003baddc18d708d616f270ac7`](https://github.com/Ustice/represent/commit/02fb190c7e3cc2d003baddc18d708d616f270ac7).
-- Evidence:
-  [independent review record](https://github.com/Ustice/represent/issues/17#issuecomment-5009728811)
-  and
-  [exact-commit Review Agent approval](https://github.com/Ustice/represent/pull/18#pullrequestreview-4727593025).
-- Unresolved disagreements: None recorded.
+`REP-CONV-001` through `REP-CONV-007` define the current conversion guarantees.
 
 This specification defines the evidence needed to describe one direction of a
 conversion as lossless and to demonstrate information loss through a projection.
@@ -259,15 +241,18 @@ losslessness witness.
 | Two users differing only in omitted email         | Projection-related information loss                              | Source-unequal pair produces structurally equal public views; recovery is congruent with that target equality | Hidden provenance is treated as part of the public view                   |
 | Dropped identifier restored as `unknown`          | Not a valid reverse witness                                      | Recovered source is not source-equivalent to original                                                         | Any source-shaped reverse output is accepted                              |
 
-These records are acceptance inputs for a later semantic-test issue. They are
-not executable evidence and MUST NOT gate implementation until they satisfy the
-test-case record and discrimination requirements in `REP-TEST-008` through
-`REP-TEST-014`.
+These examples describe the expected behavior; executable tests supply evidence
+for it. Keep the examples and tests aligned as the design evolves.
 
 ## Executable evidence
 
-None — this design issue produces reviewed clauses and acceptance examples;
-executable semantic tests require a separately linked issue after acceptance.
+[Conversion tests](../../tests/semantic/conversion-guarantees.test.ts) exercise
+`REP-CONV-001` through `REP-CONV-007` and deliberately broken subjects. The
+harness checks directional round trips over explicit finite samples and
+collision witnesses under declared equalities. Rejections identify the
+direction, domain, equalities, clause, and recovered value or collision pair
+needed to reproduce failure. These examples do not prove a universal property or
+use generated input domains. The harness is test support, not a production API.
 
 ## Unresolved questions
 
