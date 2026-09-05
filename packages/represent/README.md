@@ -166,8 +166,66 @@ names. Create and reuse a field codec (including an optional wrapper) when it
 appears in several places. The graph does not inspect mapping function bodies,
 choose routes, infer relationships from IDs, or infer guarantees.
 
+`dependents(model, { kind, name })` explains which definitions depend on a
+selected representation, conversion, operation, or reference:
+
+```ts
+const result = dependents(workspaceGraph, {
+  kind: "conversion",
+  name: dateTime.encode.name,
+});
+// dateTime.encode -> memberExchange.encode -> profileFor
+const profile = result.dependents.find(
+  ({ item }) => item.kind === "conversion" && item.name === profileFor.name,
+);
+```
+
+`Graph` is the readonly TypeScript data shape returned by `graph`. `GraphItem`
+identifies a definition by both kind and name; different kinds can share a name.
+The result contains `source` and `dependents`. Each dependent has its `item`,
+one shortest `path`, and `via`: every distinct immediate dependency link reached
+by the query, including links reached along longer paths. A `DependencyLink`
+records the `dependency`, `dependent`, and a structured `reason` (including the
+field name where applicable). The source itself is excluded, including in
+cycles.
+
+These are **definition dependencies**, traversed in the following directions:
+
+| Dependency       | Dependent         | Reason                                                   |
+| ---------------- | ----------------- | -------------------------------------------------------- |
+| Representation   | Conversion        | Input or output contract                                 |
+| Child conversion | Parent conversion | Field binding, optional wrapper, or explicit composition |
+| Representation   | Operation         | Input/output contract or declared read                   |
+| Representation   | Reference         | Source field or target key                               |
+| Reference        | Operation         | Declared reference use                                   |
+
+A conversion or operation does not make its output representation a dependent:
+producing a value does not change the definition of its schema. For example,
+changing the member encoder calls for reviewing the composed public-profile
+conversion. It does not imply a changed Member API schema or a change to every
+consumer of that schema. Changing the Member API definition itself does identify
+both its encoders and decoders. Output representations can be displayed as
+context, as Fieldwork does, without becoming dependency traversal edges.
+
+Traversal is breadth-first, with links ordered lexically by their serialized
+kind/name identities and reason. Reordering graph registration does not change
+the selected paths or results. Parallel field bindings remain distinct;
+identical links are deduplicated. Cycles terminate, and only one path per
+dependent is materialized rather than enumerating every possible path. Unknown
+selections, duplicate same-kind identities, and dangling graph links throw. A
+known isolated definition returns no dependents. Queries do not mutate the
+graph.
+
+The graph includes only registered definitions and declared dependencies.
+Register actual composed conversions to make those relationships visible. Opaque
+mapping/parser bodies, non-codec record-field representation dependencies, and
+calls inside operations are not inferred. For example, the date encoder's use
+inside Fieldwork's attendee export is not yet declared as an operation call
+edge. Results do not prove field-level impact, runtime value changes,
+persistence, or complete dependency coverage.
+
 This is a value-conversion experiment. Record codecs derive runtime parsers and
 TypeScript record shapes, not target-library schemas or artifacts. Automatic
-adapters, certification, and impact analysis are not implemented. Conversion
-dependencies, declared operation reads, and explicit references are visible;
-field-level operation dependencies and guarantee composition remain unproven.
+adapters and certification are not implemented. Definition dependency queries
+are available; field-level impact analysis and guarantee composition remain
+unproven.

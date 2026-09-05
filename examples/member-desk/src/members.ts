@@ -8,7 +8,7 @@ import {
 import { exportRoster } from "./roster.js";
 import { element, escapeHtml, json, dateLabel, showError } from "./ui.js";
 import { renderPage, download } from "./shell.js";
-import { connectionsPanel } from "./connections.js";
+import { connectionsPanel, bindConnections } from "./connections.js";
 import { savedMembers } from "./member-store.js";
 
 const storageKey = "represent.fieldwork.members.v1";
@@ -132,6 +132,7 @@ function formValue() {
 }
 
 function bindEvents() {
+  bindConnections(renderMembers);
   document
     .querySelectorAll<HTMLButtonElement>("[data-member]")
     .forEach((button) =>

@@ -1,3 +1,4 @@
+import type { Graph } from "./graph-model.js";
 import type { Representation } from "./conversions.js";
 import { dependenciesOf } from "./dependencies.js";
 import type { OperationDescriptor } from "./operations.js";
@@ -15,7 +16,7 @@ export function graph(
     operations?: readonly OperationDescriptor[];
     references?: readonly ReferenceDescriptor[];
   } = {},
-) {
+): Graph {
   const representations = new Map<string, Representation<unknown>>();
   const names = new Map<string, ConversionDescriptor>();
   const edges: Array<{ name: string; from: string; to: string }> = [];

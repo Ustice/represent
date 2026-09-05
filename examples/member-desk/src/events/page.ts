@@ -7,7 +7,7 @@ import {
   type CommunityEvent,
 } from "./model.js";
 import { eventPreview } from "./views.js";
-import { connectionsPanel } from "../connections.js";
+import { connectionsPanel, bindConnections } from "../connections.js";
 import { attendeesPanel } from "../rsvps/panel.js";
 import { changeRsvp } from "../rsvps/store.js";
 import { rsvpImportPanel, bindRsvpImport } from "../rsvps/import-panel.js";
@@ -113,6 +113,7 @@ function performRsvp(action: "register" | "cancel", memberId: string) {
 }
 
 function bindEvents() {
+  bindConnections(renderEvents);
   if (view === "import")
     bindRsvpImport(
       selectedId,

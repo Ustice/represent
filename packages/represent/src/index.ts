@@ -15,3 +15,11 @@ export { graph } from "./graph.js";
 export { reference } from "./references.js";
 
 export { runBatch, type BatchRow } from "./batch.js";
+
+export { dependents } from "./dependency-query.js";
+export type {
+  Graph,
+  GraphItem,
+  DependencyLink,
+  DependencyReason,
+} from "./graph-model.js";

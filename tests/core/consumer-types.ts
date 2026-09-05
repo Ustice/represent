@@ -8,6 +8,8 @@ import {
   operation,
   reference,
   runBatch,
+  graph,
+  dependents,
 } from "../../packages/represent/src/index.js";
 
 // This consumer program is checked by tsc, not executed by Vitest.
@@ -177,3 +179,18 @@ runBatch(add, [], {
   // @ts-expect-error Transitions must preserve the operation's context type.
   advance: () => ({ increment: "two" }),
 });
+
+const dependencies = dependents(graph([numberText.encode]), {
+  kind: "conversion",
+  name: numberText.encode.name,
+});
+for (const dependent of dependencies.dependents) {
+  dependent.item.kind.toUpperCase();
+  for (const link of dependent.path) {
+    if (link.reason.kind === "field") link.reason.field.toUpperCase();
+  }
+}
+// @ts-expect-error Graph selection must identify the kind as well as the name.
+dependents(graph([]), { name: "Number" });
+// @ts-expect-error Runtime values are not graph definition kinds.
+dependents(graph([]), { kind: "value", name: "Number" });
