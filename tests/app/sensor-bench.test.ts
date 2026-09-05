@@ -63,7 +63,15 @@ describe("Sensor Bench consumer", () => {
         { temperature: 72.1 },
       ],
     });
-    expect(result.changedReadings).toEqual([0, 1, 2]);
+    expect(result.readingChanges).toEqual([
+      { index: 0, temperatureChanged: true, timestampSpellingChanged: true },
+      { index: 1, temperatureChanged: false, timestampSpellingChanged: true },
+      { index: 2, temperatureChanged: false, timestampSpellingChanged: true },
+    ]);
+    expect(roundTrip(result.output)).toMatchObject({
+      status: "completed",
+      readingChanges: [],
+    });
   });
   it("retains indexed field errors for invalid source data", () => {
     expect(() =>

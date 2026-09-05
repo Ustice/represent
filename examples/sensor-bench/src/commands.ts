@@ -17,17 +17,22 @@ export function roundTrip(input: unknown) {
   if (trace.status === "failed") return trace;
   const before = sensorExchange.encode.to.parse(trace.initial);
   const after = sensorExchange.encode.to.parse(trace.output);
-  const changedReadings = Array.from(
+  const readingChanges = Array.from(
     { length: Math.max(before.samples.length, after.samples.length) },
-    (_, index) => index,
-  ).filter((index) => {
-    const a = before.samples[index],
-      b = after.samples[index];
-    return a?.temperature !== b?.temperature || a?.time !== b?.time;
-  });
+    (_, index) => ({
+      index,
+      temperatureChanged:
+        before.samples[index]?.temperature !==
+        after.samples[index]?.temperature,
+      timestampSpellingChanged:
+        before.samples[index]?.time !== after.samples[index]?.time,
+    }),
+  ).filter(
+    (change) => change.temperatureChanged || change.timestampSpellingChanged,
+  );
   return {
     ...trace,
-    changedReadings,
+    readingChanges,
     scope:
       "One supplied batch. Temperature is rounded to one decimal in each direction; timestamp spelling is canonicalized. No losslessness claim.",
   };

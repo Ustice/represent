@@ -65,6 +65,13 @@ describe("numeric and collection representations", () => {
     expect(maps).toBe(2);
     expect(readings.decode.run(["0", null, "2"])).toEqual([0, null, 2]);
     expect(readings.decode.run([])).toEqual([]);
+    expect(() => readings.encode.convert(new Array<number | null>(3))).toThrow(
+      "[0]",
+    );
+    const optionalReadings = listCodec(optionalCodec(exchange));
+    expect(
+      optionalReadings.encode.convert(new Array<number | undefined>(2)),
+    ).toStrictEqual([undefined, undefined]);
     expect(() => readings.encode.run([1, null, 99])).toThrow(
       /\[2\].*Unreportable/,
     );
