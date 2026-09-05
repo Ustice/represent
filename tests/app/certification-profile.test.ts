@@ -68,17 +68,23 @@ describe("native JSON adapter certification profile", () => {
         ),
       })
       .parse(report);
-    for (const defect of schemaDefects)
+    for (const defect of schemaDefects) {
+      const permissive =
+        defect === "FALSE_GUARANTEE" || defect === "ERASE_FIELD_CONSTRAINT";
       expect(results.find((result) => result.id === defect)).toMatchObject({
         status: "pass",
         evidence: {
           defect,
           witness: {
-            parserAccepted: defect !== "FALSE_GUARANTEE",
-            contractAccepted: defect === "FALSE_GUARANTEE",
+            label: permissive
+              ? "Empty sender"
+              : "Asymmetric fields and required null",
+            parserAccepted: !permissive,
+            contractAccepted: permissive,
           },
         },
       });
+    }
     expect(
       results
         .filter((result) => result.status === "skip")

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { toJsonSchema } from "@represent/json-schema";
 import { certify, type CertificationDeclaration } from "@represent/testing";
-import { jsonSchemaCases } from "./certification-profile.js";
+import { ajvOptions, jsonSchemaCases } from "./certification-profile.js";
 
 async function sourceRevision(entry: string) {
   async function files(
@@ -18,7 +18,7 @@ async function sourceRevision(entry: string) {
           directory,
         );
         if (item.isDirectory()) return files(url, name + "/");
-        if (!item.isFile() || !/\.(ts|js)$/.test(name)) return [];
+        if (!item.isFile() || !/\.[cm]?[jt]sx?$/.test(name)) return [];
         return [{ name, contents: await readFile(url) }];
       }),
     );
@@ -77,11 +77,7 @@ export async function certifyContracts(seed = 162) {
     runtime: { name: "Node.js", version: process.versions.node },
     suiteRevision,
     configuration: {
-      strict: true,
-      ownProperties: true,
-      coerceTypes: false,
-      useDefaults: false,
-      removeAdditional: false,
+      ...ajvOptions,
       seed,
       generatedCases: 100,
       maxStringLength: 8,
@@ -98,7 +94,7 @@ export async function certifyContracts(seed = 162) {
     domains: [
       "100 generated native packets serialized to JSON; strings up to 8 Unicode code points, lists up to 3 elements, plus explicit positive/negative sentinels for every required field, scalar bounds, integer/list kinds, optional/null presence, and extra fields",
       "Known unsupported Date, opaque, optional-root, refined-record, and __proto__-field exports",
-      "DROP_FIELD, SWAP_FIELDS, COLLAPSE_NULLISH, and FALSE_GUARANTEE artifact defects; no algebraic identity, conversion-composition, or impact capability claimed",
+      "DROP_FIELD, ERASE_FIELD_CONSTRAINT, SWAP_FIELDS, COLLAPSE_NULLISH, and FALSE_GUARANTEE artifact defects; no algebraic identity, conversion-composition, or impact capability claimed",
     ],
   };
   return certify({ declaration, cases: jsonSchemaCases(toJsonSchema, seed) });

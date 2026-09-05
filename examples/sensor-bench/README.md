@@ -87,13 +87,14 @@ positive/negative sentinels. It exercises every required field, text and numeric
 constraints, integer/list kinds, optional/null presence, and extra fields. It
 also checks actionable refusal of known unexportable constructs.
 
-Four deliberate artifact defects must be detected: dropped fields, swapped
-compatible field constraints, collapsed null/presence, and an always-accepting
-contract. The same profile fails when supplied an exporter containing those
-defects, a permissive fallback, or a crashing exporter. Algebraic identity,
-conversion composition, and impact checks are explicitly skipped because this
-profile claims none of those capabilities. It does not certify the Zod bridge,
-Fastify adapter, or all JSON Schema features.
+Five deliberate artifact defects must be detected: dropped fields, erased field
+constraints, swapped compatible field constraints, collapsed null/presence, and
+an always-accepting contract. Explicit witnesses precede generated samples so
+detection does not depend on a lucky seed. The same profile fails when supplied
+an exporter containing those defects, a permissive fallback, or a crashing
+exporter. Algebraic identity, conversion composition, and impact checks are
+explicitly skipped because this profile claims none of those capabilities. It
+does not certify the Zod bridge, Fastify adapter, or all JSON Schema features.
 
 Required failures, missing evidence, and harness errors produce a nonzero exit
 status with a failed report when checks can run. Setup failures produce a stderr
