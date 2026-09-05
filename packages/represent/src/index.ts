@@ -34,3 +34,8 @@ export {
   type SchemaChange,
   type FieldChange,
 } from "./schema-comparison.js";
+export {
+  tracePath,
+  type ConversionRunner,
+  type ConversionTraceStep,
+} from "./trace.js";
