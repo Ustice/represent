@@ -1,6 +1,6 @@
 {
   "name": "@represent/fastify",
-  "version": "0.0.0",
+  "version": "0.1.0-rc.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -11,5 +11,20 @@
   },
   "peerDependencies": {
     "fastify": "5.12.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
   }
 }
