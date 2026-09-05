@@ -8,8 +8,10 @@
   },
   "dependencies": {
     "@represent/core": "workspace:*",
+    "@represent/fast-check": "workspace:*",
     "@represent/json-schema": "workspace:*",
     "@represent/zod": "workspace:*",
+    "fast-check": "4.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {

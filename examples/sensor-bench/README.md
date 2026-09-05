@@ -49,3 +49,26 @@ conversion and trace the selected path. Results include endpoints, candidates,
 scores, policy, search completeness, and intermediate values. An ambiguous
 result does not execute or validate the supplied value. Ordinary batch
 processing still uses the reported-precision codec explicitly.
+
+Generate a reusable mock batch or run the real inspection operation against a
+mock data source:
+
+```sh
+pnpm --silent sensor generate --seed 162 > batch.json
+pnpm sensor summary batch.json
+pnpm sensor mock --seed 162 --device greenhouse-north
+```
+
+The fast-check adapter derives the wire batch generator from its
+representations. An explicit provider chooses synthetic greenhouse identifiers
+and canonical 2026 timestamps; numeric bounds, booleans, nullable readings, and
+lists come from the model. This example limits strings to 16 code points and
+batches to 8 readings. A signed 32-bit seed reproduces values with the same
+model, limits, providers, and fast-check 4.9.0.
+
+The mock source clones its fixture for each read and labels it with the
+requested device. `Inspect sensor` awaits the source, validates/decodes its
+payload, checks the device identity, and summarizes the domain batch. Injecting
+a mock does not bypass the operation or its conversions. The graph includes that
+operation and its declared calls. Generated batches are synthetic test data, not
+recorded sensor observations.

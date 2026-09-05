@@ -1,4 +1,5 @@
 import {
+  asyncOperation,
   booleanValue,
   codec,
   conversion,
@@ -30,7 +31,7 @@ export const unroundedTemperature = codec({
   encode: (value) => (value * 9) / 5 + 32,
   decode: (value) => ((value - 32) * 5) / 9,
 });
-const timestamp = codec({
+export const timestamp = codec({
   name: "Sensor time",
   from: dateValue("Reading time"),
   to: fromZod("Sensor timestamp", z.iso.datetime({ offset: true })),
@@ -43,12 +44,13 @@ export const reading = recordCodec({
   to: "Reading API",
   fields: { time: timestamp, temperature: nullableCodec(temperature) },
 });
+export const deviceId = text("Device", { nonempty: true });
 export const sensorExchange = recordCodec({
   name: "Sensor batch exchange",
   from: "Sensor batch",
   to: "Sensor batch API",
   fields: {
-    device: text("Device", { nonempty: true }),
+    device: deviceId,
     online: booleanValue("Online"),
     batteryPercent: numberValue("Battery percentage", {
       min: 0,
@@ -86,10 +88,31 @@ export const summarize = conversion({
     };
   },
 });
-export const sensorGraph = graph([
-  sensorExchange.encode,
-  sensorExchange.decode,
-  summarize,
-  unroundedTemperature.encode,
-  unroundedTemperature.decode,
-]);
+export interface SensorSource {
+  readonly read: (device: string) => Promise<unknown>;
+}
+export const inspectSensor = asyncOperation({
+  name: "Inspect sensor",
+  input: record("Sensor inspection", {
+    device: text("Requested device", { nonempty: true }),
+  }),
+  output: summarize.to,
+  calls: [sensorExchange.decode, summarize],
+  async perform({ device }, source: SensorSource) {
+    const input = await source.read(device);
+    const batch = sensorExchange.decode.run(input);
+    if (batch.device !== device)
+      throw new Error("Sensor source returned a different device");
+    return summarize.convert(batch);
+  },
+});
+export const sensorGraph = graph(
+  [
+    sensorExchange.encode,
+    sensorExchange.decode,
+    summarize,
+    unroundedTemperature.encode,
+    unroundedTemperature.decode,
+  ],
+  { operations: [inspectSensor] },
+);
