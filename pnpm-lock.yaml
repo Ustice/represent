@@ -87,9 +87,15 @@ importers:
       '@represent/json-schema':
         specifier: workspace:*
         version: link:../../packages/json-schema
+      '@represent/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       '@represent/zod':
         specifier: workspace:*
         version: link:../../packages/zod
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
       fast-check:
         specifier: 4.9.0
         version: 4.9.0
@@ -133,6 +139,12 @@ importers:
         version: link:../represent
 
   packages/represent: {}
+
+  packages/testing:
+    dependencies:
+      '@represent/core':
+        specifier: workspace:*
+        version: link:../represent
 
   packages/zod:
     dependencies:
