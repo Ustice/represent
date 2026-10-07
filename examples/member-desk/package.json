@@ -15,7 +15,7 @@
     "@represent/json-schema": "workspace:*",
     "@represent/zod": "workspace:*",
     "ajv": "^8.20.0",
-    "fastify": "5.12.3",
+    "fastify": "5.12.5",
     "zod": "4.4.3"
   },
   "devDependencies": {
