@@ -16,7 +16,7 @@
     "@represent/zod": "workspace:*",
     "ajv": "^8.20.0",
     "fastify": "5.12.3",
-    "zod": "4.4.3"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "tsx": "^4.23.13",
